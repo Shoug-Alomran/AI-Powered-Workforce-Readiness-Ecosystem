@@ -126,7 +126,7 @@ export async function updateApplicationStatus(formData: FormData) {
 }
 
 export async function submitFeedback(formData: FormData) {
-  await requireEmployer();
+  const employer = await requireEmployer();
   const jobId = String(formData.get("jobId") ?? "");
   const studentId = String(formData.get("studentId") ?? "");
   const technical = Number(formData.get("technical") ?? 3);
@@ -136,11 +136,17 @@ export async function submitFeedback(formData: FormData) {
   const adaptability = Number(formData.get("adaptability") ?? 3);
   const overall = Number(formData.get("overall") ?? 3);
   const notes = String(formData.get("notes") ?? "").trim();
+  const checkpointDays = Number(formData.get("checkpointDays") ?? 90);
 
   if (!jobId || !studentId) throw new Error("Missing job or student");
+  const hiredApplication = await prisma.application.findFirst({ where: { jobId, studentId, status: "hired", job: { employerId: employer.id } } });
+  if (!hiredApplication) throw new Error("Feedback is limited to students hired for your organization’s role");
 
-  await prisma.feedback.create({
-    data: {
+  if (![30, 90, 180].includes(checkpointDays)) throw new Error("Invalid feedback checkpoint");
+  await prisma.feedback.upsert({
+    where: { jobId_studentId_checkpointDays: { jobId, studentId, checkpointDays } },
+    update: { technical, communication, teamwork, problemSolving, adaptability, overall, notes: notes || null },
+    create: {
       jobId,
       studentId,
       technical,
@@ -150,6 +156,8 @@ export async function submitFeedback(formData: FormData) {
       adaptability,
       overall,
       notes: notes || null,
+      checkpointDays,
+      dueAt: new Date(hiredApplication.createdAt.getTime() + checkpointDays * 86400000),
     },
   });
 

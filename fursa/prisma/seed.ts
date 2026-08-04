@@ -15,6 +15,9 @@ async function main() {
   console.log("Seeding Fursa demo data...");
 
   // --- Wipe existing data (dev convenience) ---
+  await prisma.supportTicket.deleteMany();
+  await prisma.monitoringSnapshot.deleteMany();
+  await prisma.dataRequest.deleteMany();
   await prisma.auditEvent.deleteMany();
   await prisma.notification.deleteMany();
   await prisma.governanceScenario.deleteMany();

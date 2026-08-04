@@ -127,10 +127,11 @@ export async function addExperience(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const org = String(formData.get("org") ?? "").trim();
   const months = Math.max(1, Number(formData.get("months") ?? 1));
+  const evidenceUrl = String(formData.get("evidenceUrl") ?? "").trim();
   if (!title) return;
 
   await prisma.experience.create({
-    data: { studentId: student.id, type, title, org: org || null, months },
+    data: { studentId: student.id, type, title, org: org || null, months, evidenceUrl: evidenceUrl || null, verificationStatus: evidenceUrl ? "PENDING" : "SELF_REPORTED" },
   });
 
   revalidatePath("/student/dashboard");
@@ -150,10 +151,11 @@ export async function addProject(formData: FormData) {
   const student = await requireStudent();
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
+  const evidenceUrl = String(formData.get("evidenceUrl") ?? "").trim();
   if (!title) return;
 
   await prisma.project.create({
-    data: { studentId: student.id, title, description: description || null },
+    data: { studentId: student.id, title, description: description || null, evidenceUrl: evidenceUrl || null, verificationStatus: evidenceUrl ? "PENDING" : "SELF_REPORTED" },
   });
 
   revalidatePath("/student/dashboard");
@@ -322,6 +324,39 @@ export async function submitAppeal(formData: FormData) {
   if (!reason) throw new Error("Please explain what should be reviewed");
   await prisma.appeal.create({ data: { studentId: ctx.student.id, subjectType, subjectId: String(formData.get("subjectId") ?? "") || null, reason } });
   await prisma.notification.create({ data: { userId: ctx.user.id, type: "APPEAL", title: "Review request received", body: "Your request is in the human review queue." } });
+  revalidatePath("/student/privacy");
+  revalidatePath("/admin/governance");
+}
+
+export async function createPassportShare(formData: FormData) {
+  const ctx = await getCurrentStudent();
+  if (!ctx) throw new Error("Not signed in as a student");
+  const days = Math.min(90, Math.max(1, Number(formData.get("days") ?? 14)));
+  const label = String(formData.get("label") ?? "").trim();
+  const token = randomUUID().replaceAll("-", "");
+  await prisma.passportShare.create({ data: { studentId: ctx.student.id, token, label: label || null, expiresAt: new Date(Date.now() + days * 86400000) } });
+  await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: "PASSPORT_SHARE_CREATED", entityType: "PASSPORT_SHARE", entityId: token, explanation: `Expires in ${days} day(s)` } });
+  revalidatePath("/student/passport-sharing");
+}
+
+export async function revokePassportShare(formData: FormData) {
+  const ctx = await getCurrentStudent();
+  if (!ctx) throw new Error("Not signed in as a student");
+  const id = String(formData.get("shareId") ?? "");
+  await prisma.passportShare.updateMany({ where: { id, studentId: ctx.student.id, revokedAt: null }, data: { revokedAt: new Date() } });
+  await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: "PASSPORT_SHARE_REVOKED", entityType: "PASSPORT_SHARE", entityId: id } });
+  revalidatePath("/student/passport-sharing");
+}
+
+export async function submitDataRequest(formData: FormData) {
+  const ctx = await getCurrentStudent();
+  if (!ctx) throw new Error("Not signed in as a student");
+  const type = String(formData.get("type") ?? "ACCESS");
+  const details = String(formData.get("details") ?? "").trim();
+  if (!["ACCESS", "DOWNLOAD", "CORRECTION", "DELETION"].includes(type)) throw new Error("Invalid request type");
+  const request = await prisma.dataRequest.create({ data: { studentId: ctx.student.id, type, details: details || null } });
+  await prisma.notification.create({ data: { userId: ctx.user.id, type: "DATA_REQUEST", title: `${type.toLowerCase()} request received`, body: "Your request is recorded and awaiting review." } });
+  await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: `DATA_${type}_REQUESTED`, entityType: "DATA_REQUEST", entityId: request.id } });
   revalidatePath("/student/privacy");
   revalidatePath("/admin/governance");
 }

@@ -48,7 +48,7 @@ export default async function CandidateProfile({
   const job = application.job;
   const s = application.student;
   const match = computeJobMatch(s, job);
-  const feedback = await prisma.feedback.findFirst({ where: { jobId: job.id, studentId: s.id } });
+  const feedbacks = await prisma.feedback.findMany({ where: { jobId: job.id, studentId: s.id } });
   const blind = job.blindReview && application.status === "applied";
 
   return (
@@ -139,14 +139,16 @@ export default async function CandidateProfile({
       {application.status === "hired" && (
         <section className="card" style={{ marginTop: 18 }}>
           <span className="eyebrow">Workforce feedback loop</span>
-          <h2>Post-hire feedback</h2>
-          {feedback ? (
-            <div className="notice">Feedback submitted — overall {feedback.overall}/5. {feedback.notes}</div>
-          ) : (
-            <form action={submitFeedback} className="form-grid">
+          <h2>30, 90 and 180-day feedback</h2>
+          <p className="muted">Repeated checkpoints distinguish onboarding issues from sustained job performance.</p>
+          {[30, 90, 180].map((checkpoint) => {
+            const feedback = feedbacks.find((item) => item.checkpointDays === checkpoint);
+            return feedback ? <div className="data-row" key={checkpoint}><div><strong>{checkpoint}-day checkpoint</strong><div className="muted">{feedback.notes ?? "Feedback recorded"}</div></div><span className="pill">{feedback.overall}/5</span></div> : (
+            <form action={submitFeedback} className="form-grid" key={checkpoint} style={{ borderTop: "1px solid #e2e8f0", paddingTop: 18, marginTop: 18 }}>
               <input type="hidden" name="jobId" value={job.id} />
               <input type="hidden" name="studentId" value={s.id} />
-              <p className="muted" style={{ marginTop: -8 }}>Anonymized and used to improve future recommendations for everyone on this career track.</p>
+              <input type="hidden" name="checkpointDays" value={checkpoint} />
+              <strong>{checkpoint}-day checkpoint</strong>
               <div className="grid-3">
                 {(["technical", "communication", "teamwork", "problemSolving", "adaptability", "overall"] as const).map((field) => (
                   <label key={field} style={{ textTransform: "capitalize" }}>
@@ -158,9 +160,9 @@ export default async function CandidateProfile({
                 ))}
               </div>
               <label>Notes<textarea className="input" name="notes" placeholder="What stood out?" /></label>
-              <button className="button secondary">Submit feedback</button>
+              <button className="button secondary">Submit {checkpoint}-day feedback</button>
             </form>
-          )}
+          );})}
         </section>
       )}
     </main>

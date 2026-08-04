@@ -1,0 +1,10 @@
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db";
+import { getCurrentStudent } from "@/lib/session";
+import { createPassportShare, revokePassportShare } from "@/actions/student";
+
+export default async function PassportSharingPage() {
+  const ctx = await getCurrentStudent(); if (!ctx) redirect("/login");
+  const shares = await prisma.passportShare.findMany({ where: { studentId: ctx.student.id }, orderBy: { createdAt: "desc" } });
+  return <main className="page-shell"><span className="eyebrow">Controlled sharing</span><h1 className="page-title">Skills Passport links</h1><p className="muted">Create a time-limited public link. You can revoke access immediately without changing your profile.</p><div className="grid-2" style={{ marginTop: 26, alignItems: "start" }}><section className="card"><h2>Create a link</h2><form action={createPassportShare} className="form-grid"><label>Recipient or purpose<input className="input" name="label" placeholder="Graduate program application"/></label><label>Expires after<select className="input" name="days" defaultValue="14"><option value="1">1 day</option><option value="7">7 days</option><option value="14">14 days</option><option value="30">30 days</option><option value="90">90 days</option></select></label><button className="button primary">Create secure link</button></form></section><section className="card"><h2>Active and previous links</h2>{shares.length ? shares.map(s => { const active = !s.revokedAt && s.expiresAt > new Date(); const path = `/passport/${s.token}`; return <div className="data-row" key={s.id}><div><strong>{s.label ?? "Shared passport"}</strong><div className="muted">Expires {s.expiresAt.toLocaleDateString()} · {active ? "Active" : s.revokedAt ? "Revoked" : "Expired"}</div>{active && <a className="link" href={path} target="_blank">{path}</a>}</div>{active && <form action={revokePassportShare}><input type="hidden" name="shareId" value={s.id}/><button className="button danger">Revoke</button></form>}</div>; }) : <div className="notice">No sharing links created.</div>}</section></div></main>;
+}

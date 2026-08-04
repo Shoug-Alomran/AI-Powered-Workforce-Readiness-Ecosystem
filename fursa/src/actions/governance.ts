@@ -61,3 +61,57 @@ export async function resolveAppeal(formData: FormData) {
   revalidatePath("/admin/governance");
   revalidatePath("/student/privacy");
 }
+
+export async function reviewPortfolioEvidence(formData: FormData) {
+  const ctx = await getCurrentAdmin();
+  if (!ctx) throw new Error("Administrator access required");
+  const entityType = String(formData.get("entityType") ?? "");
+  const id = String(formData.get("entityId") ?? "");
+  const decision = String(formData.get("decision") ?? "");
+  const note = String(formData.get("note") ?? "").trim();
+  if (!id || !["APPROVED", "REJECTED"].includes(decision)) throw new Error("Invalid evidence decision");
+  if (decision === "REJECTED" && !note) throw new Error("A rejection reason is required");
+  const data = { verificationStatus: decision, reviewNote: note || null, reviewedAt: new Date(), reviewedBy: ctx.user.id };
+  if (entityType === "PROJECT") await prisma.project.update({ where: { id }, data });
+  else if (entityType === "EXPERIENCE") await prisma.experience.update({ where: { id }, data });
+  else throw new Error("Unsupported evidence type");
+  await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: `EVIDENCE_${decision}`, entityType, entityId: id, explanation: note || null } });
+  revalidatePath("/admin/governance"); revalidatePath("/student/profile");
+}
+
+export async function resolveDataRequest(formData: FormData) {
+  const ctx = await getCurrentAdmin();
+  if (!ctx) throw new Error("Administrator access required");
+  const id = String(formData.get("requestId") ?? "");
+  const status = String(formData.get("status") ?? "COMPLETED");
+  const resolution = String(formData.get("resolution") ?? "").trim();
+  if (!id || !resolution) throw new Error("A resolution is required");
+  const request = await prisma.dataRequest.update({ where: { id }, data: { status, resolution, reviewedBy: ctx.user.id, reviewedAt: new Date() }, include: { student: true } });
+  await prisma.notification.create({ data: { userId: request.student.userId, type: "DATA_REQUEST", title: `Data request ${status.toLowerCase()}`, body: resolution } });
+  revalidatePath("/admin/governance"); revalidatePath("/student/privacy");
+}
+
+export async function captureMonitoringSnapshot() {
+  const ctx = await getCurrentAdmin();
+  if (!ctx) throw new Error("Administrator access required");
+  const applications = await prisma.application.findMany();
+  const previous = await prisma.monitoringSnapshot.findFirst({ orderBy: { createdAt: "desc" } });
+  const sampleSize = applications.length;
+  const averageScore = sampleSize ? applications.reduce((n, a) => n + a.matchScore, 0) / sampleSize : 0;
+  const outcomeRate = sampleSize ? applications.filter(a => ["shortlisted", "hired"].includes(a.status)).length / sampleSize : 0;
+  const scoreDrift = previous ? averageScore - previous.averageScore : 0;
+  const outcomeDrift = previous ? outcomeRate - previous.outcomeRate : 0;
+  const status = sampleSize < 20 ? "INSUFFICIENT_DATA" : Math.abs(scoreDrift) >= 10 || Math.abs(outcomeDrift) >= .15 ? "PAUSED" : Math.abs(scoreDrift) >= 5 || Math.abs(outcomeDrift) >= .08 ? "WATCH" : "HEALTHY";
+  await prisma.monitoringSnapshot.create({ data: { modelVersion: "match-rules-v1", sampleSize, averageScore, outcomeRate, scoreDrift, outcomeDrift, status, notes: sampleSize < 20 ? "Metrics suppressed for decision-making until the minimum sample size of 20 is reached." : null } });
+  revalidatePath("/admin/monitoring");
+}
+
+export async function updateSupportTicket(formData: FormData) {
+  const ctx = await getCurrentAdmin();
+  if (!ctx) throw new Error("Administrator access required");
+  const id = String(formData.get("ticketId") ?? "");
+  const status = String(formData.get("status") ?? "IN_PROGRESS");
+  const resolution = String(formData.get("resolution") ?? "").trim();
+  await prisma.supportTicket.update({ where: { id }, data: { status, resolution: resolution || null, assignedTo: ctx.user.name } });
+  revalidatePath("/admin/support");
+}
