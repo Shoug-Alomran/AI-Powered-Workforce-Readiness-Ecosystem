@@ -7,9 +7,14 @@ import { getAllCareerTracksAsync } from "@/lib/careerTracks.server";
 import { toggleFavoriteCompany, toggleFavoriteCareerTrack } from "@/actions/student";
 import PageToc from "@/components/PageToc";
 
-export default async function StudentInterests() {
+export default async function StudentInterests({
+  searchParams,
+}: {
+  searchParams: Promise<{ trackQ?: string; companyQ?: string }>;
+}) {
   const ctx = await getCurrentStudent();
   if (!ctx) redirect("/login");
+  const { trackQ = "", companyQ = "" } = await searchParams;
 
   const [student, tracks, employers, offerings] = await Promise.all([
     prisma.student.findUniqueOrThrow({
@@ -45,6 +50,13 @@ export default async function StudentInterests() {
 
   const favoriteTracks = [...favoriteTrackIds].map((id) => trackById.get(id)).filter((t): t is NonNullable<typeof t> => Boolean(t));
   const favoriteEmployers = employers.filter((e) => favoriteEmployerIds.has(e.id));
+
+  const visibleTracks = trackQ
+    ? tracks.filter((t) => t.label.toLowerCase().includes(trackQ.trim().toLowerCase()))
+    : tracks;
+  const visibleEmployers = companyQ
+    ? employers.filter((e) => e.company.toLowerCase().includes(companyQ.trim().toLowerCase()))
+    : employers;
 
   return (
     <main className="page-shell">
@@ -205,8 +217,14 @@ export default async function StudentInterests() {
         <span className="eyebrow">Career tracks</span>
         <h2>Favorite career tracks</h2>
         <p className="muted">Beyond your primary target career, follow any track you&apos;re curious about.</p>
+        <form className="filter-bar" style={{ marginTop: 12 }}>
+          <label>Search tracks<input className="input" type="text" name="trackQ" placeholder="e.g. Data" defaultValue={trackQ} /></label>
+          <button className="button secondary" type="submit">Search</button>
+          {trackQ && <a className="link" href="/student/interests#career-tracks" style={{ alignSelf: "center" }}>Clear</a>}
+        </form>
         <div className="stack" style={{ marginTop: 12 }}>
-          {tracks.map((track) => {
+          {visibleTracks.length === 0 && <div className="notice">No career tracks match &ldquo;{trackQ}&rdquo;.</div>}
+          {visibleTracks.map((track) => {
             const isFavorite = favoriteTrackIds.has(track.id);
             return (
               <div className="data-row" key={track.id}>
@@ -225,8 +243,14 @@ export default async function StudentInterests() {
         <span className="eyebrow">Companies</span>
         <h2>Favorite companies</h2>
         <p className="muted">Follow a company to get matched against every role they post, not just the ones you happen to see.</p>
+        <form className="filter-bar" style={{ marginTop: 12 }}>
+          <label>Search companies<input className="input" type="text" name="companyQ" placeholder="e.g. Nexariya" defaultValue={companyQ} /></label>
+          <button className="button secondary" type="submit">Search</button>
+          {companyQ && <a className="link" href="/student/interests#companies" style={{ alignSelf: "center" }}>Clear</a>}
+        </form>
         <div className="stack" style={{ marginTop: 12 }}>
-          {employers.map((employer) => {
+          {visibleEmployers.length === 0 && <div className="notice">No companies match &ldquo;{companyQ}&rdquo;.</div>}
+          {visibleEmployers.map((employer) => {
             const isFavorite = favoriteEmployerIds.has(employer.id);
             return (
               <div className="data-row" key={employer.id}>

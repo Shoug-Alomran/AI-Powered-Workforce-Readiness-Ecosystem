@@ -3,6 +3,7 @@ import "dotenv/config";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 import { CAREER_TRACKS, allSkillNames, allCertificationNames } from "../src/lib/careerTracks";
+import { computeJobMatch } from "../src/lib/ai";
 
 const adapter = new PrismaLibSql({
   url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
@@ -368,22 +369,37 @@ async function main() {
   }
 
   // --- A couple of sample applications + feedback for the intelligence dashboard ---
-  const sara = await prisma.student.findFirstOrThrow({ where: { user: { email: "sara.aldosari@example.com" } } });
-  const abdullah = await prisma.student.findFirstOrThrow({ where: { user: { email: "abdullah.alghamdi@example.com" } } });
-  const lina = await prisma.student.findFirstOrThrow({ where: { user: { email: "lina.alzahrani@example.com" } } });
-  const reem = await prisma.student.findFirstOrThrow({ where: { user: { email: "reem.alanazi@example.com" } } });
+  const studentInclude = {
+    skills: { include: { skill: true } },
+    certifications: { include: { certification: true } },
+    experiences: true,
+    projects: true,
+  } as const;
+  const jobInclude = {
+    requiredSkills: { include: { skill: true } },
+    requiredCerts: { include: { certification: true } },
+  } as const;
+
+  const sara = await prisma.student.findFirstOrThrow({ where: { user: { email: "sara.aldosari@example.com" } }, include: studentInclude });
+  const abdullah = await prisma.student.findFirstOrThrow({ where: { user: { email: "abdullah.alghamdi@example.com" } }, include: studentInclude });
+  const lina = await prisma.student.findFirstOrThrow({ where: { user: { email: "lina.alzahrani@example.com" } }, include: studentInclude });
+  const reem = await prisma.student.findFirstOrThrow({ where: { user: { email: "reem.alanazi@example.com" } }, include: studentInclude });
+
+  const seJobFull = await prisma.job.findUniqueOrThrow({ where: { id: seJob.id }, include: jobInclude });
+  const dsJobFull = await prisma.job.findUniqueOrThrow({ where: { id: dsJob.id }, include: jobInclude });
+  const csJobFull = await prisma.job.findUniqueOrThrow({ where: { id: csJob.id }, include: jobInclude });
 
   await prisma.application.create({
-    data: { studentId: sara.id, jobId: seJob.id, status: "hired", matchScore: 88 },
+    data: { studentId: sara.id, jobId: seJob.id, status: "hired", matchScore: computeJobMatch(sara, seJobFull).score },
   });
   await prisma.application.create({
-    data: { studentId: abdullah.id, jobId: seJob.id, status: "shortlisted", matchScore: 61 },
+    data: { studentId: abdullah.id, jobId: seJob.id, status: "shortlisted", matchScore: computeJobMatch(abdullah, seJobFull).score },
   });
   await prisma.application.create({
-    data: { studentId: lina.id, jobId: dsJob.id, status: "hired", matchScore: 91 },
+    data: { studentId: lina.id, jobId: dsJob.id, status: "hired", matchScore: computeJobMatch(lina, dsJobFull).score },
   });
   await prisma.application.create({
-    data: { studentId: reem.id, jobId: csJob.id, status: "hired", matchScore: 85 },
+    data: { studentId: reem.id, jobId: csJob.id, status: "hired", matchScore: computeJobMatch(reem, csJobFull).score },
   });
 
   await prisma.feedback.create({
