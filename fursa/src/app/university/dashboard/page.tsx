@@ -42,6 +42,7 @@ export default async function UniversityDashboard() {
         <h1 className="page-title">{ctx.university.institution}</h1>
       </div>
       <div className="actions" style={{ margin: 0 }}>
+        <Link className="button primary" href="/university/job-demand">Explore job demand</Link>
         <Link className="button secondary" href="/university/offerings">Manage courses & certifications</Link>
         <a className="button secondary" href="/api/university/export">Export CSV</a>
       </div>
@@ -65,7 +66,7 @@ export default async function UniversityDashboard() {
 
     <div className="grid-2" style={{ marginTop: 18, alignItems: "start" }}>
       <section className="card" id="industry-signal" style={{ scrollMarginTop: 80 }}><span className="eyebrow">Industry signal</span><h2>Skills employers need now</h2>{topDemand.map(([skill, score]) => <div key={skill} style={{ marginTop: 16 }}><div className="data-row"><strong>{skill}</strong><b>{score} demand points</b></div><div className="bar"><i style={{ width: `${Math.round(score / (topDemand[0]?.[1] || 1) * 100)}%` }} /></div></div>)}</section>
-      <section className="card" id="curriculum-alignment" style={{ scrollMarginTop: 80 }}><span className="eyebrow">Curriculum alignment</span><h2>Priority gaps</h2>{gaps.length ? gaps.map((gap, index) => <div className="data-row" key={gap}><div><span className="pill">Priority {index + 1}</span><strong style={{ display: "block", marginTop: 8 }}>{gap}</strong></div><span className="muted">Review curriculum →</span></div>) : <div className="notice">The current cohort covers the strongest skills represented in live job demand.</div>}</section>
+      <section className="card" id="curriculum-alignment" style={{ scrollMarginTop: 80 }}><span className="eyebrow">Curriculum alignment</span><h2>Priority gaps</h2>{gaps.length ? gaps.map((gap, index) => <div className="data-row" key={gap}><div><span className="pill">Priority {index + 1}</span><strong style={{ display: "block", marginTop: 8 }}>{gap}</strong></div><Link className="link" href={`/university/actions?skill=${encodeURIComponent(gap)}&title=${encodeURIComponent(`Add an applied ${gap} module`)}`}>Create curriculum action →</Link></div>) : <div className="notice">The current cohort covers the strongest skills represented in live job demand.</div>}<Link className="button secondary" href="/university/job-demand" style={{ marginTop: 18 }}>See the jobs behind these gaps</Link></section>
     </div>
 
     <div className="grid-2" style={{ marginTop: 18, alignItems: "start" }}>

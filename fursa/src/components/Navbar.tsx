@@ -91,6 +91,7 @@ export default async function Navbar() {
             <>
               <Link href="/university/dashboard" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.university">University Dashboard</span></Link>
               <Link href="/university/offerings" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.offerings">Courses & Certifications</span></Link>
+              <Link href="/university/job-demand" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100">Job Demand</Link>
               <Link href="/university/actions" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100">Action Plan</Link>
             </>
           )}
