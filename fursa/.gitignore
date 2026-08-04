@@ -41,3 +41,13 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+# local prototype data and assistant tooling
+/prisma/*.db
+/prisma/*.db-journal
+/.agents/
+/.claude/
+/.windsurf/
+/AGENTS.md
+/CLAUDE.md
+/skills-lock.json

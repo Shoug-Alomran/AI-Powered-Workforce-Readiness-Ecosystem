@@ -1,0 +1,13 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Certificate evidence is uploaded and read only by authenticated server
+    // endpoints using the Admin SDK, which bypass Storage Rules.
+    match /certificate-evidence/{studentId}/{fileName} {
+      allow read, write: if false;
+    }
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
