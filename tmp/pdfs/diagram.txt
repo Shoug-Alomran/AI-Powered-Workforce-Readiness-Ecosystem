@@ -1,0 +1,65 @@
+                                                                                         Stakeholders
+
+                                                Students                           Universities         Employers   Training Providers
+
+
+
+
+                                                                                                                              Continuous Feedback
+                                                                                                                                      Loop
+                                                                                                                               Employer Feedback
+
+
+
+
+                                                              AI-Powered
+                                                           Workforce Platform
+                                                               Data Collection &
+                                                                                                                                Model Monitoring
+                                                                   Integration
+
+
+
+
+                 Student Profile &
+                                                                                                                                Model Retraining
+                  Skills Passport
+
+
+
+
+ AI Learning
+Recommendation
+    Engine
+
+
+
+
+                                     Adaptive Learning
+                                        Intelligence
+                                        Career Readiness
+                                         Scoring Engine
+
+
+
+
+                                                                     AI Job Matching
+                                                                          Engine
+
+
+
+
+                                                                                                              Workforce
+                                                                                         AI Candidate
+                                                                                                             Intelligence
+                                                                                        Ranking Engine
+                                                                                                               Dashboard
+
+
+
+
+                                                           Outputs
+
+Personalized Career   Verified Skills   Career Readiness               Job Match       Ranked Candidate   University & Labor
+      Roadmap             Passport            Score                  Recommendations      Shortlists        Market Insights
+
