@@ -8,7 +8,7 @@
 // with the "Explainable AI" and "Human oversight" principles in the README.
 // ---------------------------------------------------------------------------
 
-import { getCareerTrack } from "./careerTracks";
+import type { CareerTrack } from "./careerTracks";
 
 export type StudentSkillLike = { level: number; skill: { name: string; category: string } };
 export type StudentCertLike = { certification: { name: string }; verificationStatus?: string };
@@ -51,12 +51,7 @@ const WEIGHTS = {
  * relevance, experience relevance, portfolio strength) which are then
  * combined into a single explainable score.
  */
-export function computeReadinessScore(student: StudentForScoring): ReadinessResult {
-  const track = getCareerTrack(
-    // targetCareer stores the track id
-    student.targetCareer
-  );
-
+export function computeReadinessScore(student: StudentForScoring, track: CareerTrack): ReadinessResult {
   // --- Technical skills coverage ---
   const techTotal = track.technicalSkills.reduce((s, x) => s + x.weight, 0) || 1;
   let techEarned = 0;
@@ -143,7 +138,7 @@ export function computeReadinessScore(student: StudentForScoring): ReadinessResu
 /** Adaptive learning: recommend the highest-impact next actions. */
 function buildNextActions(
   student: StudentForScoring,
-  track: ReturnType<typeof getCareerTrack>,
+  track: CareerTrack,
   haveSkillMap: Map<string, number>,
   haveCerts: Set<string>
 ): string[] {

@@ -21,6 +21,7 @@ model User {
   role      Role
   name      String
   email     String   @unique
+  active    Boolean  @default(true)
   createdAt DateTime @default(now())
 
   student  Student?
@@ -63,8 +64,9 @@ model Skill {
   name     String @unique
   category String // technical | soft
 
-  studentSkills StudentSkill[]
-  jobSkills     JobSkill[]
+  studentSkills     StudentSkill[]
+  jobSkills         JobSkill[]
+  careerTrackSkills CareerTrackSkill[]
 }
 
 model StudentSkill {
@@ -83,8 +85,47 @@ model Certification {
   name String  @unique
   org  String?
 
-  studentCerts StudentCertification[]
-  jobCerts     JobCertification[]
+  studentCerts     StudentCertification[]
+  jobCerts         JobCertification[]
+  careerTrackCerts CareerTrackCertification[]
+}
+
+// -----------------------------------------------------------------------
+// Career taxonomy (admin-editable). Seeded from src/lib/careerTracks.ts;
+// once rows exist here they become the source of truth for readiness
+// scoring, roadmaps, and the career-track pickers across the app.
+// -----------------------------------------------------------------------
+model CareerTrack {
+  id                           String   @id // stable slug, e.g. "software-engineer"
+  label                        String
+  recommendedExperienceMonths Int      @default(6)
+  createdAt                    DateTime @default(now())
+  updatedAt                    DateTime @updatedAt
+
+  trackSkills CareerTrackSkill[]
+  trackCerts  CareerTrackCertification[]
+}
+
+model CareerTrackSkill {
+  id            String      @id @default(cuid())
+  careerTrackId String
+  careerTrack   CareerTrack @relation(fields: [careerTrackId], references: [id], onDelete: Cascade)
+  skillId       String
+  skill         Skill       @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  category      String // technical | soft
+  weight        Int         @default(2) // importance 1-3
+
+  @@unique([careerTrackId, skillId])
+}
+
+model CareerTrackCertification {
+  id              String        @id @default(cuid())
+  careerTrackId   String
+  careerTrack     CareerTrack   @relation(fields: [careerTrackId], references: [id], onDelete: Cascade)
+  certificationId String
+  certification   Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+
+  @@unique([careerTrackId, certificationId])
 }
 
 model StudentCertification {
@@ -131,6 +172,11 @@ model Employer {
   user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   company  String
   industry String?
+
+  verificationStatus String    @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewNote          String?
+  reviewedAt          DateTime?
+  reviewedBy          String?
 
   jobs Job[]
 
@@ -184,6 +230,7 @@ model Application {
   job        Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
   status     String   @default("applied") // applied | shortlisted | hired | rejected
   matchScore Int      @default(0)
+  note       String? // employer-visible reason shown back to the student
   createdAt  DateTime @default(now())
 
   @@unique([studentId, jobId])

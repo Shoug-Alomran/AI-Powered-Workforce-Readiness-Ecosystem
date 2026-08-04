@@ -13,6 +13,9 @@ async function requireEmployer() {
 
 export async function createJob(formData: FormData) {
   const employer = await requireEmployer();
+  if (employer.verificationStatus !== "APPROVED") {
+    throw new Error("Your employer account is pending administrator verification before you can post opportunities.");
+  }
   const title = String(formData.get("title") ?? "").trim();
   const careerTrack = String(formData.get("careerTrack") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
@@ -84,18 +87,29 @@ export async function reopenJob(formData: FormData) {
 }
 
 export async function updateApplicationStatus(formData: FormData) {
-  await requireEmployer();
+  const employer = await requireEmployer();
   const applicationId = String(formData.get("applicationId") ?? "");
   const status = String(formData.get("status") ?? "");
   const jobId = String(formData.get("jobId") ?? "");
+  const note = String(formData.get("note") ?? "").trim();
   if (!applicationId || !status) return;
+
+  // Defense in depth: only allow updating applications on this employer's own jobs.
+  const application = await prisma.application.findUnique({
+    where: { id: applicationId },
+    include: { job: true },
+  });
+  if (!application || application.job.employerId !== employer.id) {
+    throw new Error("Application not found for this employer");
+  }
 
   await prisma.application.update({
     where: { id: applicationId },
-    data: { status },
+    data: { status, note: note || null },
   });
 
   revalidatePath(`/employer/jobs/${jobId}`);
+  revalidatePath("/student/applications");
 }
 
 export async function submitFeedback(formData: FormData) {

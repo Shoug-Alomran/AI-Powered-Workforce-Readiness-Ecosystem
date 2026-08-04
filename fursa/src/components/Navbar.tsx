@@ -48,6 +48,12 @@ export default async function Navbar() {
                 <span data-i18n="nav.jobs">Jobs</span>
               </Link>
               <Link
+                href="/student/applications"
+                className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              >
+                <span data-i18n="nav.applications">Applications</span>
+              </Link>
+              <Link
                 href="/student/profile"
                 className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
               >
@@ -78,7 +84,10 @@ export default async function Navbar() {
           )}
 
           {user?.role === "ADMIN" && (
-            <Link href="/admin/dashboard" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.admin">Verification Admin</span></Link>
+            <>
+              <Link href="/admin/dashboard" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.admin">Verification Admin</span></Link>
+              <Link href="/admin/career-tracks" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.careerTracks">Career Tracks</span></Link>
+            </>
           )}
 
           {user && (

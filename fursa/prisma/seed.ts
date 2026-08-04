@@ -28,6 +28,9 @@ async function main() {
   await prisma.employer.deleteMany();
   await prisma.university.deleteMany();
   await prisma.user.deleteMany();
+  await prisma.careerTrackSkill.deleteMany();
+  await prisma.careerTrackCertification.deleteMany();
+  await prisma.careerTrack.deleteMany();
   await prisma.skill.deleteMany();
   await prisma.certification.deleteMany();
 
@@ -43,6 +46,32 @@ async function main() {
     certRecords.set(name, rec.id);
   }
 
+  // --- Career taxonomy (DB-backed; admin-editable from /admin/career-tracks) ---
+  for (const track of CAREER_TRACKS) {
+    await prisma.careerTrack.create({
+      data: { id: track.id, label: track.label, recommendedExperienceMonths: track.recommendedExperienceMonths },
+    });
+    for (const s of [...track.technicalSkills.map((x) => ({ ...x, category: "technical" })), ...track.softSkills.map((x) => ({ ...x, category: "soft" }))]) {
+      const skillId = skillRecords.get(s.name);
+      if (skillId) {
+        await prisma.careerTrackSkill.create({
+          data: { careerTrackId: track.id, skillId, weight: s.weight, category: s.category },
+        });
+      }
+    }
+    for (const certName of track.certifications) {
+      const certId = certRecords.get(certName);
+      if (certId) {
+        await prisma.careerTrackCertification.create({ data: { careerTrackId: track.id, certificationId: certId } });
+      }
+    }
+  }
+
+  // --- Admin (demo login only — production admin access should go through scripts/create-admin.ts + Firebase) ---
+  await prisma.user.create({
+    data: { role: "ADMIN", name: "Fursa Trust & Safety", email: "admin@fursa.demo" },
+  });
+
   // --- Employers ---
   const employerSeeds = [
     { name: "Lama Al-Harbi", email: "hr@nexariya.sa", company: "Nexariya Technologies", industry: "Software" },
@@ -55,10 +84,18 @@ async function main() {
       data: { role: "EMPLOYER", name: e.name, email: e.email },
     });
     const employer = await prisma.employer.create({
-      data: { userId: user.id, company: e.company, industry: e.industry },
+      data: { userId: user.id, company: e.company, industry: e.industry, verificationStatus: "APPROVED" },
     });
     employers.push(employer);
   }
+
+  // An unverified employer, to demo the admin approval queue.
+  const pendingEmployerUser = await prisma.user.create({
+    data: { role: "EMPLOYER", name: "Yasmin Al-Harthi", email: "hiring@newventure.sa" },
+  });
+  await prisma.employer.create({
+    data: { userId: pendingEmployerUser.id, company: "NewVenture Labs", industry: "Logistics" },
+  });
 
   const universityUser = await prisma.user.create({
     data: { role: "UNIVERSITY", name: "Dr. Amal Al-Saud", email: "workforce@ksu.edu.sa" },
