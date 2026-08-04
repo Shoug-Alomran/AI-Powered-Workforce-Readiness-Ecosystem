@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentStudent } from "@/lib/session";
 import { computeReadinessScore, readinessBand, computeJobMatch } from "@/lib/ai";
 import { getCareerTrackAsync } from "@/lib/careerTracks.server";
+import PageToc from "@/components/PageToc";
 
 export default async function StudentDashboard() {
   const ctx = await getCurrentStudent();
@@ -46,6 +47,15 @@ export default async function StudentDashboard() {
       <h1 className="page-title">Welcome back, {ctx.user.name.split(" ")[0]}.</h1>
       <p className="muted">Your personalized path toward {track.label}.</p>
 
+      <PageToc
+        items={[
+          { id: "roadmap", label: "Adaptive roadmap" },
+          { id: "matches", label: "Best matches" },
+          { id: "breakdown", label: "Readiness breakdown" },
+          { id: "feedback", label: "Employer feedback" },
+        ]}
+      />
+
       <div className="grid-3" style={{ marginTop: 26 }}>
         <div className="card">
           <span className="muted">Readiness score</span>
@@ -67,7 +77,7 @@ export default async function StudentDashboard() {
       </div>
 
       <div className="grid-2" style={{ marginTop: 18, alignItems: "start" }}>
-        <section className="card">
+        <section className="card" id="roadmap" style={{ scrollMarginTop: 80 }}>
           <div className="data-row">
             <div><span className="eyebrow">Adaptive roadmap</span><h2>Highest-impact actions</h2></div>
             <Link className="link" href="/student/profile">Update passport</Link>
@@ -79,7 +89,7 @@ export default async function StudentDashboard() {
             </div>
           ))}
         </section>
-        <section className="card">
+        <section className="card" id="matches" style={{ scrollMarginTop: 80 }}>
           <div className="data-row">
             <div><span className="eyebrow">Opportunity matching</span><h2>Best matches</h2></div>
             <Link className="link" href="/student/jobs">View all</Link>
@@ -93,7 +103,7 @@ export default async function StudentDashboard() {
         </section>
       </div>
 
-      <section className="card" style={{ marginTop: 18 }}>
+      <section className="card" id="breakdown" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">Why this score</span>
         <h2>Transparent readiness breakdown</h2>
         <div className="grid-3">
@@ -107,7 +117,7 @@ export default async function StudentDashboard() {
         </div>
       </section>
 
-      <section className="card" style={{ marginTop: 18 }}>
+      <section className="card" id="feedback" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">Workforce feedback loop</span>
         <h2>Employer feedback on your work</h2>
         <p className="muted" style={{ marginTop: -8, marginBottom: 4 }}>

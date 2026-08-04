@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentEmployer } from "@/lib/session";
 import { computeJobMatch } from "@/lib/ai";
 import { closeJob, reopenJob, updateApplicationStatus, submitFeedback } from "@/actions/employer";
+import PageToc from "@/components/PageToc";
 
 const STATUS_LABEL: Record<string, string> = {
   applied: "Applied",
@@ -66,13 +67,24 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
       </div>
       <p className="muted">{job.description}</p>
 
+      <PageToc
+        items={[
+          { id: "requirements", label: "Requirements" },
+          { id: "candidates", label: `Candidates (${candidates.length})` },
+          ...candidates.map(({ application, match }) => ({
+            id: `candidate-${application.id}`,
+            label: `${match.score}% ${application.student.user.name}`,
+          })),
+        ]}
+      />
+
       <div className="grid-3" style={{ marginTop: 26 }}>
         <div className="card"><span className="muted">Candidates</span><div className="metric">{candidates.length}</div></div>
         <div className="card"><span className="muted">Average match</span><div className="metric">{candidates.length ? Math.round(candidates.reduce((n, c) => n + c.match.score, 0) / candidates.length) : 0}%</div></div>
         <div className="card"><span className="muted">Hired</span><div className="metric">{candidates.filter((c) => c.application.status === "hired").length}</div></div>
       </div>
 
-      <section className="card" style={{ marginTop: 18 }}>
+      <section className="card" id="requirements" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">Requirements</span>
         <h2>What this role is looking for</h2>
         <div className="grid-2">
@@ -89,7 +101,7 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
         </div>
       </section>
 
-      <section className="card" style={{ marginTop: 18 }}>
+      <section className="card" id="candidates" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">AI candidate ranking</span>
         <h2>Candidates, ranked with full explainability</h2>
         {candidates.length === 0 && <div className="notice">No applications yet. Students will appear here as soon as they apply.</div>}
@@ -98,7 +110,7 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
             const s = application.student;
             const feedback = feedbackByStudent.get(s.id);
             return (
-              <article className="card" key={application.id} style={{ boxShadow: "none", border: "1px solid #e0e7e3" }}>
+              <article className="card" id={`candidate-${application.id}`} style={{ boxShadow: "none", border: "1px solid #e0e7e3", scrollMarginTop: 80 }} key={application.id}>
                 <div className="data-row">
                   <div>
                     <strong>{s.user.name}</strong>

@@ -4,10 +4,25 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/session";
 import { reviewCertification, reviewEmployer, toggleUserActive } from "@/actions/admin";
+import PageToc from "@/components/PageToc";
+import AZStrip from "@/components/AZStrip";
 
-export default async function AdminDashboard() {
+const ROLE_LABEL: Record<string, string> = {
+  STUDENT: "Students",
+  EMPLOYER: "Employers",
+  UNIVERSITY: "Universities",
+  ADMIN: "Admins",
+};
+
+export default async function AdminDashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; role?: string; letter?: string }>;
+}) {
   const ctx = await getCurrentAdmin();
   if (!ctx) redirect("/login");
+
+  const { q = "", role = "", letter = "" } = await searchParams;
 
   const [submissions, employers, users] = await Promise.all([
     prisma.studentCertification.findMany({
@@ -18,7 +33,7 @@ export default async function AdminDashboard() {
       include: { user: true },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.user.findMany({ orderBy: [{ role: "asc" }, { createdAt: "desc" }] }),
+    prisma.user.findMany({ orderBy: [{ name: "asc" }] }),
   ]);
 
   const pendingCerts = submissions.filter((item) => item.verificationStatus === "PENDING" && item.evidencePath);
@@ -27,6 +42,27 @@ export default async function AdminDashboard() {
     acc[u.role] = (acc[u.role] ?? 0) + 1;
     return acc;
   }, {});
+
+  const availableLetters = new Set(users.map((u) => u.name.charAt(0).toUpperCase()).filter((c) => /[A-Z]/.test(c)));
+  const qLower = q.trim().toLowerCase();
+  const directory = users.filter((u) => {
+    if (role && u.role !== role) return false;
+    if (letter && u.name.charAt(0).toUpperCase() !== letter) return false;
+    if (qLower && !(u.name.toLowerCase().includes(qLower) || u.email.toLowerCase().includes(qLower))) return false;
+    return true;
+  });
+
+  function buildHref(overrides: { q?: string; role?: string; letter?: string | null }) {
+    const params = new URLSearchParams();
+    const nextQ = overrides.q ?? q;
+    const nextRole = overrides.role ?? role;
+    const nextLetter = overrides.letter === null ? "" : (overrides.letter ?? letter);
+    if (nextQ) params.set("q", nextQ);
+    if (nextRole) params.set("role", nextRole);
+    if (nextLetter) params.set("letter", nextLetter);
+    const qs = params.toString();
+    return `/admin/dashboard${qs ? `?${qs}` : ""}#user-directory`;
+  }
 
   return (
     <main className="page-shell">
@@ -39,13 +75,21 @@ export default async function AdminDashboard() {
       </div>
       <p className="muted">Review submitted evidence, approve employer accounts, and manage user access.</p>
 
+      <PageToc
+        items={[
+          { id: "employer-verification", label: `Employer verification (${pendingEmployers.length})` },
+          { id: "certificate-review", label: `Certificate review (${pendingCerts.length})` },
+          { id: "user-directory", label: `User directory (${users.length})` },
+        ]}
+      />
+
       <div className="grid-3" style={{ marginTop: 26 }}>
         <div className="card"><span className="muted">Pending certificates</span><div className="metric">{pendingCerts.length}</div></div>
         <div className="card"><span className="muted">Pending employers</span><div className="metric">{pendingEmployers.length}</div></div>
         <div className="card"><span className="muted">Total users</span><div className="metric">{users.length}</div><span className="muted">{Object.entries(roleCounts).map(([r, c]) => `${c} ${r.toLowerCase()}`).join(" · ")}</span></div>
       </div>
 
-      <section className="card" style={{ marginTop: 18 }}>
+      <section className="card" id="employer-verification" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">Employer verification</span>
         <h2>Pending employer accounts</h2>
         <p className="muted">Employers can browse the portal immediately, but can&apos;t post roles or see candidates until approved here.</p>
@@ -72,7 +116,7 @@ export default async function AdminDashboard() {
         </div>
       </section>
 
-      <section className="card" style={{ marginTop: 18 }}>
+      <section className="card" id="certificate-review" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">Certificate evidence review</span>
         <h2>Pending certificate submissions</h2>
         <p className="muted">Review the submitted image, compare it with the student&apos;s claim, and record a human decision.</p>
@@ -98,11 +142,42 @@ export default async function AdminDashboard() {
         </div>
       </section>
 
-      <section className="card" style={{ marginTop: 18 }}>
-        <span className="eyebrow">User management</span>
-        <h2>All accounts</h2>
-        <div className="stack" style={{ marginTop: 12 }}>
-          {users.map((u) => (
+      <section className="card" id="user-directory" style={{ marginTop: 18, scrollMarginTop: 80 }}>
+        <span className="eyebrow">User directory</span>
+        <h2>Phone book</h2>
+        <p className="muted">Search by name or email, filter by role, or jump straight to a letter.</p>
+
+        <form className="filter-bar" style={{ marginTop: 14 }}>
+          <label>Search<input className="input" type="text" name="q" placeholder="Name or email" defaultValue={q} /></label>
+          <label>
+            Role
+            <select className="input" name="role" defaultValue={role}>
+              <option value="">All roles</option>
+              <option value="STUDENT">Students</option>
+              <option value="EMPLOYER">Employers</option>
+              <option value="UNIVERSITY">Universities</option>
+              <option value="ADMIN">Admins</option>
+            </select>
+          </label>
+          {letter && <input type="hidden" name="letter" value={letter} />}
+          <button className="button secondary" type="submit">Search</button>
+          {(q || role || letter) && <a className="link" href="/admin/dashboard#user-directory" style={{ alignSelf: "center" }}>Clear</a>}
+        </form>
+
+        <AZStrip
+          activeLetter={letter || null}
+          availableLetters={availableLetters}
+          buildHref={(l) => buildHref({ letter: l })}
+        />
+
+        <p className="muted" style={{ fontSize: 13 }}>
+          {directory.length} of {users.length} account{users.length === 1 ? "" : "s"}
+          {role ? ` · ${ROLE_LABEL[role] ?? role}` : ""}
+          {letter ? ` · starting with "${letter}"` : ""}
+        </p>
+
+        <div className="stack" style={{ marginTop: 8 }}>
+          {directory.length ? directory.map((u) => (
             <div className="data-row" key={u.id}>
               <div>
                 <strong>{u.name}</strong>
@@ -118,7 +193,7 @@ export default async function AdminDashboard() {
                 )}
               </div>
             </div>
-          ))}
+          )) : <div className="notice">No accounts match this search.</div>}
         </div>
       </section>
     </main>

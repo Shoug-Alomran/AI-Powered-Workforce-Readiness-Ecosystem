@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/session";
 import { createCareerTrack, updateCareerTrackSkillWeight, removeCareerTrackSkill, addCareerTrackSkill } from "@/actions/admin";
+import PageToc from "@/components/PageToc";
 
 export default async function CareerTracksAdmin() {
   const ctx = await getCurrentAdmin();
@@ -37,9 +38,16 @@ export default async function CareerTracksAdmin() {
         </div>
       )}
 
+      <PageToc
+        items={[
+          ...tracks.map((t) => ({ id: `track-${t.id}`, label: t.label })),
+          { id: "new-track", label: "+ New track" },
+        ]}
+      />
+
       <div className="stack" style={{ marginTop: 26 }}>
         {tracks.map((track) => (
-          <section className="card" key={track.id}>
+          <section className="card" id={`track-${track.id}`} style={{ scrollMarginTop: 80 }} key={track.id}>
             <div className="data-row">
               <div>
                 <strong style={{ fontSize: 18 }}>{track.label}</strong>
@@ -99,7 +107,7 @@ export default async function CareerTracksAdmin() {
         ))}
       </div>
 
-      <section className="card" style={{ marginTop: 18 }}>
+      <section className="card" id="new-track" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">New track</span>
         <h2>Create a career track</h2>
         <form action={createCareerTrack} className="form-grid">
