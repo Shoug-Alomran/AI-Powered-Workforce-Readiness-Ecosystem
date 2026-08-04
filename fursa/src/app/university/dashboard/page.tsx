@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentUniversity } from "@/lib/session";
@@ -40,7 +41,10 @@ export default async function UniversityDashboard() {
         <span className="eyebrow">University workforce intelligence</span>
         <h1 className="page-title">{ctx.university.institution}</h1>
       </div>
-      <a className="button secondary" href="/api/university/export">Export CSV</a>
+      <div className="actions" style={{ margin: 0 }}>
+        <Link className="button secondary" href="/university/offerings">Manage courses & certifications</Link>
+        <a className="button secondary" href="/api/university/export">Export CSV</a>
+      </div>
     </div>
     <p className="muted">Aggregated readiness, industry demand and curriculum-alignment signals for {ctx.university.region ?? "your institution"}.</p>
 

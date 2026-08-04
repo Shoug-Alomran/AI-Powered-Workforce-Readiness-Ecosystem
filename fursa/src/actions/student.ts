@@ -221,3 +221,41 @@ export async function toggleBookmark(formData: FormData) {
   revalidatePath(`/student/jobs/${jobId}`);
   revalidatePath("/student/dashboard");
 }
+
+export async function toggleFavoriteCompany(formData: FormData) {
+  const student = await requireStudent();
+  const employerId = String(formData.get("employerId") ?? "");
+  if (!employerId) return;
+
+  const existing = await prisma.favoriteCompany.findUnique({
+    where: { studentId_employerId: { studentId: student.id, employerId } },
+  });
+
+  if (existing) {
+    await prisma.favoriteCompany.delete({ where: { id: existing.id } });
+  } else {
+    await prisma.favoriteCompany.create({ data: { studentId: student.id, employerId } });
+  }
+
+  revalidatePath("/student/interests");
+  revalidatePath("/student/dashboard");
+}
+
+export async function toggleFavoriteCareerTrack(formData: FormData) {
+  const student = await requireStudent();
+  const careerTrackId = String(formData.get("careerTrackId") ?? "");
+  if (!careerTrackId) return;
+
+  const existing = await prisma.favoriteCareerTrack.findUnique({
+    where: { studentId_careerTrackId: { studentId: student.id, careerTrackId } },
+  });
+
+  if (existing) {
+    await prisma.favoriteCareerTrack.delete({ where: { id: existing.id } });
+  } else {
+    await prisma.favoriteCareerTrack.create({ data: { studentId: student.id, careerTrackId } });
+  }
+
+  revalidatePath("/student/interests");
+  revalidatePath("/student/dashboard");
+}

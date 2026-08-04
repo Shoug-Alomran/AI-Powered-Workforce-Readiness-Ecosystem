@@ -3,7 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentEmployer } from "@/lib/session";
 import { computeJobMatch } from "@/lib/ai";
-import { closeJob, reopenJob, updateApplicationStatus, submitFeedback } from "@/actions/employer";
+import { closeJob, reopenJob } from "@/actions/employer";
 import PageToc from "@/components/PageToc";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -71,10 +71,6 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
         items={[
           { id: "requirements", label: "Requirements" },
           { id: "candidates", label: `Candidates (${candidates.length})` },
-          ...candidates.map(({ application, match }) => ({
-            id: `candidate-${application.id}`,
-            label: `${match.score}% ${application.student.user.name}`,
-          })),
         ]}
       />
 
@@ -104,108 +100,34 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
       <section className="card" id="candidates" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">AI candidate ranking</span>
         <h2>Candidates, ranked with full explainability</h2>
+        <p className="muted">Click a candidate to view their full profile and take action — this list stays put so you can compare everyone at once.</p>
         {candidates.length === 0 && <div className="notice">No applications yet. Students will appear here as soon as they apply.</div>}
         <div className="stack" style={{ marginTop: 12 }}>
           {candidates.map(({ application, match }) => {
             const s = application.student;
             const feedback = feedbackByStudent.get(s.id);
             return (
-              <article className="card" id={`candidate-${application.id}`} style={{ boxShadow: "none", border: "1px solid #e0e7e3", scrollMarginTop: 80 }} key={application.id}>
-                <div className="data-row">
-                  <div>
-                    <strong>{s.user.name}</strong>
-                    <div className="muted">{s.user.email} · {s.degree ?? "—"} {s.university ? `· ${s.university}` : ""}</div>
-                  </div>
+              <Link
+                href={`/employer/jobs/${job.id}/candidates/${application.id}`}
+                className="data-row"
+                key={application.id}
+                style={{ color: "inherit", textDecoration: "none", alignItems: "flex-start" }}
+              >
+                <div>
+                  <strong>{s.user.name}</strong>
+                  <div className="muted">{s.degree ?? "—"}{s.university ? ` · ${s.university}` : ""}</div>
+                  <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>
+                    {match.matchedSkills.length ? `Matches: ${match.matchedSkills.slice(0, 4).join(", ")}` : "No skill matches yet"}
+                  </p>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
                   <span className="pill">{match.score}% match</span>
+                  <span className={`pill status-${application.status === "hired" ? "approved" : application.status === "rejected" ? "rejected" : "pending"}`}>
+                    {STATUS_LABEL[application.status] ?? application.status}
+                  </span>
+                  {application.status === "hired" && feedback && <span className="pill status-approved">Feedback ✓</span>}
                 </div>
-
-                <div className="grid-2" style={{ marginTop: 8 }}>
-                  <div>
-                    <strong>Matches</strong>
-                    <p className="muted">{match.matchedSkills.join(", ") || "None yet"}</p>
-                  </div>
-                  <div>
-                    <strong>Gaps</strong>
-                    <p className="muted">
-                      {[...match.missingSkills, ...match.missingCerts, match.experienceGapMonths ? `${match.experienceGapMonths} more experience month(s)` : ""]
-                        .filter(Boolean)
-                        .join(", ") || "None detected"}
-                    </p>
-                  </div>
-                </div>
-
-                <details style={{ marginTop: 10 }}>
-                  <summary className="link" style={{ cursor: "pointer" }}>View full Skills Passport</summary>
-                  <div className="grid-2" style={{ marginTop: 10 }}>
-                    <div>
-                      <strong>Skills</strong>
-                      {s.skills.length ? s.skills.map((sk) => (
-                        <div className="data-row" key={sk.id}><span>{sk.skill.name}</span><span className="pill">Level {sk.level}/5</span></div>
-                      )) : <p className="muted">No skills listed.</p>}
-                      <strong style={{ display: "block", marginTop: 10 }}>Certifications</strong>
-                      {s.certifications.length ? s.certifications.map((c) => (
-                        <div className="data-row" key={c.id}><span>{c.certification.name}</span><span className={`pill status-${c.verificationStatus.toLowerCase()}`}>{c.verificationStatus}</span></div>
-                      )) : <p className="muted">None submitted.</p>}
-                    </div>
-                    <div>
-                      <strong>Experience</strong>
-                      {s.experiences.length ? s.experiences.map((e) => (
-                        <div className="data-row" key={e.id}><div><strong>{e.title}</strong><div className="muted">{e.org} · {e.months} month(s)</div></div><span className="pill">{e.type}</span></div>
-                      )) : <p className="muted">None listed.</p>}
-                      <strong style={{ display: "block", marginTop: 10 }}>Projects</strong>
-                      {s.projects.length ? s.projects.map((p) => (
-                        <div key={p.id}><strong>{p.title}</strong><p className="muted">{p.description}</p></div>
-                      )) : <p className="muted">None listed.</p>}
-                    </div>
-                  </div>
-                </details>
-
-                <div className="notice" style={{ marginTop: 10 }}>{match.explanation}</div>
-
-                <form action={updateApplicationStatus} className="form-grid" style={{ marginTop: 12 }}>
-                  <input type="hidden" name="applicationId" value={application.id} />
-                  <input type="hidden" name="jobId" value={job.id} />
-                  <div className="data-row" style={{ padding: 0 }}>
-                    <span className="muted">Status: <strong>{STATUS_LABEL[application.status] ?? application.status}</strong></span>
-                  </div>
-                  <label>
-                    Note back to candidate (shown to the student)
-                    <textarea className="input" name="note" defaultValue={application.note ?? ""} placeholder="e.g. Strong React fundamentals — we'd like to move forward." />
-                  </label>
-                  <div className="actions">
-                    <button className="button secondary" name="status" value="shortlisted">Shortlist</button>
-                    <button className="button primary" name="status" value="hired">Hire</button>
-                    <button className="button danger" name="status" value="rejected">Reject</button>
-                  </div>
-                </form>
-
-                {application.status === "hired" && (
-                  feedback ? (
-                    <div className="notice" style={{ marginTop: 12 }}>
-                      Feedback submitted — overall {feedback.overall}/5. {feedback.notes}
-                    </div>
-                  ) : (
-                    <form action={submitFeedback} className="form-grid" style={{ marginTop: 12, borderTop: "1px solid #edf1ef", paddingTop: 12 }}>
-                      <input type="hidden" name="jobId" value={job.id} />
-                      <input type="hidden" name="studentId" value={s.id} />
-                      <strong>Post-hire feedback</strong>
-                      <p className="muted" style={{ marginTop: -8 }}>Anonymized and used to improve future recommendations for everyone on this career track.</p>
-                      <div className="grid-3">
-                        {(["technical", "communication", "teamwork", "problemSolving", "adaptability", "overall"] as const).map((field) => (
-                          <label key={field} style={{ textTransform: "capitalize" }}>
-                            {field.replace(/([A-Z])/g, " $1")}
-                            <select className="input" name={field} defaultValue="4">
-                              {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
-                            </select>
-                          </label>
-                        ))}
-                      </div>
-                      <label>Notes<textarea className="input" name="notes" placeholder="What stood out?" /></label>
-                      <button className="button secondary">Submit feedback</button>
-                    </form>
-                  )
-                )}
-              </article>
+              </Link>
             );
           })}
         </div>

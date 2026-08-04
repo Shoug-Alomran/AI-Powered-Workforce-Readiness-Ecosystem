@@ -36,6 +36,8 @@ model University {
   institution String
   region      String?
   createdAt   DateTime @default(now())
+
+  offerings Offering[]
 }
 
 model Student {
@@ -47,13 +49,15 @@ model Student {
   university   String?
   bio          String?
 
-  skills         StudentSkill[]
-  certifications StudentCertification[]
-  experiences    Experience[]
-  projects       Project[]
-  applications   Application[]
-  feedbacks      Feedback[]
-  bookmarks      BookmarkedJob[]
+  skills              StudentSkill[]
+  certifications      StudentCertification[]
+  experiences         Experience[]
+  projects            Project[]
+  applications        Application[]
+  feedbacks           Feedback[]
+  bookmarks           BookmarkedJob[]
+  favoriteCompanies   FavoriteCompany[]
+  favoriteCareerTracks FavoriteCareerTrack[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -67,6 +71,7 @@ model Skill {
   studentSkills     StudentSkill[]
   jobSkills         JobSkill[]
   careerTrackSkills CareerTrackSkill[]
+  offeringSkills    OfferingSkill[]
 }
 
 model StudentSkill {
@@ -88,6 +93,7 @@ model Certification {
   studentCerts     StudentCertification[]
   jobCerts         JobCertification[]
   careerTrackCerts CareerTrackCertification[]
+  offerings        Offering[]
 }
 
 // -----------------------------------------------------------------------
@@ -178,7 +184,8 @@ model Employer {
   reviewedAt          DateTime?
   reviewedBy          String?
 
-  jobs Job[]
+  jobs        Job[]
+  favoritedBy FavoriteCompany[]
 
   createdAt DateTime @default(now())
 }
@@ -261,4 +268,60 @@ model BookmarkedJob {
   createdAt DateTime @default(now())
 
   @@unique([studentId, jobId])
+}
+
+// -----------------------------------------------------------------------
+// Career interests: students follow companies and/or career tracks so the
+// AI can proactively surface matches and skill-gap recommendations for
+// them, even before a matching job is posted.
+// -----------------------------------------------------------------------
+model FavoriteCompany {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  employerId String
+  employer   Employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([studentId, employerId])
+}
+
+model FavoriteCareerTrack {
+  id            String   @id @default(cuid())
+  studentId     String
+  student       Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  careerTrackId String // matches CareerTrack.id (DB-backed or static fallback), same convention as Student.targetCareer
+  createdAt     DateTime @default(now())
+
+  @@unique([studentId, careerTrackId])
+}
+
+// -----------------------------------------------------------------------
+// University-provided courses/certifications. The AI matches these against
+// a student's skill gaps for their favorite companies/career tracks, so a
+// gap surfaces alongside the specific offering that closes it.
+// -----------------------------------------------------------------------
+model Offering {
+  id              String         @id @default(cuid())
+  universityId    String
+  university      University     @relation(fields: [universityId], references: [id], onDelete: Cascade)
+  title           String
+  type            String // course | certification
+  description     String?
+  url             String?
+  certificationId String? // optional: this offering grants a specific catalog certification
+  certification   Certification? @relation(fields: [certificationId], references: [id], onDelete: SetNull)
+  createdAt       DateTime       @default(now())
+
+  skills OfferingSkill[]
+}
+
+model OfferingSkill {
+  id         String   @id @default(cuid())
+  offeringId String
+  offering   Offering @relation(fields: [offeringId], references: [id], onDelete: Cascade)
+  skillId    String
+  skill      Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+
+  @@unique([offeringId, skillId])
 }

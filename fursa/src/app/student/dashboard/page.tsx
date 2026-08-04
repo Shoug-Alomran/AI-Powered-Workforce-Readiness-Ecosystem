@@ -45,7 +45,10 @@ export default async function StudentDashboard() {
     <main className="page-shell">
       <span className="eyebrow">Student workspace</span>
       <h1 className="page-title">Welcome back, {ctx.user.name.split(" ")[0]}.</h1>
-      <p className="muted">Your personalized path toward {track.label}.</p>
+      <p className="muted">
+        Your personalized path toward {track.label}.{" "}
+        <Link className="link" href="/student/interests">Follow companies & career tracks →</Link>
+      </p>
 
       <PageToc
         items={[

@@ -1,0 +1,245 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db";
+import { getCurrentStudent } from "@/lib/session";
+import { computeJobMatch, computeReadinessScore, getTrackGaps, matchOfferingsToGaps, readinessBand } from "@/lib/ai";
+import { getAllCareerTracksAsync } from "@/lib/careerTracks.server";
+import { toggleFavoriteCompany, toggleFavoriteCareerTrack } from "@/actions/student";
+import PageToc from "@/components/PageToc";
+
+export default async function StudentInterests() {
+  const ctx = await getCurrentStudent();
+  if (!ctx) redirect("/login");
+
+  const [student, tracks, employers, offerings] = await Promise.all([
+    prisma.student.findUniqueOrThrow({
+      where: { id: ctx.student.id },
+      include: {
+        skills: { include: { skill: true } },
+        certifications: { include: { certification: true } },
+        experiences: true,
+        projects: true,
+        favoriteCompanies: true,
+        favoriteCareerTracks: true,
+      },
+    }),
+    getAllCareerTracksAsync(),
+    prisma.employer.findMany({
+      where: { verificationStatus: "APPROVED" },
+      include: {
+        jobs: {
+          where: { status: "open" },
+          include: { requiredSkills: { include: { skill: true } }, requiredCerts: { include: { certification: true } } },
+        },
+      },
+      orderBy: { company: "asc" },
+    }),
+    prisma.offering.findMany({
+      include: { university: true, skills: { include: { skill: true } }, certification: true },
+    }),
+  ]);
+
+  const trackById = new Map(tracks.map((t) => [t.id, t]));
+  const favoriteTrackIds = new Set(student.favoriteCareerTracks.map((f) => f.careerTrackId));
+  const favoriteEmployerIds = new Set(student.favoriteCompanies.map((f) => f.employerId));
+
+  const favoriteTracks = [...favoriteTrackIds].map((id) => trackById.get(id)).filter((t): t is NonNullable<typeof t> => Boolean(t));
+  const favoriteEmployers = employers.filter((e) => favoriteEmployerIds.has(e.id));
+
+  return (
+    <main className="page-shell">
+      <span className="eyebrow">Career interests</span>
+      <h1 className="page-title">What are you working toward?</h1>
+      <p className="muted">
+        Follow companies and career tracks you care about. The AI checks your fit continuously — when you&apos;re ready, it
+        surfaces the match; when you&apos;re close, it recommends the exact course or certification to close the gap.
+      </p>
+
+      <PageToc
+        items={[
+          { id: "recommendations", label: "Your matches & recommendations" },
+          { id: "career-tracks", label: "Favorite career tracks" },
+          { id: "companies", label: "Favorite companies" },
+        ]}
+      />
+
+      <section className="card" id="recommendations" style={{ marginTop: 26, scrollMarginTop: 80 }}>
+        <span className="eyebrow">AI career interest matching</span>
+        <h2>Your matches & recommendations</h2>
+
+        {favoriteTracks.length === 0 && favoriteEmployers.length === 0 && (
+          <div className="notice">Follow a career track or a company below to get personalized matches and recommendations.</div>
+        )}
+
+        {favoriteTracks.map((track) => {
+          const readiness = computeReadinessScore(student, track);
+          const band = readinessBand(readiness.score);
+          const gaps = getTrackGaps(student, track);
+          const isReady = gaps.missingSkillNames.length === 0 && gaps.missingCertNames.length === 0;
+          const openJobsForTrack = employers
+            .flatMap((e) => e.jobs.filter((j) => j.careerTrack === track.id).map((j) => ({ job: j, employer: e })))
+            .map(({ job, employer }) => ({ employer, job, match: computeJobMatch(student, job) }))
+            .sort((a, b) => b.match.score - a.match.score);
+          const recommendedOfferings = isReady ? [] : matchOfferingsToGaps(gaps, offerings).slice(0, 3);
+
+          return (
+            <article className="card" key={track.id} style={{ marginTop: 14, boxShadow: "none", border: "1px solid #e0e7e3" }}>
+              <div className="data-row">
+                <div>
+                  <strong>{track.label}</strong>
+                  <div className="muted">Readiness for this track: {readiness.score}/100</div>
+                </div>
+                <span className="pill">{band.label}</span>
+              </div>
+
+              {isReady ? (
+                <div className="notice" style={{ marginTop: 10 }}>
+                  You meet the core requirements for {track.label}.{" "}
+                  {openJobsForTrack.length
+                    ? `${openJobsForTrack.length} open role(s) match this track right now.`
+                    : "No open roles in this track yet — you'll be ready the moment one is posted."}
+                </div>
+              ) : (
+                <div style={{ marginTop: 10 }}>
+                  <strong>What&apos;s missing</strong>
+                  <p className="muted">
+                    {[...gaps.missingSkillNames, ...gaps.missingCertNames].join(", ")}
+                  </p>
+                </div>
+              )}
+
+              {openJobsForTrack.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <strong>Open roles in this track</strong>
+                  {openJobsForTrack.slice(0, 3).map(({ job, employer, match }) => (
+                    <div className="data-row" key={job.id}>
+                      <div><strong>{job.title}</strong><div className="muted">{employer.company}</div></div>
+                      <span className="pill">{match.score}% match</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {recommendedOfferings.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <strong>Recommended to close the gap</strong>
+                  {recommendedOfferings.map(({ offering, coveredSkillNames, coversCertification }) => (
+                    <div className="data-row" key={offering.id}>
+                      <div>
+                        <strong>{offering.title}</strong>
+                        <div className="muted">
+                          {offering.university.institution} · {offering.type}
+                          {coveredSkillNames.length ? ` · covers ${coveredSkillNames.join(", ")}` : ""}
+                          {coversCertification ? " · grants the required certification" : ""}
+                        </div>
+                      </div>
+                      {offering.url ? <a className="link" href={offering.url} target="_blank" rel="noreferrer">View →</a> : <span className="pill">No link</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
+          );
+        })}
+
+        {favoriteEmployers.map((employer) => {
+          const jobMatches = employer.jobs
+            .map((job) => ({ job, match: computeJobMatch(student, job) }))
+            .sort((a, b) => b.match.score - a.match.score);
+          const best = jobMatches[0];
+          const isReady = best && best.match.score >= 70;
+          const gaps = best
+            ? { missingSkillNames: best.match.missingSkills, missingCertNames: best.match.missingCerts }
+            : { missingSkillNames: [], missingCertNames: [] };
+          const recommendedOfferings = !isReady && best ? matchOfferingsToGaps(gaps, offerings).slice(0, 3) : [];
+
+          return (
+            <article className="card" key={employer.id} style={{ marginTop: 14, boxShadow: "none", border: "1px solid #e0e7e3" }}>
+              <div className="data-row">
+                <div>
+                  <strong>{employer.company}</strong>
+                  <div className="muted">{employer.jobs.length} open role(s)</div>
+                </div>
+                {best && <span className="pill">{best.match.score}% best match</span>}
+              </div>
+
+              {!best && <div className="notice" style={{ marginTop: 10 }}>No open roles right now — you&apos;ll be notified here the moment one is posted.</div>}
+
+              {best && isReady && (
+                <div className="notice" style={{ marginTop: 10 }}>
+                  You&apos;re a strong match for &ldquo;{best.job.title}&rdquo; ({best.match.score}%). <Link className="link" href="/student/jobs">Apply now →</Link>
+                </div>
+              )}
+
+              {best && !isReady && (
+                <div style={{ marginTop: 10 }}>
+                  <strong>Closest role: {best.job.title} ({best.match.score}% match)</strong>
+                  <p className="muted">{[...gaps.missingSkillNames, ...gaps.missingCertNames].join(", ") || "Minor gaps only."}</p>
+                </div>
+              )}
+
+              {recommendedOfferings.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <strong>Recommended to close the gap</strong>
+                  {recommendedOfferings.map(({ offering, coveredSkillNames, coversCertification }) => (
+                    <div className="data-row" key={offering.id}>
+                      <div>
+                        <strong>{offering.title}</strong>
+                        <div className="muted">
+                          {offering.university.institution} · {offering.type}
+                          {coveredSkillNames.length ? ` · covers ${coveredSkillNames.join(", ")}` : ""}
+                          {coversCertification ? " · grants the required certification" : ""}
+                        </div>
+                      </div>
+                      {offering.url ? <a className="link" href={offering.url} target="_blank" rel="noreferrer">View →</a> : <span className="pill">No link</span>}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </section>
+
+      <section className="card" id="career-tracks" style={{ marginTop: 18, scrollMarginTop: 80 }}>
+        <span className="eyebrow">Career tracks</span>
+        <h2>Favorite career tracks</h2>
+        <p className="muted">Beyond your primary target career, follow any track you&apos;re curious about.</p>
+        <div className="stack" style={{ marginTop: 12 }}>
+          {tracks.map((track) => {
+            const isFavorite = favoriteTrackIds.has(track.id);
+            return (
+              <div className="data-row" key={track.id}>
+                <span>{track.label}{track.id === student.targetCareer ? " (primary)" : ""}</span>
+                <form action={toggleFavoriteCareerTrack}>
+                  <input type="hidden" name="careerTrackId" value={track.id} />
+                  <button className={`button ${isFavorite ? "secondary" : "primary"}`}>{isFavorite ? "Following ✓" : "Follow"}</button>
+                </form>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="card" id="companies" style={{ marginTop: 18, scrollMarginTop: 80 }}>
+        <span className="eyebrow">Companies</span>
+        <h2>Favorite companies</h2>
+        <p className="muted">Follow a company to get matched against every role they post, not just the ones you happen to see.</p>
+        <div className="stack" style={{ marginTop: 12 }}>
+          {employers.map((employer) => {
+            const isFavorite = favoriteEmployerIds.has(employer.id);
+            return (
+              <div className="data-row" key={employer.id}>
+                <div><strong>{employer.company}</strong><div className="muted">{employer.industry ?? "—"} · {employer.jobs.length} open role(s)</div></div>
+                <form action={toggleFavoriteCompany}>
+                  <input type="hidden" name="employerId" value={employer.id} />
+                  <button className={`button ${isFavorite ? "secondary" : "primary"}`}>{isFavorite ? "Following ✓" : "Follow"}</button>
+                </form>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+    </main>
+  );
+}

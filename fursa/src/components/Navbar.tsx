@@ -54,6 +54,12 @@ export default async function Navbar() {
                 <span data-i18n="nav.applications">Applications</span>
               </Link>
               <Link
+                href="/student/interests"
+                className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+              >
+                <span data-i18n="nav.interests">Interests</span>
+              </Link>
+              <Link
                 href="/student/profile"
                 className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
               >
@@ -80,7 +86,10 @@ export default async function Navbar() {
           )}
 
           {user?.role === "UNIVERSITY" && (
-            <Link href="/university/dashboard" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.university">University Dashboard</span></Link>
+            <>
+              <Link href="/university/dashboard" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.university">University Dashboard</span></Link>
+              <Link href="/university/offerings" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.offerings">Courses & Certifications</span></Link>
+            </>
           )}
 
           {user?.role === "ADMIN" && (

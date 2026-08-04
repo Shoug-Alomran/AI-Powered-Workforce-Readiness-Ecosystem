@@ -286,3 +286,74 @@ export function readinessBand(score: number): { label: string; color: string } {
   if (score >= 55) return { label: "Developing", color: "amber" };
   return { label: "Early Stage", color: "rose" };
 }
+
+// ---------------------------------------------------------------------------
+// Career interests: gap analysis for a favorited track/company + matching
+// university offerings to close those gaps. This is what powers "if the
+// student already fits, surface the match; if they're a few skills short,
+// recommend the course/certification that gets them there."
+// ---------------------------------------------------------------------------
+
+export interface TrackGaps {
+  missingSkillNames: string[];
+  missingCertNames: string[];
+}
+
+/** Structured version of the readiness gap analysis, for a given (possibly non-primary) track. */
+export function getTrackGaps(student: StudentForScoring, track: CareerTrack): TrackGaps {
+  const haveSkillMap = new Map(student.skills.map((s) => [s.skill.name.toLowerCase(), s.level]));
+  const haveCerts = new Set(
+    student.certifications
+      .filter((c) => !c.verificationStatus || c.verificationStatus === "APPROVED")
+      .map((c) => c.certification.name.toLowerCase())
+  );
+
+  const missingSkillNames = [...track.technicalSkills, ...track.softSkills]
+    .filter((req) => (haveSkillMap.get(req.name.toLowerCase()) ?? 0) < 3)
+    .map((req) => req.name);
+
+  const missingCertNames = track.certifications.filter((c) => !haveCerts.has(c.toLowerCase()));
+
+  return { missingSkillNames, missingCertNames };
+}
+
+export type OfferingForMatching = {
+  id: string;
+  title: string;
+  type: string;
+  url: string | null;
+  university: { institution: string };
+  skills: { skill: { name: string } }[];
+  certification: { name: string } | null;
+};
+
+export interface OfferingMatch {
+  offering: OfferingForMatching;
+  coveredSkillNames: string[];
+  coversCertification: boolean;
+}
+
+/** Rank university offerings by how many of the given gaps they close. */
+export function matchOfferingsToGaps(gaps: TrackGaps, offerings: OfferingForMatching[]): OfferingMatch[] {
+  const missingSkillsLower = new Set(gaps.missingSkillNames.map((s) => s.toLowerCase()));
+  const missingCertsLower = new Set(gaps.missingCertNames.map((c) => c.toLowerCase()));
+
+  const results: OfferingMatch[] = [];
+  for (const offering of offerings) {
+    const coveredSkillNames = offering.skills
+      .map((s) => s.skill.name)
+      .filter((name) => missingSkillsLower.has(name.toLowerCase()));
+    const coversCertification = offering.certification
+      ? missingCertsLower.has(offering.certification.name.toLowerCase())
+      : false;
+
+    if (coveredSkillNames.length > 0 || coversCertification) {
+      results.push({ offering, coveredSkillNames, coversCertification });
+    }
+  }
+
+  return results.sort(
+    (a, b) =>
+      b.coveredSkillNames.length + (b.coversCertification ? 1 : 0) - (a.coveredSkillNames.length + (a.coversCertification ? 1 : 0))
+  );
+}
