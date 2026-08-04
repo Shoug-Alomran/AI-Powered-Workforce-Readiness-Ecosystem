@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import PreferencesControls from "@/components/PreferencesControls";
@@ -29,7 +30,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       className="h-full antialiased"
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col"><Navbar />{children}<PreferencesControls /><Analytics /></body>
+      <body className="min-h-full flex flex-col"><Navbar />{children}<PreferencesControls /><Analytics /><SpeedInsights /></body>
     </html>
   );
 }
