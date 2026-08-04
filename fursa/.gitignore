@@ -52,3 +52,4 @@ next-env.d.ts
 /AGENTS.md
 /CLAUDE.md
 /skills-lock.json
+.turso-temp.env
