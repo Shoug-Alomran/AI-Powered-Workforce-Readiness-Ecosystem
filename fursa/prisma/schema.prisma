@@ -1,0 +1,217 @@
+// Prisma schema for the Fursa AI-Powered Workforce Readiness Ecosystem prototype
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+enum Role {
+  STUDENT
+  EMPLOYER
+  UNIVERSITY
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(cuid())
+  role      Role
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  student  Student?
+  employer Employer?
+  university University?
+}
+
+model University {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution String
+  region      String?
+  createdAt   DateTime @default(now())
+}
+
+model Student {
+  id           String @id @default(cuid())
+  userId       String @unique
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetCareer String
+  degree       String?
+  university   String?
+  bio          String?
+
+  skills         StudentSkill[]
+  certifications StudentCertification[]
+  experiences    Experience[]
+  projects       Project[]
+  applications   Application[]
+  feedbacks      Feedback[]
+  bookmarks      BookmarkedJob[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Skill {
+  id       String @id @default(cuid())
+  name     String @unique
+  category String // technical | soft
+
+  studentSkills StudentSkill[]
+  jobSkills     JobSkill[]
+}
+
+model StudentSkill {
+  id        String  @id @default(cuid())
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  skillId   String
+  skill     Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  level     Int     @default(3) // 1-5 proficiency
+
+  @@unique([studentId, skillId])
+}
+
+model Certification {
+  id   String  @id @default(cuid())
+  name String  @unique
+  org  String?
+
+  studentCerts StudentCertification[]
+  jobCerts     JobCertification[]
+}
+
+model StudentCertification {
+  id              String        @id @default(cuid())
+  studentId       String
+  student         Student       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  certificationId String
+  certification   Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+  earnedAt        DateTime      @default(now())
+  evidencePath    String?
+  evidenceName    String?
+  evidenceType    String?
+  verificationStatus String     @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewNote      String?
+  reviewedAt      DateTime?
+  reviewedBy      String?
+
+  @@unique([studentId, certificationId])
+}
+
+model Experience {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  type      String // internship | research | volunteer | competition | hackathon | workshop
+  title     String
+  org       String?
+  months    Int      @default(1)
+  createdAt DateTime @default(now())
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  studentId   String
+  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model Employer {
+  id       String  @id @default(cuid())
+  userId   String  @unique
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company  String
+  industry String?
+
+  jobs Job[]
+
+  createdAt DateTime @default(now())
+}
+
+model Job {
+  id            String   @id @default(cuid())
+  employerId    String
+  employer      Employer @relation(fields: [employerId], references: [id], onDelete: Cascade)
+  title         String
+  careerTrack   String
+  description   String?
+  minExperience Int      @default(0) // months
+  status        String   @default("open") // open | closed
+  createdAt     DateTime @default(now())
+
+  requiredSkills JobSkill[]
+  requiredCerts  JobCertification[]
+  applications   Application[]
+  feedbacks      Feedback[]
+  bookmarks      BookmarkedJob[]
+}
+
+model JobSkill {
+  id       String  @id @default(cuid())
+  jobId    String
+  job      Job     @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  skillId  String
+  skill    Skill   @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  weight   Int     @default(2) // importance 1-3
+
+  @@unique([jobId, skillId])
+}
+
+model JobCertification {
+  id              String        @id @default(cuid())
+  jobId           String
+  job             Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  certificationId String
+  certification   Certification @relation(fields: [certificationId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId, certificationId])
+}
+
+model Application {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  jobId      String
+  job        Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  status     String   @default("applied") // applied | shortlisted | hired | rejected
+  matchScore Int      @default(0)
+  createdAt  DateTime @default(now())
+
+  @@unique([studentId, jobId])
+}
+
+model Feedback {
+  id             String   @id @default(cuid())
+  jobId          String
+  job            Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  studentId      String
+  student        Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  technical      Int
+  communication  Int
+  teamwork       Int
+  problemSolving Int
+  adaptability   Int
+  overall        Int
+  notes          String?
+  createdAt      DateTime @default(now())
+}
+
+model BookmarkedJob {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([studentId, jobId])
+}
