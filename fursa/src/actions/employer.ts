@@ -22,11 +22,13 @@ export async function createJob(formData: FormData) {
   const minExperience = Math.max(0, Number(formData.get("minExperience") ?? 0));
   const skillsRaw = String(formData.get("skills") ?? ""); // "Name:weight, Name2:weight2"
   const certsRaw = String(formData.get("certifications") ?? ""); // comma separated
+  const preferredSkillsRaw = String(formData.get("preferredSkills") ?? "");
+  const blindReview = formData.get("blindReview") === "on";
 
   if (!title || !careerTrack) throw new Error("Title and career track are required");
 
   const job = await prisma.job.create({
-    data: { employerId: employer.id, title, careerTrack, description: description || null, minExperience },
+    data: { employerId: employer.id, title, careerTrack, description: description || null, minExperience, blindReview },
   });
 
   const skillEntries = skillsRaw
@@ -44,6 +46,12 @@ export async function createJob(formData: FormData) {
       create: { name: namePart, category: "technical" },
     });
     await prisma.jobSkill.create({ data: { jobId: job.id, skillId: skill.id, weight } });
+  }
+  for (const entry of preferredSkillsRaw.split(",").map((s) => s.trim()).filter(Boolean)) {
+    const [namePart, weightPart] = entry.split(":").map((x) => x.trim());
+    const weight = Math.min(3, Math.max(1, Number(weightPart) || 1));
+    const skill = await prisma.skill.upsert({ where: { name: namePart }, update: {}, create: { name: namePart, category: "technical" } });
+    await prisma.jobSkill.create({ data: { jobId: job.id, skillId: skill.id, weight, requirementType: "PREFERRED" } });
   }
 
   const certEntries = certsRaw
@@ -92,6 +100,7 @@ export async function updateApplicationStatus(formData: FormData) {
   const status = String(formData.get("status") ?? "");
   const jobId = String(formData.get("jobId") ?? "");
   const note = String(formData.get("note") ?? "").trim();
+  const decisionReason = String(formData.get("decisionReason") ?? "").trim();
   if (!applicationId || !status) return;
 
   // Defense in depth: only allow updating applications on this employer's own jobs.
@@ -102,11 +111,15 @@ export async function updateApplicationStatus(formData: FormData) {
   if (!application || application.job.employerId !== employer.id) {
     throw new Error("Application not found for this employer");
   }
+  if (["rejected", "shortlisted", "hired"].includes(status) && !decisionReason) throw new Error("A structured decision reason is required");
 
   await prisma.application.update({
     where: { id: applicationId },
-    data: { status, note: note || null },
+    data: { status, note: note || null, decisionReason },
   });
+  const student = await prisma.student.findUniqueOrThrow({ where: { id: application.studentId } });
+  await prisma.notification.create({ data: { userId: student.userId, type: "APPLICATION", title: `Application ${status}`, body: note || `Your application status changed to ${status}. Reason: ${decisionReason}` } });
+  await prisma.auditEvent.create({ data: { actorUserId: employer.userId, action: `APPLICATION_${status.toUpperCase()}`, entityType: "APPLICATION", entityId: application.id, explanation: decisionReason } });
 
   revalidatePath(`/employer/jobs/${jobId}`);
   revalidatePath("/student/applications");

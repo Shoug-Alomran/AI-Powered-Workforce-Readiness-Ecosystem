@@ -65,6 +65,8 @@ export default async function Navbar() {
               >
                 <span data-i18n="nav.profile">Profile</span>
               </Link>
+              <Link href="/student/roadmap" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100">Roadmap</Link>
+              <Link href="/student/privacy" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100">Privacy</Link>
             </>
           )}
 
@@ -89,6 +91,7 @@ export default async function Navbar() {
             <>
               <Link href="/university/dashboard" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.university">University Dashboard</span></Link>
               <Link href="/university/offerings" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.offerings">Courses & Certifications</span></Link>
+              <Link href="/university/actions" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100">Action Plan</Link>
             </>
           )}
 
@@ -96,6 +99,7 @@ export default async function Navbar() {
             <>
               <Link href="/admin/dashboard" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.admin">Verification Admin</span></Link>
               <Link href="/admin/career-tracks" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.careerTracks">Career Tracks</span></Link>
+              <Link href="/admin/governance" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100">AI Governance</Link>
             </>
           )}
 

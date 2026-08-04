@@ -15,6 +15,14 @@ async function main() {
   console.log("Seeding Fursa demo data...");
 
   // --- Wipe existing data (dev convenience) ---
+  await prisma.auditEvent.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.governanceScenario.deleteMany();
+  await prisma.appeal.deleteMany();
+  await prisma.passportShare.deleteMany();
+  await prisma.consentRecord.deleteMany();
+  await prisma.roadmapItem.deleteMany();
+  await prisma.curriculumAction.deleteMany();
   await prisma.feedback.deleteMany();
   await prisma.bookmarkedJob.deleteMany();
   await prisma.application.deleteMany();
@@ -101,9 +109,113 @@ async function main() {
   const universityUser = await prisma.user.create({
     data: { role: "UNIVERSITY", name: "Dr. Amal Al-Saud", email: "workforce@ksu.edu.sa" },
   });
-  await prisma.university.create({
+  const ksu = await prisma.university.create({
     data: { userId: universityUser.id, institution: "King Saud University", region: "Riyadh" },
   });
+
+  const psuUser = await prisma.user.create({
+    data: { role: "UNIVERSITY", name: "Dr. Khalid Al-Fayez", email: "workforce@psu.edu.sa" },
+  });
+  const psu = await prisma.university.create({
+    data: { userId: psuUser.id, institution: "Prince Sultan University", region: "Riyadh" },
+  });
+
+  // --- Offerings (courses & certifications published by universities) ---
+  async function createOffering(
+    universityId: string,
+    title: string,
+    type: "course" | "certification",
+    description: string,
+    skillNames: string[],
+    certName?: string
+  ) {
+    const offering = await prisma.offering.create({
+      data: {
+        universityId,
+        title,
+        type,
+        description,
+        certificationId: certName ? certRecords.get(certName) : undefined,
+      },
+    });
+    for (const name of skillNames) {
+      const skillId = skillRecords.get(name);
+      if (skillId) {
+        await prisma.offeringSkill.create({ data: { offeringId: offering.id, skillId } });
+      }
+    }
+    return offering;
+  }
+
+  await createOffering(
+    ksu.id,
+    "Full-Stack Web Development",
+    "course",
+    "Hands-on course covering modern front-end and back-end web development.",
+    ["JavaScript", "React", "TypeScript", "Node.js"]
+  );
+  await createOffering(
+    ksu.id,
+    "AWS Cloud Practitioner Prep",
+    "certification",
+    "Exam-prep track for the AWS Certified Cloud Practitioner credential.",
+    ["Git", "System Design"],
+    "AWS Certified Cloud Practitioner"
+  );
+  await createOffering(
+    ksu.id,
+    "Applied Machine Learning",
+    "course",
+    "Introductory ML course with a focus on applied modeling and evaluation.",
+    ["Python", "Machine Learning", "Statistics"]
+  );
+  await createOffering(
+    ksu.id,
+    "Financial Analysis & Modeling",
+    "course",
+    "Core financial modeling techniques used in corporate finance and investment analysis.",
+    ["Excel", "Financial Modeling", "Accounting"]
+  );
+
+  await createOffering(
+    psu.id,
+    "Cybersecurity Fundamentals",
+    "certification",
+    "Foundational cybersecurity track aligned to the CompTIA Security+ exam objectives.",
+    ["Network Security", "Linux", "Threat Analysis"],
+    "CompTIA Security+"
+  );
+  await createOffering(
+    psu.id,
+    "Cloud Security Essentials",
+    "certification",
+    "Cloud-focused security course preparing students for the ISC2 CC credential.",
+    ["Cloud Security", "Critical Thinking"],
+    "ISC2 CC"
+  );
+  await createOffering(
+    psu.id,
+    "UX Design Foundations",
+    "certification",
+    "End-to-end UX design course covering research, wireframing, and prototyping.",
+    ["Figma", "User Research", "Wireframing", "Prototyping"],
+    "Google UX Design"
+  );
+  await createOffering(
+    psu.id,
+    "Data Analytics with Python",
+    "certification",
+    "Applied data analytics course aligned to the Google Data Analytics certificate.",
+    ["Python", "SQL", "Data Visualization", "Pandas"],
+    "Google Data Analytics"
+  );
+  await createOffering(
+    psu.id,
+    "Software Engineering Essentials",
+    "course",
+    "Intro to professional software engineering practices and collaborative development.",
+    ["JavaScript", "Git", "Problem Solving"]
+  );
 
   // --- Jobs ---
   async function createJob(
@@ -327,6 +439,79 @@ async function main() {
       experiences: [{ type: "internship", title: "Finance Intern", org: "Riyadh FinTech Group", months: 3 }],
       projects: [{ title: "Portfolio Risk Dashboard", description: "Excel + Power BI risk model." }],
     },
+    {
+      name: "Faris Al-Qahtani",
+      email: "faris.alqahtani@example.com",
+      targetCareer: "cybersecurity-specialist",
+      university: "Prince Sultan University",
+      degree: "B.Sc. Cybersecurity",
+      bio: "PSU cybersecurity student registered in the Cybersecurity Fundamentals track.",
+      skills: [
+        { name: "Network Security", level: 3 },
+        { name: "Linux", level: 3 },
+        { name: "Threat Analysis", level: 2 },
+        { name: "Critical Thinking", level: 3 },
+        { name: "Attention to Detail", level: 3 },
+      ],
+      certs: ["CompTIA Security+"],
+      experiences: [{ type: "internship", title: "IT Security Intern", org: "Sanad Secure", months: 2 }],
+      projects: [{ title: "Campus Wi-Fi Security Audit", description: "Pen-tested the PSU guest network for a capstone project." }],
+    },
+    {
+      name: "Maha Al-Otaibi",
+      email: "maha.alotaibi@example.com",
+      targetCareer: "ux-designer",
+      university: "Prince Sultan University",
+      degree: "B.A. Digital Design",
+      bio: "PSU design student completing the UX Design Foundations certification.",
+      skills: [
+        { name: "Figma", level: 4 },
+        { name: "User Research", level: 3 },
+        { name: "Wireframing", level: 4 },
+        { name: "Prototyping", level: 3 },
+        { name: "Empathy", level: 4 },
+        { name: "Communication", level: 3 },
+      ],
+      certs: ["Google UX Design"],
+      experiences: [{ type: "internship", title: "UX Design Intern", org: "Nexariya Technologies", months: 3 }],
+      projects: [{ title: "Student Services App Redesign", description: "Usability study and redesign of the PSU student portal." }],
+    },
+    {
+      name: "Omar Al-Rashid",
+      email: "omar.alrashid@example.com",
+      targetCareer: "software-engineer",
+      university: "Prince Sultan University",
+      degree: "B.Sc. Computer Engineering",
+      bio: "PSU engineering student enrolled in Software Engineering Essentials.",
+      skills: [
+        { name: "JavaScript", level: 3 },
+        { name: "Git", level: 3 },
+        { name: "React", level: 2 },
+        { name: "Problem Solving", level: 3 },
+        { name: "Teamwork", level: 3 },
+      ],
+      certs: [],
+      experiences: [],
+      projects: [{ title: "Course Registration Bot", description: "Automation script to track PSU course seat availability." }],
+    },
+    {
+      name: "Dana Al-Harbi",
+      email: "dana.alharbi@example.com",
+      targetCareer: "data-scientist",
+      university: "Prince Sultan University",
+      degree: "B.Sc. Data Science",
+      bio: "PSU student pursuing the Data Analytics with Python certificate.",
+      skills: [
+        { name: "Python", level: 3 },
+        { name: "SQL", level: 3 },
+        { name: "Data Visualization", level: 3 },
+        { name: "Pandas", level: 2 },
+        { name: "Problem Solving", level: 3 },
+      ],
+      certs: ["Google Data Analytics"],
+      experiences: [{ type: "research", title: "Data Analytics Trainee", org: "PSU Data Lab", months: 2 }],
+      projects: [{ title: "Riyadh Traffic Trends Dashboard", description: "Power BI dashboard analyzing open city traffic data." }],
+    },
   ];
 
   for (const s of studentSeeds) {
@@ -384,6 +569,8 @@ async function main() {
   const abdullah = await prisma.student.findFirstOrThrow({ where: { user: { email: "abdullah.alghamdi@example.com" } }, include: studentInclude });
   const lina = await prisma.student.findFirstOrThrow({ where: { user: { email: "lina.alzahrani@example.com" } }, include: studentInclude });
   const reem = await prisma.student.findFirstOrThrow({ where: { user: { email: "reem.alanazi@example.com" } }, include: studentInclude });
+  const faris = await prisma.student.findFirstOrThrow({ where: { user: { email: "faris.alqahtani@example.com" } }, include: studentInclude });
+  const dana = await prisma.student.findFirstOrThrow({ where: { user: { email: "dana.alharbi@example.com" } }, include: studentInclude });
 
   const seJobFull = await prisma.job.findUniqueOrThrow({ where: { id: seJob.id }, include: jobInclude });
   const dsJobFull = await prisma.job.findUniqueOrThrow({ where: { id: dsJob.id }, include: jobInclude });
@@ -400,6 +587,12 @@ async function main() {
   });
   await prisma.application.create({
     data: { studentId: reem.id, jobId: csJob.id, status: "hired", matchScore: computeJobMatch(reem, csJobFull).score },
+  });
+  await prisma.application.create({
+    data: { studentId: faris.id, jobId: csJob.id, status: "shortlisted", matchScore: computeJobMatch(faris, csJobFull).score },
+  });
+  await prisma.application.create({
+    data: { studentId: dana.id, jobId: dsJob.id, status: "shortlisted", matchScore: computeJobMatch(dana, dsJobFull).score },
   });
 
   await prisma.feedback.create({
@@ -445,6 +638,8 @@ async function main() {
   console.log("Seed complete:");
   console.log(`  Career tracks: ${CAREER_TRACKS.length}`);
   console.log(`  Employers: ${employers.length}`);
+  console.log(`  Universities: 2 (King Saud University, Prince Sultan University)`);
+  console.log(`  Offerings: 9`);
   console.log(`  Students: ${studentSeeds.length}`);
   console.log(`  Jobs: 4`);
 }

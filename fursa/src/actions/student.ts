@@ -7,6 +7,8 @@ import { getFirebaseAdminDb } from "@/lib/firebase-admin";
 import { uploadPrivateCertificate } from "@/lib/r2";
 import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
+import { getCareerTrackAsync } from "@/lib/careerTracks.server";
+import { computeReadinessScore } from "@/lib/ai";
 
 async function requireStudent() {
   const ctx = await getCurrentStudent();
@@ -258,4 +260,68 @@ export async function toggleFavoriteCareerTrack(formData: FormData) {
 
   revalidatePath("/student/interests");
   revalidatePath("/student/dashboard");
+}
+
+export async function syncRoadmap() {
+  const ctx = await getCurrentStudent();
+  if (!ctx) throw new Error("Not signed in as a student");
+  const student = await prisma.student.findUniqueOrThrow({
+    where: { id: ctx.student.id },
+    include: { skills: { include: { skill: true } }, certifications: { include: { certification: true } }, experiences: true, projects: true },
+  });
+  const track = await getCareerTrackAsync(student.targetCareer);
+  const result = computeReadinessScore(student, track);
+  const existing = await prisma.roadmapItem.findMany({ where: { studentId: student.id } });
+  const activeTitles = new Set(existing.filter((item) => item.status !== "COMPLETED").map((item) => item.title));
+  for (const [index, title] of result.nextActions.entries()) {
+    if (!activeTitles.has(title)) {
+      await prisma.roadmapItem.create({ data: { studentId: student.id, title, category: title.includes("certification") ? "CERTIFICATION" : title.includes("internship") ? "EXPERIENCE" : title.includes("project") ? "PORTFOLIO" : "SKILL", expectedImpact: Math.max(2, 8 - index) } });
+    }
+  }
+  await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: "ROADMAP_SYNCED", entityType: "STUDENT", entityId: student.id, modelVersion: "readiness-rules-v1", explanation: `${result.nextActions.length} current recommendations evaluated` } });
+  revalidatePath("/student/roadmap");
+  revalidatePath("/student/dashboard");
+}
+
+export async function updateRoadmapItem(formData: FormData) {
+  const ctx = await getCurrentStudent();
+  if (!ctx) throw new Error("Not signed in as a student");
+  const itemId = String(formData.get("itemId") ?? "");
+  const status = String(formData.get("status") ?? "NOT_STARTED");
+  const note = String(formData.get("note") ?? "").trim();
+  const allowed = ["NOT_STARTED", "IN_PROGRESS", "COMPLETED", "SKIPPED", "STRUGGLING"];
+  if (!itemId || !allowed.includes(status)) return;
+  const item = await prisma.roadmapItem.findFirst({ where: { id: itemId, studentId: ctx.student.id } });
+  if (!item) throw new Error("Roadmap item not found");
+  await prisma.roadmapItem.update({ where: { id: item.id }, data: { status, studentNote: note || null } });
+  if (status === "STRUGGLING" || status === "SKIPPED") {
+    const alternativeTitle = status === "STRUGGLING" ? `Take a foundational or mentored alternative for: ${item.title}` : `Choose an alternative route toward: ${item.title}`;
+    await prisma.roadmapItem.create({ data: { studentId: ctx.student.id, title: alternativeTitle, category: item.category, source: "AI", expectedImpact: Math.max(1, item.expectedImpact - 1), alternativeForId: item.id } });
+  }
+  await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: `ROADMAP_${status}`, entityType: "ROADMAP_ITEM", entityId: item.id, explanation: note || null } });
+  revalidatePath("/student/roadmap");
+  revalidatePath("/student/dashboard");
+}
+
+export async function updateConsent(formData: FormData) {
+  const ctx = await getCurrentStudent();
+  if (!ctx) throw new Error("Not signed in as a student");
+  const purpose = String(formData.get("purpose") ?? "");
+  const granted = String(formData.get("granted") ?? "false") === "true";
+  if (!purpose) return;
+  await prisma.consentRecord.upsert({ where: { studentId_purpose: { studentId: ctx.student.id, purpose } }, update: { granted }, create: { studentId: ctx.student.id, purpose, granted } });
+  await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: granted ? "CONSENT_GRANTED" : "CONSENT_WITHDRAWN", entityType: "CONSENT", entityId: purpose } });
+  revalidatePath("/student/privacy");
+}
+
+export async function submitAppeal(formData: FormData) {
+  const ctx = await getCurrentStudent();
+  if (!ctx) throw new Error("Not signed in as a student");
+  const subjectType = String(formData.get("subjectType") ?? "READINESS");
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!reason) throw new Error("Please explain what should be reviewed");
+  await prisma.appeal.create({ data: { studentId: ctx.student.id, subjectType, subjectId: String(formData.get("subjectId") ?? "") || null, reason } });
+  await prisma.notification.create({ data: { userId: ctx.user.id, type: "APPEAL", title: "Review request received", body: "Your request is in the human review queue." } });
+  revalidatePath("/student/privacy");
+  revalidatePath("/admin/governance");
 }

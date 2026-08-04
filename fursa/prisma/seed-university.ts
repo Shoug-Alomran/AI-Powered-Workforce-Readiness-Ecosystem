@@ -9,19 +9,31 @@ const adapter = new PrismaLibSql({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  const user = await prisma.user.upsert({
+  const ksuUser = await prisma.user.upsert({
     where: { email: "workforce@ksu.edu.sa" },
     update: { role: "UNIVERSITY", name: "Dr. Amal Al-Saud" },
     create: { role: "UNIVERSITY", name: "Dr. Amal Al-Saud", email: "workforce@ksu.edu.sa" },
   });
 
   await prisma.university.upsert({
-    where: { userId: user.id },
+    where: { userId: ksuUser.id },
     update: { institution: "King Saud University", region: "Riyadh" },
-    create: { userId: user.id, institution: "King Saud University", region: "Riyadh" },
+    create: { userId: ksuUser.id, institution: "King Saud University", region: "Riyadh" },
   });
 
-  console.log("University demo account is ready: workforce@ksu.edu.sa");
+  const psuUser = await prisma.user.upsert({
+    where: { email: "workforce@psu.edu.sa" },
+    update: { role: "UNIVERSITY", name: "Dr. Khalid Al-Fayez" },
+    create: { role: "UNIVERSITY", name: "Dr. Khalid Al-Fayez", email: "workforce@psu.edu.sa" },
+  });
+
+  await prisma.university.upsert({
+    where: { userId: psuUser.id },
+    update: { institution: "Prince Sultan University", region: "Riyadh" },
+    create: { userId: psuUser.id, institution: "Prince Sultan University", region: "Riyadh" },
+  });
+
+  console.log("University demo accounts are ready: workforce@ksu.edu.sa, workforce@psu.edu.sa");
 }
 
 main().finally(() => prisma.$disconnect());

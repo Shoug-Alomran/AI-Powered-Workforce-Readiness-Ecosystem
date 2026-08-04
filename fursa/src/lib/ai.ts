@@ -190,7 +190,7 @@ function buildNextActions(
 
 export interface JobForMatching {
   minExperience: number;
-  requiredSkills: { weight: number; skill: { name: string } }[];
+  requiredSkills: { weight: number; requirementType?: string; skill: { name: string } }[];
   requiredCerts: { certification: { name: string } }[];
 }
 
@@ -218,18 +218,25 @@ export function computeJobMatch(
 
   const matchedSkills: string[] = [];
   const missingSkills: string[] = [];
-  let skillEarned = 0;
-  const skillTotal = job.requiredSkills.reduce((s, r) => s + r.weight, 0) || 1;
+  let essentialEarned = 0;
+  let preferredEarned = 0;
+  const essential = job.requiredSkills.filter(r => !r.requirementType || r.requirementType === "ESSENTIAL");
+  const preferred = job.requiredSkills.filter(r => r.requirementType === "PREFERRED");
+  const essentialTotal = essential.reduce((s, r) => s + r.weight, 0) || 1;
+  const preferredTotal = preferred.reduce((s, r) => s + r.weight, 0) || 1;
   for (const r of job.requiredSkills) {
     const level = haveSkillMap.get(r.skill.name.toLowerCase());
     if (level) {
       matchedSkills.push(r.skill.name);
-      skillEarned += r.weight * Math.min(level / 5, 1);
+      if (r.requirementType === "PREFERRED") preferredEarned += r.weight * Math.min(level / 5, 1);
+      else essentialEarned += r.weight * Math.min(level / 5, 1);
     } else {
       missingSkills.push(r.skill.name);
     }
   }
-  const skillScore = (skillEarned / skillTotal) * 100;
+  const essentialScore = (essentialEarned / essentialTotal) * 100;
+  const preferredScore = preferred.length ? (preferredEarned / preferredTotal) * 100 : essentialScore;
+  const skillScore = essentialScore * 0.8 + preferredScore * 0.2;
 
   const matchedCerts: string[] = [];
   const missingCerts: string[] = [];

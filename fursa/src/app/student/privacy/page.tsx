@@ -1,0 +1,16 @@
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db";
+import { getCurrentStudent } from "@/lib/session";
+import { submitAppeal, updateConsent } from "@/actions/student";
+
+const PURPOSES = [{ id: "EMPLOYER_EVIDENCE", title: "Share verified evidence with employers", body: "Allows employers reviewing your application to view approved supporting evidence." }, { id: "OUTCOME_LEARNING", title: "Use anonymized outcomes to improve recommendations", body: "Allows de-identified employment outcomes to improve future recommendations." }, { id: "OPPORTUNITY_ALERTS", title: "Personalized opportunity notifications", body: "Allows matching alerts for followed companies and career tracks." }];
+
+export default async function PrivacyPage() {
+  const ctx = await getCurrentStudent(); if (!ctx) redirect("/login");
+  const [consents, appeals, notifications] = await Promise.all([prisma.consentRecord.findMany({ where: { studentId: ctx.student.id } }), prisma.appeal.findMany({ where: { studentId: ctx.student.id }, orderBy: { createdAt: "desc" } }), prisma.notification.findMany({ where: { userId: ctx.user.id }, orderBy: { createdAt: "desc" }, take: 10 })]);
+  const byPurpose = new Map(consents.map(c => [c.purpose, c]));
+  return <main className="page-shell"><span className="eyebrow">Control and correction</span><h1 className="page-title">Privacy, consent and appeals</h1><p className="muted">Choose how your information is used and ask a human to review an incorrect automated result.</p>
+    <div className="grid-2" style={{ marginTop: 26, alignItems: "start" }}><section className="card"><h2>Purpose-specific consent</h2>{PURPOSES.map(p => { const granted = byPurpose.get(p.id)?.granted ?? false; return <form action={updateConsent} className="data-row" key={p.id}><input type="hidden" name="purpose" value={p.id}/><input type="hidden" name="granted" value={String(!granted)}/><div><strong>{p.title}</strong><div className="muted">{p.body}</div></div><button className={granted ? "button secondary" : "button primary"}>{granted ? "Withdraw" : "Allow"}</button></form>; })}</section>
+    <section className="card"><h2>Request human review</h2><form action={submitAppeal} className="form-grid"><label>What should be reviewed?<select className="input" name="subjectType"><option value="READINESS">Readiness score</option><option value="MATCH">Job match</option><option value="EVIDENCE">Evidence decision</option><option value="DATA">Data use or correction</option></select></label><label>Why is it incorrect or unfair?<textarea className="input" name="reason" required/></label><button className="button primary">Submit review request</button></form>{appeals.map(a => <div className="data-row" key={a.id}><div><strong>{a.subjectType}</strong><div className="muted">{a.resolution ?? a.reason}</div></div><span className="pill">{a.status}</span></div>)}</section></div>
+    <section className="card" style={{ marginTop: 18 }}><h2>Notifications</h2>{notifications.length ? notifications.map(n => <div className="data-row" key={n.id}><div><strong>{n.title}</strong><div className="muted">{n.body}</div></div><span className="muted">{n.createdAt.toLocaleDateString()}</span></div>) : <div className="notice">No notifications yet.</div>}</section></main>;
+}

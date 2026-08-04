@@ -1,0 +1,10 @@
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db";
+import { getCurrentUniversity } from "@/lib/session";
+import { createCurriculumAction, updateCurriculumAction } from "@/actions/curriculum";
+
+export default async function UniversityActionsPage() {
+  const ctx = await getCurrentUniversity(); if (!ctx) redirect("/login");
+  const actions = await prisma.curriculumAction.findMany({ where: { universityId: ctx.university.id }, orderBy: { createdAt: "desc" } });
+  return <main className="page-shell"><span className="eyebrow">Insight to accountable action</span><h1 className="page-title">Curriculum action plan</h1><p className="muted">Turn workforce gaps into owned improvements and record whether they produced a measurable outcome.</p><div className="grid-2" style={{ marginTop: 26, alignItems: "start" }}><section className="card"><h2>Create an action</h2><form action={createCurriculumAction} className="form-grid"><label>Improvement<input className="input" name="title" placeholder="Add a cloud-security practical module" required/></label><label>Target skill<input className="input" name="skill"/></label><label>Responsible owner<input className="input" name="owner"/></label><button className="button primary">Add to plan</button></form></section><section className="card"><h2>Tracked decisions</h2>{actions.length ? actions.map(a => <form action={updateCurriculumAction} className="data-row" key={a.id}><input type="hidden" name="actionId" value={a.id}/><div style={{ flex: 1 }}><strong>{a.title}</strong><div className="muted">{a.skill ?? "Cross-program"} · Owner: {a.owner ?? "Unassigned"}</div><input className="input" name="outcomeNote" defaultValue={a.outcomeNote ?? ""} placeholder="Outcome or evidence"/></div><select className="input" name="status" defaultValue={a.status}><option value="PROPOSED">Proposed</option><option value="PLANNED">Planned</option><option value="IN_PROGRESS">In progress</option><option value="COMPLETED">Completed</option></select><button className="button secondary">Save</button></form>) : <div className="notice">No curriculum actions yet.</div>}</section></div></main>;
+}
