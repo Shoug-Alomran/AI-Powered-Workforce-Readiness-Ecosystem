@@ -1,0 +1,72 @@
+{
+  "match_score": 73,
+  "verdict": "promising",
+  "explanation": "STU-88412 covers four of five required skills with verified SQL and Excel proficiency, a relevant internship, and a portfolio dashboard that directly mirrors the job's core deliverable. The main gaps are Power BI (absent from the profile) and Statistics at only beginner level, both of which are closable quickly given the candidate's demonstrated learning momentum. Interviewers should probe how the candidate built the Riyadh Metro dashboard end-to-end, how they handled data quality issues at Elm, and their comfort level with statistical concepts like cohort construction and significance testing. Ramp-up is estimated at 6–10 weeks focused on Power BI and applied statistics.",
+  "matched_skills": [
+    "SQL",
+    "Excel",
+    "Statistics (partial — beginner)",
+    "Communication (evidenced by Presentation soft skill)",
+    "Python (preferred, beginner)",
+    "Data Visualization (preferred, project-evidenced)",
+    "Arabic (preferred)"
+  ],
+  "gaps": [
+    {
+      "skill": "Power BI",
+      "importance": "critical",
+      "student_level": "none detected",
+      "required_level": "able to build and publish dashboards for branch performance reporting",
+      "closable_in_weeks": 6
+    },
+    {
+      "skill": "Statistics",
+      "importance": "critical",
+      "student_level": "beginner, unverified",
+      "required_level": "intermediate — cohort analysis, descriptive and inferential stats for retail analytics",
+      "closable_in_weeks": 8
+    },
+    {
+      "skill": "Python",
+      "importance": "important",
+      "student_level": "beginner, unverified",
+      "required_level": "able to automate data pulls and basic analysis scripts",
+      "closable_in_weeks": 12
+    }
+  ],
+  "breakdown": {
+    "required_skills": {
+      "score": 26,
+      "max": 40,
+      "note": "SQL: verified intermediate (full credit ~8/10). Excel: verified advanced (full credit ~8/10). Statistics: beginner unverified (partial ~4/10). Communication: evidenced by Presentation soft skill (partial ~6/10). Power BI: absent (0/10). Weighted proportionally across five required skills: ~26/40."
+    },
+    "experience": {
+      "score": 13,
+      "max": 20,
+      "note": "4-month internship at Elm Company is below the 6-month minimum but directly relevant (data cleaning, Excel reporting). Because this is entry-level, the shortfall is not penalised harshly; role alignment and demonstrated output quality justify 13/20."
+    },
+    "certifications": {
+      "score": 11,
+      "max": 15,
+      "note": "Google Data Analytics Certificate (Coursera, 2025, verified) is directly relevant to this role and covers SQL, data cleaning, and visualization basics. No required certifications were listed, so this fully satisfies the dimension with minor deduction for it being a single credential: 11/15."
+    },
+    "projects": {
+      "score": 13,
+      "max": 15,
+      "note": "Riyadh Metro Ridership Dashboard is a strong, directly analogous deliverable — interactive dashboard using SQL, Excel, and Data Visualization, matching exactly what the role requires. Minor deduction because Power BI was not the tool used: 13/15."
+    },
+    "soft_skills": {
+      "score": 10,
+      "max": 10,
+      "note": "Teamwork and Presentation cover the Communication requirement explicitly listed as a required skill. Arabic and English bilingualism satisfies all three preferred language/communication signals. Full score: 10/10."
+    }
+  },
+  "recommended_next_actions": [
+    "Complete Microsoft's free 'Power BI Desktop in a Day' learning path and rebuild the Riyadh Metro dashboard in Power BI to produce a portfolio artifact directly relevant to this role.",
+    "Enroll in a structured statistics course covering cohort analysis, descriptive statistics, and A/B testing concepts — work through at least two banking or retail case studies to demonstrate applied understanding.",
+    "Verify your Python and Statistics skills on a recognized platform (e.g., DataCamp skill assessments) and link verified badges to your profile to close the credibility gap on unverified skills.",
+    "During the interview, walk through your Elm internship data-cleaning process in detail: what the raw data looked like, what decisions you made, and how stakeholders used the final reports — this addresses the experience shortfall with concrete evidence.",
+    "Seek one additional short project or volunteer analysis (even a public dataset) using Power BI and a statistical technique like cohort segmentation, and publish it on GitHub or LinkedIn before the application deadline."
+  ],
+  "fairness_note": "Scoring was based exclusively on: skills (name, level, years, verification status), certifications, internship experience (title, duration, description), project content, soft skills listed, and language proficiency. Education major and university were used only to confirm alignment with the quantitative field requirement. No protected attribute — including gender, nationality, family name, age, marital status, disability, or tribal affiliation — was used or allowed to influence any score component."
+}

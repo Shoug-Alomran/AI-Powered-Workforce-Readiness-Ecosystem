@@ -1,0 +1,11 @@
+{
+  "status": "ok",
+  "model": "claude-sonnet-4-6",
+  "effort": "medium",
+  "anthropic_key_configured": true,
+  "knowledge_base": {
+    "ready": true,
+    "chunks": 139,
+    "embedder": "local:all-MiniLM-L6-v2"
+  }
+}

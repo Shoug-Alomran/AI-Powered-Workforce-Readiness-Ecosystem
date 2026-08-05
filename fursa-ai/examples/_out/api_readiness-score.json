@@ -1,0 +1,51 @@
+{
+  "readiness_score": 62,
+  "band": "job_ready",
+  "breakdown": {
+    "technical_skills": {
+      "score": 18,
+      "max": 30,
+      "note": "Your verified SQL (intermediate) and Excel (advanced) are solid foundations for a Data Analyst role. Python is beginner-level and unverified, which counts for roughly half — so it contributes little right now. Statistics is also unverified and beginner, which is a gap for analytical roles. Data Visualization is intermediate but unverified. The most critical missing tool is Power BI, which appears in most Riyadh job postings you are targeting. Closing that gap alone would push this score meaningfully higher."
+    },
+    "experience": {
+      "score": 13,
+      "max": 20,
+      "note": "A 4-month data internship at Elm Company is real, relevant, private-sector experience — that matters to employers. Your 8-month Statistics Teaching Assistant role shows you can explain analytical concepts, which is a bonus. Combined, 12 months of applied exposure is good for a student graduating in 2026, but neither placement was listed as a Tamheer or HRDF-supported program, which can carry additional weight with employers. One more industry placement before graduation would make this section competitive."
+    },
+    "certifications": {
+      "score": 9,
+      "max": 15,
+      "note": "The Google Data Analytics Certificate from Coursera is verified and widely recognised by entry-level employers. It covers the full analyst workflow and complements your profile well. However, a single certificate leaves points on the table. A Power BI certification (Microsoft) would directly address the gap flagged in Riyadh job market demand and would likely be the highest-value addition here."
+    },
+    "portfolio": {
+      "score": 11,
+      "max": 15,
+      "note": "Two projects is a good start, and the Riyadh Metro Ridership Dashboard is particularly strong — it is local, published, and interactive, which gives interviewers something concrete to discuss. The Retail Churn Prediction graduation project shows Python and ML ambition, though as a graduation project still in progress its full weight depends on the final output. Hosting both on GitHub or a public portfolio link and writing a short case-study for each would convert these from 'things you did' into 'evidence you can show.'"
+    },
+    "soft_skills": {
+      "score": 7,
+      "max": 10,
+      "note": "Teamwork, Presentation, and Problem Solving are listed. Your Teaching Assistant role provides indirect evidence of communication and explanation skills, and the published dashboard suggests you can present findings to an audience. These are self-reported rather than demonstrated through external awards or documented feedback, which limits the score slightly."
+    },
+    "market_alignment": {
+      "score": 4,
+      "max": 10,
+      "note": "Your target role, preferred location (Riyadh), and education background align well with the banking and government analyst hiring wave described in the market context. However, Power BI is absent from your profile and it appears in most postings — that is the single biggest alignment gap. Arabic and English bilingualism is a genuine advantage in Riyadh's market. Addressing Power BI would be the fastest route to improving this dimension."
+    }
+  },
+  "strengths": [
+    "Verified intermediate SQL and advanced Excel — the two most consistently requested tools for entry-level analyst roles.",
+    "Real private-sector internship experience at Elm Company, a recognised Saudi technology company.",
+    "The Riyadh Metro Ridership Dashboard is a locally relevant, published piece of work that stands out in interviews.",
+    "Google Data Analytics Certificate is verified and signals structured, end-to-end analytical training.",
+    "Arabic-English bilingualism is a practical advantage for Riyadh banking and government roles."
+  ],
+  "weaknesses": [
+    "Power BI is absent entirely — it is the most commonly requested visualisation tool in your target market right now.",
+    "Python and Statistics are both unverified and beginner-level, which limits your competitiveness for roles that involve any modelling or automation.",
+    "No public portfolio link (GitHub, Tableau Public, etc.) means your projects are not easily verifiable by recruiters.",
+    "A single certification leaves you exposed relative to candidates who stack role-specific credentials."
+  ],
+  "highest_impact_next_step": "Complete the free Microsoft Power BI learning path on Microsoft Learn and earn the PL-300 Power BI Data Analyst certification — this directly addresses the most common requirement in Riyadh job postings and adds a verified, employer-recognised credential within 4-6 weeks.",
+  "explanation": "You are in a genuinely strong position for someone still finishing their degree — a verified internship at Elm, a published dashboard, and a recognised Google certificate put you ahead of most final-year students. Your readiness score of 62 places you in the job-ready band, meaning you can apply now and be competitive for entry-level analyst roles. The clearest thing holding you back is the absence of Power BI: it shows up in most of the Riyadh postings you are targeting, and adding it quickly would close the gap between you and stronger candidates. After that, put your two projects on GitHub with a short write-up each — recruiters need a link they can click, not just a description. You are close; a focused 4-6 weeks of effort on Power BI could meaningfully improve your offer rate."
+}

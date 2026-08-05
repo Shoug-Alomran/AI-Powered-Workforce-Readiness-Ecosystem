@@ -1,0 +1,41 @@
+{
+  "target_role": "Data Analyst",
+  "job_market_context": "Riyadh banking and government sectors are hiring entry-level analysts; Power BI and SQL appear in most postings.",
+  "student": {
+    "student_id": "STU-88412",
+    "target_role": "Data Analyst",
+    "education_level": "Bachelor's",
+    "major": "Information Systems",
+    "university": "King Saud University",
+    "graduation_year": 2026,
+    "skills": [
+      { "name": "SQL", "level": "intermediate", "years": 1.5, "verified": true },
+      { "name": "Excel", "level": "advanced", "years": 3, "verified": true },
+      { "name": "Python", "level": "beginner", "years": 0.5, "verified": false },
+      { "name": "Statistics", "level": "beginner", "verified": false },
+      { "name": "Data Visualization", "level": "intermediate", "verified": false }
+    ],
+    "soft_skills": ["Teamwork", "Presentation", "Problem Solving"],
+    "certifications": [
+      { "name": "Google Data Analytics Certificate", "issuer": "Coursera", "year": 2025, "verified": true }
+    ],
+    "experience": [
+      { "title": "Data Intern", "organization": "Elm Company", "months": 4 },
+      { "title": "Teaching Assistant (Statistics Lab)", "organization": "King Saud University", "months": 8 }
+    ],
+    "projects": [
+      {
+        "name": "Riyadh Metro Ridership Dashboard",
+        "description": "Analysed open ridership data and published an interactive dashboard.",
+        "skills_used": ["SQL", "Excel", "Data Visualization"]
+      },
+      {
+        "name": "Graduation Project: Retail Churn Prediction",
+        "description": "Built a churn model on a public retail dataset.",
+        "skills_used": ["Python", "Statistics"]
+      }
+    ],
+    "languages": ["Arabic", "English"],
+    "preferred_locations": ["Riyadh"]
+  }
+}

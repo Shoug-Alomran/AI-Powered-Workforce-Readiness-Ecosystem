@@ -1,0 +1,935 @@
+{
+  "trending_up": [
+    {
+      "skill": "Machine Learning",
+      "growth_rate": 3.182,
+      "recent_count": 46,
+      "earlier_count": 11,
+      "confidence": "medium",
+      "interpretation": "Demand more than quadrupled in the recent period (11→46), signalling strong employer appetite for ML skills, though the underlying dataset of 45 postings limits certainty."
+    },
+    {
+      "skill": "Kubernetes",
+      "growth_rate": 3.333,
+      "recent_count": 39,
+      "earlier_count": 9,
+      "confidence": "medium",
+      "interpretation": "Container orchestration demand surged from 9 to 39 mentions, reflecting the maturing cloud-native infrastructure market in the Kingdom."
+    },
+    {
+      "skill": "Cloud Computing",
+      "growth_rate": 3.833,
+      "recent_count": 29,
+      "earlier_count": 6,
+      "confidence": "medium",
+      "interpretation": "Nearly a fivefold increase in mentions (6→29) confirms cloud adoption is accelerating across Saudi employers, consistent with Vision 2030 digital infrastructure goals."
+    },
+    {
+      "skill": "JavaScript",
+      "growth_rate": 2.75,
+      "recent_count": 45,
+      "earlier_count": 12,
+      "confidence": "medium",
+      "interpretation": "JavaScript postings rose from 12 to 45, indicating strong and broad demand for front-end and full-stack development capacity."
+    },
+    {
+      "skill": "React",
+      "growth_rate": 2.75,
+      "recent_count": 45,
+      "earlier_count": 12,
+      "confidence": "medium",
+      "interpretation": "Mirrors the JavaScript surge (12→45), pointing to React as the dominant front-end framework employers are specifying."
+    },
+    {
+      "skill": "Statistics",
+      "growth_rate": 1.938,
+      "recent_count": 47,
+      "earlier_count": 16,
+      "confidence": "medium",
+      "interpretation": "A near-tripling in mentions (16→47) suggests employers increasingly want quantitative reasoning alongside data tooling, not just software skills."
+    },
+    {
+      "skill": "Python",
+      "growth_rate": 0.9,
+      "recent_count": 95,
+      "earlier_count": 50,
+      "confidence": "high",
+      "interpretation": "Python is both the highest-volume data/AI skill and still growing strongly (50→95), making it the single most critical technical skill to embed in curricula."
+    },
+    {
+      "skill": "SQL",
+      "growth_rate": 0.683,
+      "recent_count": 106,
+      "earlier_count": 63,
+      "confidence": "high",
+      "interpretation": "SQL leads all skills in absolute volume and continues to grow (63→106), confirming it as a foundational requirement across data, finance, and technology roles."
+    }
+  ],
+  "trending_down": [
+    {
+      "skill": "Networking",
+      "growth_rate": -0.852,
+      "recent_count": 4,
+      "earlier_count": 27,
+      "confidence": "medium",
+      "interpretation": "An 85% drop in mentions (27→4) suggests traditional networking skills are being displaced by cloud-native and software-defined approaches."
+    },
+    {
+      "skill": "Communication",
+      "growth_rate": -0.674,
+      "recent_count": 28,
+      "earlier_count": 86,
+      "confidence": "medium",
+      "interpretation": "While still frequently mentioned in absolute terms, Communication appears far less as an explicit job-posting requirement in the recent period (86→28), possibly reflecting a shift toward specifying technical skills instead."
+    },
+    {
+      "skill": "Excel",
+      "growth_rate": -0.333,
+      "recent_count": 40,
+      "earlier_count": 60,
+      "confidence": "medium",
+      "interpretation": "Declining from 60 to 40, Excel is being replaced by Power BI and Python as preferred data tools, though it retains meaningful baseline demand."
+    },
+    {
+      "skill": "Arabic",
+      "growth_rate": -0.322,
+      "recent_count": 40,
+      "earlier_count": 59,
+      "confidence": "medium",
+      "interpretation": "Explicit Arabic language requirements fell (59→40), potentially as employers assume proficiency or shift emphasis toward technical over soft-skill criteria."
+    },
+    {
+      "skill": "Linux",
+      "growth_rate": -0.235,
+      "recent_count": 13,
+      "earlier_count": 17,
+      "confidence": "low",
+      "interpretation": "A modest decline (17→13) with low absolute volume; treat as a weak signal that Linux may be absorbed into broader cloud or DevOps skill bundles."
+    },
+    {
+      "skill": "SAP",
+      "growth_rate": -0.25,
+      "recent_count": 12,
+      "earlier_count": 16,
+      "confidence": "low",
+      "interpretation": "SAP demand edged down (16→12); the small counts mean this is a weak signal, but it may reflect a gradual shift toward cloud-native ERP and data platforms."
+    }
+  ],
+  "stable": [
+    {
+      "skill": "AWS",
+      "total_count": 59,
+      "interpretation": "Moderate, consistent demand (26 earlier / 33 recent, +27%) confirms AWS as a steady baseline cloud certification target for graduates."
+    },
+    {
+      "skill": "Power BI",
+      "total_count": 69,
+      "interpretation": "Doubled in volume (23→46) but has settled into a high-frequency requirement across data and business analytics roles, effectively becoming table stakes."
+    },
+    {
+      "skill": "CI/CD",
+      "total_count": 37,
+      "interpretation": "Near-flat growth (17→20) at moderate volume marks CI/CD as a reliable but not accelerating DevOps baseline requirement."
+    },
+    {
+      "skill": "Financial Modeling",
+      "total_count": 53,
+      "interpretation": "Slight decline (28→25, -11%) with high absolute count confirms Financial Modeling remains a core finance-sector requirement with no near-term collapse."
+    },
+    {
+      "skill": "Cloud Security",
+      "total_count": 26,
+      "interpretation": "Growing at 0.6 (10→16) with modest totals; positioned between stable and emerging — worth monitoring as cloud adoption scales."
+    },
+    {
+      "skill": "Git",
+      "total_count": 44,
+      "interpretation": "Consistent growth (14→30, +114%) at moderate volume makes Git a reliable baseline expectation for all software-facing programmes."
+    }
+  ],
+  "emerging": [
+    {
+      "skill": "Generative AI",
+      "signal": "26 mentions entirely in the recent period (earlier_count = 0); only appears after the split date.",
+      "why_it_matters": "Zero earlier-period presence followed by 26 recent mentions is the clearest early-signal pattern in this dataset; employers are beginning to formalise GenAI as a job requirement, and curricula that ignore it will lag within 12 months."
+    },
+    {
+      "skill": "Terraform",
+      "signal": "27 mentions exclusively in the recent period (earlier_count = 0).",
+      "why_it_matters": "Infrastructure-as-Code tooling appeared only post-split, tracking the Kubernetes and Cloud Computing surge; DevOps and cloud programmes should introduce Terraform hands-on labs now."
+    },
+    {
+      "skill": "TypeScript",
+      "signal": "31 mentions exclusively in the recent period (earlier_count = 0).",
+      "why_it_matters": "TypeScript's sudden appearance alongside JavaScript and React signals that employers want type-safe front-end development, not just vanilla JS; web development courses should add TypeScript modules."
+    },
+    {
+      "skill": "Azure",
+      "signal": "32 mentions exclusively in the recent period (earlier_count = 0).",
+      "why_it_matters": "Azure's emergence alongside AWS suggests employers are diversifying multi-cloud strategies; programmes that teach only AWS risk leaving graduates under-prepared."
+    },
+    {
+      "skill": "Node.js",
+      "signal": "30 mentions exclusively in the recent period (earlier_count = 0).",
+      "why_it_matters": "Paired with the JavaScript/React/TypeScript cluster, Node.js signals demand for full-stack JavaScript engineers, not just front-end specialists."
+    },
+    {
+      "skill": "Data Visualization",
+      "signal": "50 mentions exclusively in the recent period (earlier_count = 0); highest emerging absolute count.",
+      "why_it_matters": "With 50 recent mentions and no earlier presence, Data Visualization is the highest-volume emerging skill and should be introduced as a standalone module in data science and business analytics programmes immediately."
+    }
+  ],
+  "horizon_months": 12,
+  "curriculum_implications": [
+    "Make Python and SQL co-requisites in all data, computer science, and business analytics programmes — they are the two highest-volume and still-growing technical skills in the dataset.",
+    "Add a dedicated Statistics and quantitative methods module to data science tracks; employer demand nearly tripled (16→47) and it is now comparable in volume to Machine Learning.",
+    "Launch or deepen Machine Learning and Generative AI modules: ML demand quadrupled, and GenAI appeared from zero with 26 mentions post-split — treat both as near-term hiring requirements, not future electives.",
+    "Build a full-stack JavaScript track covering JavaScript, TypeScript, React, and Node.js; all four appear in the recent period only or with strong growth, and together they form a coherent employer skill bundle.",
+    "Introduce Infrastructure-as-Code (Terraform) and container orchestration (Kubernetes) labs within cloud and DevOps programmes; both are sharply rising and employers are specifying them alongside AWS and Azure.",
+    "Replace standalone Excel courses with Power BI and Data Visualization modules; Excel is declining (60→40) while Power BI doubled and Data Visualization emerged with 50 mentions.",
+    "Add multi-cloud content: Azure and AWS both appear at significant volume; graduates should hold literacy in at least two major cloud platforms.",
+    "Reduce curriculum hours dedicated to traditional Networking and standalone Linux administration; Networking dropped 85% (27→4) and these skills are increasingly bundled within cloud and DevOps pathways."
+  ],
+  "summary": "Across 45 job postings from January 2025 to June 2026, the Saudi market shows a decisive shift toward data, AI, and cloud-native skills: SQL, Python, Machine Learning, Kubernetes, and Cloud Computing are all growing strongly, and six skills — including Generative AI, Azure, Terraform, TypeScript, Node.js, and Data Visualization — appear exclusively in the most recent period as sharp emerging signals. Traditional infrastructure (Networking, Linux) and generic productivity skills (Excel, Communication) are declining as explicit requirements. Education providers should prioritise full-stack data engineering pipelines, cloud-multi-platform literacy, and applied AI modules within the next curriculum cycle. Caution is warranted: with only 45 source postings, growth rates are directionally informative but statistically fragile, and all forecasts should be revisited when a larger dataset is available.",
+  "data_window": {
+    "from": "2025-01-15",
+    "to": "2026-06-30",
+    "postings": 45,
+    "caveats": [
+      "Only 45 postings underpin all figures; even moderate count changes produce extreme growth rates and confidence in any single skill's trend should be treated as low-to-medium rather than high.",
+      "Six skills (Data Visualization, Azure, TypeScript, Node.js, Terraform, Generative AI) have earlier_count = 0, meaning their 'growth rate' is undefined and their emergence could reflect changed posting language or sampling rather than genuine new demand.",
+      "The dataset covers 66 distinct skills but only 35 are shown; the remaining 31 are unobserved and may include material trends.",
+      "No sector or regional filter was applied, so skill mixes from different industries (finance, technology, cybersecurity, operations) are aggregated and may partially cancel each other out.",
+      "The split date (2025-10-20) divides an 18-month window unevenly; the recent period is approximately 8 months and the earlier period approximately 9 months, which may slightly inflate recent counts."
+    ]
+  },
+  "aggregates": {
+    "postings_analysed": 45,
+    "date_range": {
+      "from": "2025-01-15",
+      "to": "2026-06-30",
+      "split_at": "2025-10-20",
+      "undated_rows": 0
+    },
+    "distinct_skills": 66,
+    "skills": [
+      {
+        "skill": "SQL",
+        "total_count": 169,
+        "recent_count": 106,
+        "earlier_count": 63,
+        "growth_rate": 0.683,
+        "by_period": {
+          "2025-01": 25,
+          "2025-04": 10,
+          "2025-06": 7,
+          "2025-07": 9,
+          "2025-09": 12,
+          "2025-10": 14,
+          "2025-11": 7,
+          "2025-12": 15,
+          "2026-01": 13,
+          "2026-03": 18,
+          "2026-05": 13,
+          "2026-06": 26
+        }
+      },
+      {
+        "skill": "Python",
+        "total_count": 145,
+        "recent_count": 95,
+        "earlier_count": 50,
+        "growth_rate": 0.9,
+        "by_period": {
+          "2025-01": 14,
+          "2025-04": 8,
+          "2025-05": 5,
+          "2025-07": 15,
+          "2025-08": 8,
+          "2025-11": 7,
+          "2026-01": 24,
+          "2026-02": 12,
+          "2026-03": 18,
+          "2026-04": 5,
+          "2026-05": 13,
+          "2026-06": 16
+        }
+      },
+      {
+        "skill": "Communication",
+        "total_count": 114,
+        "recent_count": 28,
+        "earlier_count": 86,
+        "growth_rate": -0.674,
+        "by_period": {
+          "2025-01": 14,
+          "2025-02": 31,
+          "2025-04": 10,
+          "2025-07": 20,
+          "2025-08": 11,
+          "2026-05": 17,
+          "2026-06": 11
+        }
+      },
+      {
+        "skill": "Excel",
+        "total_count": 100,
+        "recent_count": 40,
+        "earlier_count": 60,
+        "growth_rate": -0.333,
+        "by_period": {
+          "2025-01": 11,
+          "2025-03": 16,
+          "2025-04": 10,
+          "2025-08": 11,
+          "2025-09": 12,
+          "2025-12": 15,
+          "2026-05": 13,
+          "2026-06": 12
+        }
+      },
+      {
+        "skill": "Arabic",
+        "total_count": 99,
+        "recent_count": 40,
+        "earlier_count": 59,
+        "growth_rate": -0.322,
+        "by_period": {
+          "2025-03": 16,
+          "2025-05": 12,
+          "2025-07": 20,
+          "2025-08": 11,
+          "2026-05": 17,
+          "2026-06": 23
+        }
+      },
+      {
+        "skill": "Power BI",
+        "total_count": 69,
+        "recent_count": 46,
+        "earlier_count": 23,
+        "growth_rate": 1.0,
+        "by_period": {
+          "2025-01": 11,
+          "2025-09": 12,
+          "2025-12": 15,
+          "2026-03": 18,
+          "2026-05": 13
+        }
+      },
+      {
+        "skill": "Statistics",
+        "total_count": 63,
+        "recent_count": 47,
+        "earlier_count": 16,
+        "growth_rate": 1.938,
+        "by_period": {
+          "2025-01": 11,
+          "2025-05": 5,
+          "2025-11": 7,
+          "2026-02": 12,
+          "2026-03": 18,
+          "2026-06": 10
+        }
+      },
+      {
+        "skill": "AWS",
+        "total_count": 59,
+        "recent_count": 33,
+        "earlier_count": 26,
+        "growth_rate": 0.269,
+        "by_period": {
+          "2025-04": 8,
+          "2025-07": 9,
+          "2025-09": 9,
+          "2025-12": 6,
+          "2026-04": 14,
+          "2026-05": 13
+        }
+      },
+      {
+        "skill": "JavaScript",
+        "total_count": 57,
+        "recent_count": 45,
+        "earlier_count": 12,
+        "growth_rate": 2.75,
+        "by_period": {
+          "2025-03": 12,
+          "2025-10": 14,
+          "2026-03": 15,
+          "2026-06": 16
+        }
+      },
+      {
+        "skill": "React",
+        "total_count": 57,
+        "recent_count": 45,
+        "earlier_count": 12,
+        "growth_rate": 2.75,
+        "by_period": {
+          "2025-03": 12,
+          "2025-10": 14,
+          "2026-03": 15,
+          "2026-06": 16
+        }
+      },
+      {
+        "skill": "Machine Learning",
+        "total_count": 57,
+        "recent_count": 46,
+        "earlier_count": 11,
+        "growth_rate": 3.182,
+        "by_period": {
+          "2025-05": 5,
+          "2025-07": 6,
+          "2025-11": 7,
+          "2026-01": 11,
+          "2026-02": 12,
+          "2026-06": 16
+        }
+      },
+      {
+        "skill": "Financial Modeling",
+        "total_count": 53,
+        "recent_count": 25,
+        "earlier_count": 28,
+        "growth_rate": -0.107,
+        "by_period": {
+          "2025-03": 16,
+          "2025-09": 12,
+          "2026-05": 13,
+          "2026-06": 12
+        }
+      },
+      {
+        "skill": "Data Visualization",
+        "total_count": 50,
+        "recent_count": 50,
+        "earlier_count": 0,
+        "growth_rate": null,
+        "by_period": {
+          "2025-12": 15,
+          "2026-03": 18,
+          "2026-05": 17
+        }
+      },
+      {
+        "skill": "Kubernetes",
+        "total_count": 48,
+        "recent_count": 39,
+        "earlier_count": 9,
+        "growth_rate": 3.333,
+        "by_period": {
+          "2025-09": 9,
+          "2025-12": 6,
+          "2026-04": 14,
+          "2026-05": 13,
+          "2026-06": 6
+        }
+      },
+      {
+        "skill": "Git",
+        "total_count": 44,
+        "recent_count": 30,
+        "earlier_count": 14,
+        "growth_rate": 1.143,
+        "by_period": {
+          "2025-01": 14,
+          "2025-10": 14,
+          "2026-06": 16
+        }
+      },
+      {
+        "skill": "CRM",
+        "total_count": 37,
+        "recent_count": 17,
+        "earlier_count": 20,
+        "growth_rate": -0.15,
+        "by_period": {
+          "2025-07": 20,
+          "2026-05": 17
+        }
+      },
+      {
+        "skill": "Problem Solving",
+        "total_count": 37,
+        "recent_count": 17,
+        "earlier_count": 20,
+        "growth_rate": -0.15,
+        "by_period": {
+          "2025-07": 20,
+          "2026-05": 17
+        }
+      },
+      {
+        "skill": "CI/CD",
+        "total_count": 37,
+        "recent_count": 20,
+        "earlier_count": 17,
+        "growth_rate": 0.176,
+        "by_period": {
+          "2025-08": 8,
+          "2025-09": 9,
+          "2026-04": 14,
+          "2026-06": 6
+        }
+      },
+      {
+        "skill": "Cloud Computing",
+        "total_count": 35,
+        "recent_count": 29,
+        "earlier_count": 6,
+        "growth_rate": 3.833,
+        "by_period": {
+          "2025-07": 6,
+          "2025-12": 6,
+          "2026-01": 11,
+          "2026-02": 12
+        }
+      },
+      {
+        "skill": "Network Security",
+        "total_count": 33,
+        "recent_count": 16,
+        "earlier_count": 17,
+        "growth_rate": -0.059,
+        "by_period": {
+          "2025-03": 7,
+          "2025-10": 10,
+          "2026-02": 16
+        }
+      },
+      {
+        "skill": "SIEM",
+        "total_count": 33,
+        "recent_count": 16,
+        "earlier_count": 17,
+        "growth_rate": -0.059,
+        "by_period": {
+          "2025-03": 7,
+          "2025-10": 10,
+          "2026-02": 16
+        }
+      },
+      {
+        "skill": "NCA Compliance",
+        "total_count": 33,
+        "recent_count": 16,
+        "earlier_count": 17,
+        "growth_rate": -0.059,
+        "by_period": {
+          "2025-03": 7,
+          "2025-10": 10,
+          "2026-02": 16
+        }
+      },
+      {
+        "skill": "Azure",
+        "total_count": 32,
+        "recent_count": 32,
+        "earlier_count": 0,
+        "growth_rate": null,
+        "by_period": {
+          "2025-12": 6,
+          "2026-01": 13,
+          "2026-05": 13
+        }
+      },
+      {
+        "skill": "Networking",
+        "total_count": 31,
+        "recent_count": 4,
+        "earlier_count": 27,
+        "growth_rate": -0.852,
+        "by_period": {
+          "2025-02": 27,
+          "2026-06": 4
+        }
+      },
+      {
+        "skill": "Docker",
+        "total_count": 31,
+        "recent_count": 14,
+        "earlier_count": 17,
+        "growth_rate": -0.176,
+        "by_period": {
+          "2025-04": 8,
+          "2025-09": 9,
+          "2026-04": 14
+        }
+      },
+      {
+        "skill": "TypeScript",
+        "total_count": 31,
+        "recent_count": 31,
+        "earlier_count": 0,
+        "growth_rate": null,
+        "by_period": {
+          "2026-03": 15,
+          "2026-06": 16
+        }
+      },
+      {
+        "skill": "Linux",
+        "total_count": 30,
+        "recent_count": 13,
+        "earlier_count": 17,
+        "growth_rate": -0.235,
+        "by_period": {
+          "2025-04": 8,
+          "2025-09": 9,
+          "2026-05": 13
+        }
+      },
+      {
+        "skill": "Node.js",
+        "total_count": 30,
+        "recent_count": 30,
+        "earlier_count": 0,
+        "growth_rate": null,
+        "by_period": {
+          "2025-10": 14,
+          "2026-06": 16
+        }
+      },
+      {
+        "skill": "SAP",
+        "total_count": 28,
+        "recent_count": 12,
+        "earlier_count": 16,
+        "growth_rate": -0.25,
+        "by_period": {
+          "2025-03": 16,
+          "2026-06": 12
+        }
+      },
+      {
+        "skill": "CSS",
+        "total_count": 27,
+        "recent_count": 15,
+        "earlier_count": 12,
+        "growth_rate": 0.25,
+        "by_period": {
+          "2025-03": 12,
+          "2026-03": 15
+        }
+      },
+      {
+        "skill": "Terraform",
+        "total_count": 27,
+        "recent_count": 27,
+        "earlier_count": 0,
+        "growth_rate": null,
+        "by_period": {
+          "2026-04": 14,
+          "2026-05": 13
+        }
+      },
+      {
+        "skill": "Project Management",
+        "total_count": 26,
+        "recent_count": 11,
+        "earlier_count": 15,
+        "growth_rate": -0.267,
+        "by_period": {
+          "2025-06": 15,
+          "2026-06": 11
+        }
+      },
+      {
+        "skill": "Cloud Security",
+        "total_count": 26,
+        "recent_count": 16,
+        "earlier_count": 10,
+        "growth_rate": 0.6,
+        "by_period": {
+          "2025-10": 10,
+          "2026-02": 16
+        }
+      },
+      {
+        "skill": "Generative AI",
+        "total_count": 26,
+        "recent_count": 26,
+        "earlier_count": 0,
+        "growth_rate": null,
+        "by_period": {
+          "2026-01": 11,
+          "2026-04": 5,
+          "2026-06": 10
+        }
+      },
+      {
+        "skill": "Incident Response",
+        "total_count": 23,
+        "recent_count": 16,
+        "earlier_count": 7,
+        "growth_rate": 1.286,
+        "by_period": {
+          "2025-03": 7,
+          "2026-02": 16
+        }
+      },
+      {
+        "skill": "ETL",
+        "total_count": 22,
+        "recent_count": 13,
+        "earlier_count": 9,
+        "growth_rate": 0.444,
+        "by_period": {
+          "2025-07": 9,
+          "2026-01": 13
+        }
+      },
+      {
+        "skill": "Spark",
+        "total_count": 22,
+        "recent_count": 13,
+        "earlier_count": 9,
+        "growth_rate": 0.444,
+        "by_period": {
+          "2025-07": 9,
+          "2026-01": 13
+        }
+      },
+      {
+        "skill": "On-Premise Infrastructure",
+        "total_count": 20,
+        "recent_count": 4,
+        "earlier_count": 16,
+        "growth_rate": -0.75,
+        "by_period": {
+          "2025-02": 9,
+          "2025-06": 7,
+          "2026-06": 4
+        }
+      },
+      {
+        "skill": "Manual Testing",
+        "total_count": 19,
+        "recent_count": 6,
+        "earlier_count": 13,
+        "growth_rate": -0.538,
+        "by_period": {
+          "2025-02": 13,
+          "2025-11": 6
+        }
+      },
+      {
+        "skill": "Test Cases",
+        "total_count": 19,
+        "recent_count": 6,
+        "earlier_count": 13,
+        "growth_rate": -0.538,
+        "by_period": {
+          "2025-02": 13,
+          "2025-11": 6
+        }
+      },
+      {
+        "skill": "Windows Server",
+        "total_count": 18,
+        "recent_count": 0,
+        "earlier_count": 18,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-02": 18
+        }
+      },
+      {
+        "skill": "Help Desk",
+        "total_count": 18,
+        "recent_count": 0,
+        "earlier_count": 18,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-02": 18
+        }
+      },
+      {
+        "skill": "MLOps",
+        "total_count": 18,
+        "recent_count": 18,
+        "earlier_count": 0,
+        "growth_rate": null,
+        "by_period": {
+          "2026-02": 12,
+          "2026-06": 6
+        }
+      },
+      {
+        "skill": "Prompt Engineering",
+        "total_count": 16,
+        "recent_count": 16,
+        "earlier_count": 0,
+        "growth_rate": null,
+        "by_period": {
+          "2026-01": 11,
+          "2026-04": 5
+        }
+      },
+      {
+        "skill": "AutoCAD",
+        "total_count": 15,
+        "recent_count": 0,
+        "earlier_count": 15,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-06": 15
+        }
+      },
+      {
+        "skill": "Safety Standards",
+        "total_count": 15,
+        "recent_count": 0,
+        "earlier_count": 15,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-06": 15
+        }
+      },
+      {
+        "skill": "Accessibility",
+        "total_count": 15,
+        "recent_count": 15,
+        "earlier_count": 0,
+        "growth_rate": null,
+        "by_period": {
+          "2026-03": 15
+        }
+      },
+      {
+        "skill": "Risk Assessment",
+        "total_count": 15,
+        "recent_count": 15,
+        "earlier_count": 0,
+        "growth_rate": null,
+        "by_period": {
+          "2026-03": 4,
+          "2026-06": 11
+        }
+      },
+      {
+        "skill": "Cisco",
+        "total_count": 13,
+        "recent_count": 4,
+        "earlier_count": 9,
+        "growth_rate": -0.556,
+        "by_period": {
+          "2025-02": 9,
+          "2026-06": 4
+        }
+      },
+      {
+        "skill": "jQuery",
+        "total_count": 12,
+        "recent_count": 0,
+        "earlier_count": 12,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-03": 12
+        }
+      },
+      {
+        "skill": "SEO",
+        "total_count": 12,
+        "recent_count": 0,
+        "earlier_count": 12,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-05": 12
+        }
+      },
+      {
+        "skill": "Content Marketing",
+        "total_count": 12,
+        "recent_count": 0,
+        "earlier_count": 12,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-05": 12
+        }
+      },
+      {
+        "skill": "Analytics",
+        "total_count": 12,
+        "recent_count": 0,
+        "earlier_count": 12,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-05": 12
+        }
+      },
+      {
+        "skill": "Recruitment",
+        "total_count": 11,
+        "recent_count": 0,
+        "earlier_count": 11,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-08": 11
+        }
+      },
+      {
+        "skill": "Requirements Analysis",
+        "total_count": 10,
+        "recent_count": 0,
+        "earlier_count": 10,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-04": 10
+        }
+      },
+      {
+        "skill": "Selenium",
+        "total_count": 8,
+        "recent_count": 0,
+        "earlier_count": 8,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-08": 8
+        }
+      },
+      {
+        "skill": "Test Automation",
+        "total_count": 8,
+        "recent_count": 0,
+        "earlier_count": 8,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-08": 8
+        }
+      },
+      {
+        "skill": "Oracle",
+        "total_count": 7,
+        "recent_count": 0,
+        "earlier_count": 7,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-06": 7
+        }
+      },
+      {
+        "skill": "Backup",
+        "total_count": 7,
+        "recent_count": 0,
+        "earlier_count": 7,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-06": 7
+        }
+      },
+      {
+        "skill": "Deep Learning",
+        "total_count": 6,
+        "recent_count": 0,
+        "earlier_count": 6,
+        "growth_rate": -1.0,
+        "by_period": {
+          "2025-07": 6
+        }
+      }
+    ]
+  }
+}

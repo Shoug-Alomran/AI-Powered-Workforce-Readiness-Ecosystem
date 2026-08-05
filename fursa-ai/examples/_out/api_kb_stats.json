@@ -1,0 +1,31 @@
+{
+  "collection": "fursa_kb",
+  "embedder": "local:all-MiniLM-L6-v2",
+  "chunks": 139,
+  "documents": 19,
+  "chunks_by_origin": {
+    "catalog": 19,
+    "web": 120
+  },
+  "chunks_by_document": {
+    "KB-001 — National Strategy for Data & AI (NSDAI)": 6,
+    "KB-002 — AI Adoption Framework": 20,
+    "KB-003 — AI Ethics Principles": 1,
+    "KB-004 — Generative AI Guidelines": 1,
+    "KB-005 — Personal Data Protection Law (PDPL)": 13,
+    "KB-006 — National Cybersecurity Framework": 3,
+    "KB-007 — Human Capability Development Program (HCDP)": 1,
+    "KB-008 — Human Resources Development Fund (HRDF / Hadaf)": 2,
+    "KB-009 — HRDF Strategy": 4,
+    "KB-010 — Jadarat — Unified National Employment Platform": 3,
+    "KB-011 — Nitaqat (Saudization) Program": 3,
+    "KB-012 — Tawteen Program": 19,
+    "KB-013 — Saudi Labor Market Progress Report": 17,
+    "KB-014 — Skills and Training Initiatives (MHRSD)": 16,
+    "KB-015 — Technical and Vocational Training Corporation (TVTC)": 1,
+    "KB-016 — World Bank — Saudi National Skills Strategy": 1,
+    "KB-017 — Vision 2030 Framework": 1,
+    "KB-018 — Pearson-AWS AI Readiness Report (KSA Findings)": 1,
+    "KB-019 — SDAIA HUMAIN Initiative": 26
+  }
+}

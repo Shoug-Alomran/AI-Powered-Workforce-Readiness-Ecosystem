@@ -1,0 +1,80 @@
+{
+  "target_role": "Data Analyst",
+  "current_path": ["TVTC-DS1 Python for Data Analysis", "DRB-204 Applied Statistics", "DRB-101 Power BI"],
+  "student": {
+    "student_id": "STU-88412",
+    "target_role": "Data Analyst",
+    "education_level": "Bachelor's",
+    "major": "Information Systems",
+    "skills": [
+      { "name": "SQL", "level": "intermediate", "verified": true },
+      { "name": "Excel", "level": "advanced", "verified": true }
+    ],
+    "languages": ["Arabic", "English"]
+  },
+  "progress_history": [
+    {
+      "course_id": "TVTC-DS1",
+      "title": "Python for Data Analysis",
+      "skill": "Python",
+      "status": "in_progress",
+      "started_at": "2026-04-02",
+      "time_spent_hours": 38,
+      "expected_hours": 45,
+      "attempts": 3,
+      "score": 48,
+      "module": "Module 4 — Pandas GroupBy"
+    },
+    {
+      "course_id": "TVTC-DS1",
+      "title": "Python for Data Analysis",
+      "skill": "Python",
+      "status": "assessment_failed",
+      "attempts": 2,
+      "score": 44,
+      "completed_at": "2026-05-11",
+      "module": "Module 4 — Pandas GroupBy"
+    },
+    {
+      "course_id": "TVTC-DS1",
+      "title": "Python for Data Analysis",
+      "skill": "Python",
+      "status": "assessment_failed",
+      "attempts": 3,
+      "score": 41,
+      "completed_at": "2026-06-20",
+      "module": "Module 4 — Pandas GroupBy"
+    },
+    {
+      "course_id": "DRB-204",
+      "title": "Applied Statistics for Business",
+      "skill": "Statistics",
+      "status": "dropped",
+      "started_at": "2026-05-01",
+      "dropped": true,
+      "time_spent_hours": 4,
+      "expected_hours": 30
+    },
+    {
+      "course_id": "DRB-101",
+      "title": "Introduction to Power BI",
+      "skill": "Power BI",
+      "status": "completed",
+      "started_at": "2026-03-01",
+      "completed_at": "2026-03-14",
+      "time_spent_hours": 16,
+      "expected_hours": 20,
+      "score": 92
+    },
+    {
+      "course_id": "SQL-ADV",
+      "title": "Advanced SQL Window Functions",
+      "skill": "SQL",
+      "status": "completed",
+      "completed_at": "2026-02-10",
+      "time_spent_hours": 9,
+      "expected_hours": 15,
+      "score": 96
+    }
+  ]
+}

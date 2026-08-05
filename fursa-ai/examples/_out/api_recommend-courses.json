@@ -1,0 +1,42 @@
+{
+  "recommendations": [
+    {
+      "course_id": "DRB-204",
+      "title": "Applied Statistics for Business",
+      "rank": 1,
+      "closes_gaps": [
+        "Statistics"
+      ],
+      "impact_score": 82,
+      "rationale": "Statistics is the most foundational analytical gap for a Data Analyst role; closing it first strengthens the learner's ability to interpret outputs from Python and Power BI meaningfully. Free and intermediate-level, matching the learner's IS background.",
+      "estimated_readiness_gain": 18,
+      "sequence_note": "Take first — statistical reasoning underpins effective use of both Python and Power BI."
+    },
+    {
+      "course_id": "TVTC-DS1",
+      "title": "Python for Data Analysis",
+      "rank": 2,
+      "closes_gaps": [
+        "Python"
+      ],
+      "impact_score": 88,
+      "rationale": "Python is the highest-demand technical skill for Data Analysts and this course also teaches Pandas and Data Analysis, closing multiple competency gaps in one course. At 45 hours and free, it fits the zero-budget constraint.",
+      "estimated_readiness_gain": 22,
+      "sequence_note": "Take second — basic statistical literacy from DRB-204 will help the learner contextualize data manipulation in Pandas."
+    },
+    {
+      "course_id": "DRB-101",
+      "title": "Introduction to Power BI",
+      "rank": 3,
+      "closes_gaps": [
+        "Power BI"
+      ],
+      "impact_score": 75,
+      "rationale": "Power BI is a core visualization tool for Data Analysts; this beginner course closes that gap directly and adds Data Visualization as a bonus skill. Free and short enough to complete alongside other coursework.",
+      "estimated_readiness_gain": 15,
+      "sequence_note": "Take third or concurrently with TVTC-DS1 — no hard prerequisite, but having Python and stats context makes dashboarding more impactful."
+    }
+  ],
+  "uncovered_gaps": [],
+  "learning_path_summary": "The learner should begin with Applied Statistics for Business (~4 weeks at 8 hrs/week) to build the analytical reasoning foundation, then move into Python for Data Analysis (~6 weeks) to gain the core programmatic skill, and finish with Introduction to Power BI (~3 weeks) to complete the visualization toolkit. All three courses are free, fully covering the zero-SAR budget, and together they close every identified gap — positioning this learner competitively for a Data Analyst role on top of their existing SQL and Excel strengths. CRS-ML9 was excluded for exceeding the budget (1,800 SAR) and being outside the identified gaps; SDA-COM2 was excluded as it addresses no skill gap in scope."
+}

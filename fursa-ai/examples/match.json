@@ -1,0 +1,52 @@
+{
+  "job": {
+    "job_id": "JOB-2026-0412",
+    "title": "Junior Data Analyst",
+    "employer": "Riyadh Bank",
+    "sector": "Banking",
+    "location": "Riyadh",
+    "description": "Support the retail analytics team: build dashboards, run cohort analyses, and prepare monthly reporting for branch performance.",
+    "required_skills": ["SQL", "Excel", "Power BI", "Statistics", "Communication"],
+    "preferred_skills": ["Python", "Data Visualization", "Arabic"],
+    "required_certifications": [],
+    "min_experience_months": 6,
+    "education_requirement": "Bachelor's degree in a quantitative field",
+    "is_entry_level": true
+  },
+  "student": {
+    "student_id": "STU-88412",
+    "target_role": "Data Analyst",
+    "education_level": "Bachelor's",
+    "major": "Information Systems",
+    "university": "King Saud University",
+    "graduation_year": 2026,
+    "skills": [
+      { "name": "SQL", "level": "intermediate", "years": 1.5, "verified": true },
+      { "name": "Excel", "level": "advanced", "years": 3, "verified": true },
+      { "name": "Python", "level": "beginner", "years": 0.5, "verified": false },
+      { "name": "Statistics", "level": "beginner", "verified": false }
+    ],
+    "soft_skills": ["Teamwork", "Presentation"],
+    "certifications": [
+      { "name": "Google Data Analytics Certificate", "issuer": "Coursera", "year": 2025, "verified": true }
+    ],
+    "experience": [
+      {
+        "title": "Data Intern",
+        "organization": "Elm Company",
+        "months": 4,
+        "description": "Cleaned survey datasets and built weekly Excel reports for the product team."
+      }
+    ],
+    "projects": [
+      {
+        "name": "Riyadh Metro Ridership Dashboard",
+        "description": "Analysed open ridership data and published an interactive dashboard.",
+        "skills_used": ["SQL", "Excel", "Data Visualization"]
+      }
+    ],
+    "languages": ["Arabic", "English"],
+    "preferred_locations": ["Riyadh"]
+  },
+  "explain": true
+}

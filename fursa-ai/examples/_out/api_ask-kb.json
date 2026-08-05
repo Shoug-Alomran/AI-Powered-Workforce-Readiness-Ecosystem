@@ -1,0 +1,72 @@
+{
+  "answer": "Jadarat is designed as the primary national job-matching platform, connecting Saudi job seekers with vacancies across public, private, and non-profit sectors, managed by HRDF under Cabinet Decision No. 241 (KB-010). It successfully unifies the job-search journey and is accessible to all sectors without exception (KB-010).\n\nHowever, the Human Capability Development Program (HCDP) sets a broader ambition: ensuring that Saudis possess the 21st-century digital and cognitive skills that will be required in roughly 70% of future jobs, with 89 initiatives and SR 23B invested toward that goal (KB-007). HCDP explicitly targets workforce readiness and lifelong learning — not just job placement.\n\nThe critical gap identified in the context is that no standardized national Skills Passport or Career Readiness metric currently exists to track an individual's progress toward HCDP goals (KB-007). Jadarat addresses labor market access (where jobs are and who is hiring) but does not appear to provide a mechanism to measure or certify whether a job seeker is actually ready for the roles listed — i.e., whether they meet the occupational standards and skill thresholds that HCDP is working to define. The MHRSD's Skills Accelerator initiative and the National Occupational Standards platform are being developed to connect skills measurement to labor market requirements (KB-014), but a personal, standardized readiness metric remains absent.\n\nThis is precisely the gap Fursa addresses: its Career Readiness Score functions as the individual-level skills passport that HCDP aims to produce but that neither Jadarat nor current MHRSD initiatives yet deliver at the individual tracking level (KB-007). Meanwhile, broader labor market data shows Saudi participation at 51.3% and over 2.48 million Saudis entering the private sector since 2020 (KB-013), underscoring the scale at which such a readiness layer would need to operate.",
+  "citations": [
+    "KB-010",
+    "KB-007",
+    "KB-014",
+    "KB-013"
+  ],
+  "confidence": "high",
+  "grounded": true,
+  "follow_up_questions": [
+    "How does MHRSD's National Occupational Standards platform interact with Jadarat's job-matching function, and is there an integration plan?",
+    "What specific HCDP initiatives are closest to producing a standardized Skills Passport, and what would be required to align them with Fursa's Career Readiness Score?",
+    "Given that Saudi labor force participation reached 51.3% in Q1 2025, which sectors show the largest readiness-to-vacancy mismatch that Fursa could target first?"
+  ],
+  "sources": [
+    {
+      "kb_id": "KB-010",
+      "title": "Jadarat — Unified National Employment Platform",
+      "source": "HRDF (by Cabinet Decision No. 241)",
+      "url": "https://www.hrdf.org.sa/en/products-and-services/programs/establishments/other/jadarat/",
+      "origin": "web",
+      "relevance": 0.6936,
+      "excerpt": "KB-010 — Jadarat — Unified National Employment Platform\n\nUnified National Employment Platform (JADARAT)\nGet the Service\nThe Unified Employment Platform \"Jadarat\" is a national platform aimed at being the primary enabler for employing the Saudi workforce. This is achieved by facilitating the journey of job seekers in ex…"
+    },
+    {
+      "kb_id": "KB-010",
+      "title": "Jadarat — Unified National Employment Platform",
+      "source": "HRDF (by Cabinet Decision No. 241)",
+      "url": "https://www.hrdf.org.sa/en/products-and-services/programs/establishments/other/jadarat/",
+      "origin": "web",
+      "relevance": 0.6596,
+      "excerpt": "KB-010 — Jadarat — Unified National Employment Platform\n\ninet Decision No. (241) dated 18-3-1445 AH.\n- Saudi job seekers.\n- Government and semi-government entities.\n- Private sector establishments in the Saudi labor market, as well as similar entities such as non-profit organizations, foreign investments, and others.\nY…"
+    },
+    {
+      "kb_id": "KB-013",
+      "title": "Saudi Labor Market Progress Report",
+      "source": "MHRSD",
+      "url": "https://www.hrsd.gov.sa/en/knowledge-centre/articles/progress-saudi-labor-market",
+      "origin": "web",
+      "relevance": 0.6536,
+      "excerpt": "KB-013 — Saudi Labor Market Progress Report\n\nis implementing wide-ranging reforms and initiatives to boost employment, support national workforce development, and strengthen economic resilience.\n\nExpanding opportunities for Saudi workers\n- Since 2020, more than 2.48 million Saudis have entered the private sector, refle…"
+    },
+    {
+      "kb_id": "KB-007",
+      "title": "Human Capability Development Program (HCDP)",
+      "source": "Vision 2030",
+      "url": "https://www.vision2030.gov.sa/v2030/vrps/hcdp/",
+      "origin": "catalog",
+      "relevance": 0.5793,
+      "excerpt": "KB-007 — Human Capability Development Program (HCDP)\nCategory: Workforce Development & Employment\nSource: Vision 2030\nDocument type: National Program\nDate: 2021\nDomain tags: Education, Workforce, Skills, Vision 2030\nURL: https://www.vision2030.gov.sa/v2030/vrps/hcdp/\nSummary: Core Vision 2030 program for human capital.…"
+    },
+    {
+      "kb_id": "KB-009",
+      "title": "HRDF Strategy",
+      "source": "HRDF",
+      "url": "https://www.hrdf.org.sa/en/about/fund-policies-and-strategy/strategy/",
+      "origin": "web",
+      "relevance": 0.5042,
+      "excerpt": "KB-009 — HRDF Strategy\n\nHuman Resources Development Fund Strategy\nVision\nBuilding a sustainable national workforce in the Kingdom of Saudi Arabia\nMessage\nThe Human Resources Development Fund focuses its efforts on enhancing the skills of national human resources, providing them with knowledge and qualifications, and al…"
+    },
+    {
+      "kb_id": "KB-014",
+      "title": "Skills and Training Initiatives (MHRSD)",
+      "source": "MHRSD",
+      "url": "https://www.hrsd.gov.sa/en/care-about-you/skillsandtrain",
+      "origin": "web",
+      "relevance": 0.4883,
+      "excerpt": "KB-014 — Skills and Training Initiatives (MHRSD)\n\n00 skills.\n\nThis will positively reflect on the outputs of the education and training system and improve their relevance to labor market requirements.\n\nThis is achieved through a standard reference to measure an individual's ability to perform specific professional task…"
+    }
+  ]
+}

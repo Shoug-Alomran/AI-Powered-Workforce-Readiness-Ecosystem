@@ -1,0 +1,75 @@
+{
+  "skill_gaps": ["Power BI", "Statistics", "Python"],
+  "target_role": "Data Analyst",
+  "max_recommendations": 4,
+  "constraints": {
+    "max_hours_per_week": 8,
+    "budget_sar": 0,
+    "language": "Arabic or English"
+  },
+  "student": {
+    "student_id": "STU-88412",
+    "target_role": "Data Analyst",
+    "education_level": "Bachelor's",
+    "major": "Information Systems",
+    "skills": [
+      { "name": "SQL", "level": "intermediate", "verified": true },
+      { "name": "Excel", "level": "advanced", "verified": true }
+    ],
+    "languages": ["Arabic", "English"]
+  },
+  "course_catalog": [
+    {
+      "course_id": "DRB-101",
+      "title": "Introduction to Power BI",
+      "provider": "Doroob (HRDF)",
+      "skills_taught": ["Power BI", "Data Visualization"],
+      "duration_hours": 20,
+      "level": "beginner",
+      "cost_sar": 0,
+      "is_free": true,
+      "certification_awarded": "Doroob Certificate of Completion"
+    },
+    {
+      "course_id": "DRB-204",
+      "title": "Applied Statistics for Business",
+      "provider": "Doroob (HRDF)",
+      "skills_taught": ["Statistics", "Data Analysis"],
+      "duration_hours": 30,
+      "level": "intermediate",
+      "cost_sar": 0,
+      "is_free": true
+    },
+    {
+      "course_id": "TVTC-DS1",
+      "title": "Python for Data Analysis",
+      "provider": "TVTC",
+      "skills_taught": ["Python", "Pandas", "Data Analysis"],
+      "duration_hours": 45,
+      "level": "beginner",
+      "cost_sar": 0,
+      "is_free": true,
+      "certification_awarded": "TVTC Vocational Certificate"
+    },
+    {
+      "course_id": "CRS-ML9",
+      "title": "Advanced Machine Learning Engineering",
+      "provider": "Coursera",
+      "skills_taught": ["Machine Learning", "Deep Learning"],
+      "duration_hours": 120,
+      "level": "advanced",
+      "cost_sar": 1800,
+      "is_free": false
+    },
+    {
+      "course_id": "SDA-COM2",
+      "title": "Professional Communication in the Workplace",
+      "provider": "Doroob (HRDF)",
+      "skills_taught": ["Communication", "Presentation"],
+      "duration_hours": 12,
+      "level": "beginner",
+      "cost_sar": 0,
+      "is_free": true
+    }
+  ]
+}
