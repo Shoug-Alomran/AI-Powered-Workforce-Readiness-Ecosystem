@@ -7,7 +7,7 @@ import Navbar from "@/components/Navbar";
 import PreferencesControls from "@/components/PreferencesControls";
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://fursa.shoug-tech.com"),
+  metadataBase: new URL("https://fursah.org"),
   title: "Fursa | AI Workforce Readiness",
   description: "Connecting Saudi talent, education and employers through explainable AI.",
   openGraph: {

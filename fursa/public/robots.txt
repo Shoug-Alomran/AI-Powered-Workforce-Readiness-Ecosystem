@@ -16,3 +16,5 @@ Allow: /
 
 User-agent: PerplexityBot
 Allow: /
+
+Sitemap: https://fursah.org/sitemap.xml
