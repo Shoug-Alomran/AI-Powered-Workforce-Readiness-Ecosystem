@@ -1,4 +1,4 @@
-// Prisma schema for the Fursa AI-Powered Workforce Readiness Ecosystem prototype
+// Prisma schema for the Fursah AI-Powered Workforce Readiness Ecosystem prototype
 
 generator client {
   provider = "prisma-client"

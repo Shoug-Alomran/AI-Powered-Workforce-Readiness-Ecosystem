@@ -1,5 +1,5 @@
 // ---------------------------------------------------------------------------
-// Fursa AI Engine
+// Fursah AI Engine
 // ---------------------------------------------------------------------------
 // A transparent, rule-based scoring engine that stands in for the platform's
 // AI/ML pipeline described in the proposal (ITU-T Y.3172-style stages:

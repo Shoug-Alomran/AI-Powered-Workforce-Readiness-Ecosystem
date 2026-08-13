@@ -42,7 +42,7 @@ export async function GET() {
   students.forEach((student) => tracksCount.set(student.targetCareer, (tracksCount.get(student.targetCareer) ?? 0) + 1));
 
   let csv = "";
-  csv += `Fursa workforce intelligence export — ${ctx.university.institution}\n`;
+  csv += `Fursah workforce intelligence export — ${ctx.university.institution}\n`;
   csv += `Generated,${new Date().toISOString()}\n\n`;
 
   csv += "Section,Metric,Value\n";
@@ -66,7 +66,7 @@ export async function GET() {
   return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="fursa-workforce-intelligence-${new Date().toISOString().slice(0, 10)}.csv"`,
+      "Content-Disposition": `attachment; filename="fursah-workforce-intelligence-${new Date().toISOString().slice(0, 10)}.csv"`,
     },
   });
 }

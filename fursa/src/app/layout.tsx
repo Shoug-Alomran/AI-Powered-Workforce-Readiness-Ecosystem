@@ -8,17 +8,17 @@ import PreferencesControls from "@/components/PreferencesControls";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://fursah.org"),
-  title: "Fursa | AI Workforce Readiness",
+  title: "Fursah | AI Workforce Readiness",
   description: "Connecting Saudi talent, education and employers through explainable AI.",
   openGraph: {
-    title: "Fursa | AI Workforce Readiness",
+    title: "Fursah | AI Workforce Readiness",
     description: "Connecting Saudi talent, education and employers through explainable AI.",
-    siteName: "Fursa",
+    siteName: "Fursah",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Fursa | AI Workforce Readiness",
+    title: "Fursah | AI Workforce Readiness",
     description: "Connecting Saudi talent, education and employers through explainable AI.",
   },
 };

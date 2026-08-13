@@ -1,4 +1,4 @@
-# Fursa prototype
+# Fursah prototype
 
 A functional local prototype of the AI-Powered Workforce Readiness Ecosystem. It includes student career-readiness scoring, adaptive next actions, a skills passport, explainable opportunity matching, employer job creation/candidate ranking, and a dedicated university account with aggregate workforce and curriculum-alignment intelligence.
 

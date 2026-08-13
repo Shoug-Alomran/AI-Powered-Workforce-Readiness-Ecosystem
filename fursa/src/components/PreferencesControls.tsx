@@ -64,8 +64,8 @@ export default function PreferencesControls() {
   const [language, setLanguage] = useState<Language>("en");
 
   useEffect(() => {
-    const savedTheme = (localStorage.getItem("fursa-theme") as Theme | null) ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-    const savedLanguage = (localStorage.getItem("fursa-language") as Language | null) ?? "en";
+    const savedTheme = (localStorage.getItem("fursah-theme") as Theme | null) ?? (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const savedLanguage = (localStorage.getItem("fursah-language") as Language | null) ?? "en";
     document.documentElement.dataset.theme = savedTheme;
     applyLanguage(savedLanguage);
     const frame = requestAnimationFrame(() => {
@@ -84,14 +84,14 @@ export default function PreferencesControls() {
   function toggleTheme() {
     const next = theme === "light" ? "dark" : "light";
     setTheme(next);
-    localStorage.setItem("fursa-theme", next);
+    localStorage.setItem("fursah-theme", next);
     document.documentElement.dataset.theme = next;
   }
 
   function toggleLanguage() {
     const next = language === "en" ? "ar" : "en";
     setLanguage(next);
-    localStorage.setItem("fursa-language", next);
+    localStorage.setItem("fursah-language", next);
     applyLanguage(next);
   }
 

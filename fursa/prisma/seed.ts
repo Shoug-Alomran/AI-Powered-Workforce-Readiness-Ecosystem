@@ -12,7 +12,7 @@ const adapter = new PrismaLibSql({
 const prisma = new PrismaClient({ adapter });
 
 async function main() {
-  console.log("Seeding Fursa demo data...");
+  console.log("Seeding Fursah demo data...");
 
   // --- Wipe existing data (dev convenience) ---
   await prisma.supportTicket.deleteMany();
@@ -81,7 +81,7 @@ async function main() {
 
   // --- Admin (demo login only — production admin access should go through scripts/create-admin.ts + Firebase) ---
   await prisma.user.create({
-    data: { role: "ADMIN", name: "Fursa Trust & Safety", email: "admin@fursa.demo" },
+    data: { role: "ADMIN", name: "Fursah Trust & Safety", email: "admin@fursah.demo" },
   });
 
   // --- Employers ---

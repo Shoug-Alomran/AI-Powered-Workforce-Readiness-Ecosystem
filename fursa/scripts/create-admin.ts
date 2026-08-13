@@ -5,7 +5,7 @@ import { prisma } from "../src/lib/db";
 async function main() {
   const email = String(process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
   const password = String(process.env.ADMIN_PASSWORD ?? "");
-  const name = String(process.env.ADMIN_NAME ?? "Fursa Verification Admin").trim();
+  const name = String(process.env.ADMIN_NAME ?? "Fursah Verification Admin").trim();
   if (!email) throw new Error("Set ADMIN_EMAIL");
   const auth = getFirebaseAdminAuth();
   let user;
