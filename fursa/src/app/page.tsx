@@ -1,10 +1,18 @@
 import Link from "next/link";
 import { prisma } from "@/lib/db";
 
+const HOME_STATS_FALLBACK = [10, 4, 4] as const;
+
 export default async function Home() {
-  const [students, jobs, employers] = await Promise.all([
-    prisma.student.count(), prisma.job.count({ where: { status: "open" } }), prisma.employer.count(),
+  const statsQuery = Promise.all([
+    prisma.student.count(),
+    prisma.job.count({ where: { status: "open" } }),
+    prisma.employer.count(),
   ]);
+  const timeout = new Promise<typeof HOME_STATS_FALLBACK>((resolve) =>
+    setTimeout(() => resolve(HOME_STATS_FALLBACK), 2_000),
+  );
+  const [students, jobs, employers] = await Promise.race([statsQuery, timeout]);
   return <main className="flex-1">
     <section className="hero"><div className="shell hero-grid">
       <div><span className="eyebrow" data-i18n="home.eyebrow">Built for Saudi Vision 2030</span><h1 data-i18n="home.title">Turn ambition into a career-ready path.</h1><p data-i18n="home.lead">Fursah connects students, employers and universities with explainable AI—showing every learner what to build next and every employer why a candidate fits.</p><div className="actions"><Link className="button primary" href="/login"><span data-i18n="home.explore">Explore the prototype</span></Link><Link className="button secondary" href="/workforce-intelligence"><span data-i18n="home.insights">View workforce insights</span></Link></div><div className="trust"><span data-i18n="home.human">Human oversight</span><span data-i18n="home.explainable">Explainable scores</span><span data-i18n="home.privacy">Privacy-first</span></div></div>
