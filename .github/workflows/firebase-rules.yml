@@ -15,9 +15,6 @@ jobs:
     name: Deploy Firestore rules and indexes
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      FIREBASE_SERVICE_ACCOUNT_SECRET: FIREBASE_SERVICE_ACCOUNT_FURSA_A4F06
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v5
@@ -30,7 +27,7 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets[env.FIREBASE_SERVICE_ACCOUNT_SECRET] }}
+          credentials_json: ${{ secrets[format('{0}_{1}', 'FIREBASE_SERVICE_ACCOUNT_FURSA', 'A4F06')] }}
 
       - name: Deploy Firestore configuration
         working-directory: fursa

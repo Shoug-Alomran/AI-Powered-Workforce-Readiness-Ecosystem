@@ -14,6 +14,10 @@ type DemandSignal = {
   demandPoints: number;
 };
 
+async function currentTimestamp() {
+  return Date.now();
+}
+
 export default async function UniversityDashboard({ searchParams }: { searchParams: Promise<{ q?: string; track?: string }> }) {
   const ctx = await getCurrentUniversity();
   if (!ctx) redirect("/login");
@@ -76,7 +80,8 @@ export default async function UniversityDashboard({ searchParams }: { searchPara
   const emergingSkill = withKnownCoverage.length ? [...withKnownCoverage].sort((a, b) => a.coverage - b.coverage)[0] : topDemand[0];
 
   const latestJobDate = jobs.length ? jobs.reduce((latest, job) => (job.createdAt > latest ? job.createdAt : latest), jobs[0].createdAt) : null;
-  const hoursAgo = latestJobDate ? Math.max(0, Math.round((Date.now() - latestJobDate.getTime()) / 3_600_000)) : null;
+  const renderedAt = await currentTimestamp();
+  const hoursAgo = latestJobDate ? Math.max(0, Math.round((renderedAt - latestJobDate.getTime()) / 3_600_000)) : null;
 
   // --- curriculum gap analysis: top-demand skills with weakest cohort coverage ---
   const gapList = withKnownCoverage

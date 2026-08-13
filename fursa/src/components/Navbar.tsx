@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getCurrentUser } from "@/lib/session";
 import { logout } from "@/actions/auth";
 
@@ -9,7 +10,7 @@ export default async function Navbar() {
     <header className="border-b border-slate-200 bg-white/80 backdrop-blur sticky top-0 z-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-semibold text-slate-900">
-          <img src="/logo.svg" alt="" width={36} height={36} className="rounded-xl" />
+          <Image src="/logo.svg" alt="" width={36} height={36} className="rounded-xl" />
           <span>Fursah</span>
           <span data-i18n="brand.tagline" className="hidden sm:inline text-slate-400 font-normal text-sm">
             AI Workforce Readiness
