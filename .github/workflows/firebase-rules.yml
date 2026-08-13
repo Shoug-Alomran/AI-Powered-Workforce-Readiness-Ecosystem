@@ -27,7 +27,7 @@ jobs:
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets[format('{0}_{1}', 'FIREBASE_SERVICE_ACCOUNT_FURSA', 'A4F06')] }}
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_FURSA_A4F06 }}
 
       - name: Deploy Firestore configuration
         working-directory: fursa
