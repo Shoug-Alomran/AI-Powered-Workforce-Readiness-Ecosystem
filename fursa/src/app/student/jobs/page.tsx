@@ -82,27 +82,10 @@ export default async function Jobs({
           const applied = student.applications.some((a) => a.jobId === job.id);
           const saved = student.bookmarks.some((b) => b.jobId === job.id);
           return (
-            <article className="card" key={job.id}>
-              <div className="data-row">
-                <div>
-                  <span className="pill">{m.score}% match</span>
-                  <h2 style={{ margin: "10px 0 4px" }}>{job.title}</h2>
-                  <span className="muted">{job.employer.company} · {job.minExperience} months minimum experience</span>
-                </div>
-                <div className="actions">
-                  <form action={toggleBookmark}>
-                    <input type="hidden" name="jobId" value={job.id} />
-                    <button className="button secondary">{saved ? "Saved ✓" : "Save"}</button>
-                  </form>
-                  <form action={applyToJob}>
-                    <input type="hidden" name="jobId" value={job.id} />
-                    {!applied&&<DocumentUpload label="Application documents" compact/>}
-                    <button className="button primary">{applied ? "Applied ✓" : "Apply"}</button>
-                  </form>
-                </div>
-              </div>
-              <p>{job.description}</p>
-              <div className="grid-2">
+            <article className="card student-job-card" key={job.id}>
+              <header className="student-job-card-header"><div><span className="pill">{m.score}% match</span><h2>{job.title}</h2><p>{job.employer.company} · {job.minExperience} months minimum experience</p></div><span className="student-job-status">{applied ? "Application submitted" : saved ? "Saved opportunity" : "Open opportunity"}</span></header>
+              <p className="student-job-description">{job.description}</p>
+              <div className="grid-2 student-job-match-grid">
                 <div>
                   <strong>Matches</strong>
                   <p className="muted">{m.matchedSkills.join(", ") || "Build your profile to reveal matches"}</p>
@@ -116,7 +99,18 @@ export default async function Jobs({
                   </p>
                 </div>
               </div>
-              <div className="notice">{m.explanation}</div>
+              <div className="notice student-job-explanation">{m.explanation}</div>
+              <footer className="student-job-card-footer">
+                <form action={applyToJob} className="student-job-apply-form">
+                  <input type="hidden" name="jobId" value={job.id} />
+                  {!applied&&<DocumentUpload label="Application documents" compact/>}
+                  <button className="button primary student-job-apply-button" disabled={applied}>{applied ? "Applied ✓" : "Apply now"}</button>
+                </form>
+                <form action={toggleBookmark} className="student-job-save-form">
+                  <input type="hidden" name="jobId" value={job.id} />
+                  <button className="button secondary">{saved ? "Saved ✓" : "Save"}</button>
+                </form>
+              </footer>
             </article>
           );
         })}

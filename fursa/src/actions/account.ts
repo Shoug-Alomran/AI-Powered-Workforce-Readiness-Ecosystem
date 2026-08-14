@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { firebaseAdminConfigured, getFirebaseAdminAuth, getFirebaseAdminDb } from "@/lib/firebase-admin";
+import { randomUUID } from "node:crypto";
+import { uploadPrivateDocument } from "@/lib/r2";
 
 export type AccountUpdateState = { error?: string; success?: string };
 
@@ -52,5 +54,25 @@ export async function updateAccountCredentials(_previous: AccountUpdateState, fo
   revalidatePath("/employer/profile");
   revalidatePath("/university/profile");
   revalidatePath("/student/account");
+  revalidatePath("/admin/profile");
   return { success: password ? "Email and password updated." : "Email updated." };
+}
+
+export async function updateProfileImage(formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) return;
+  const image = formData.get("profileImage");
+  if (!(image instanceof File) || image.size === 0) return;
+  const allowed = new Set(["image/jpeg","image/png","image/webp","image/gif"]);
+  if (!allowed.has(image.type)) throw new Error("Choose a JPG, PNG, WebP, or GIF image.");
+  if (image.size > 5 * 1024 * 1024) throw new Error("Profile images must be 5 MB or smaller.");
+  const extension = ({"image/jpeg":"jpg","image/png":"png","image/webp":"webp","image/gif":"gif"} as Record<string,string>)[image.type];
+  const storageKey = `profiles/${user.id}/${randomUUID()}.${extension}`;
+  await uploadPrivateDocument(storageKey,new Uint8Array(await image.arrayBuffer()),image.type);
+  await prisma.evidenceDocument.create({data:{ownerUserId:user.id,contextType:"PROFILE_IMAGE",contextId:user.id,purpose:"Account profile image",storageKey,originalName:image.name.slice(0,180),mimeType:image.type,sizeBytes:image.size,aiStatus:"PASSED",aiNote:"User-provided profile image.",reviewStatus:"APPROVED"}});
+  revalidatePath("/student/account"); revalidatePath("/student/profile"); revalidatePath("/student/dashboard");
+  revalidatePath("/employer/profile"); revalidatePath("/employer/dashboard");
+  revalidatePath("/university/profile"); revalidatePath("/university/dashboard");
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/admin/profile");
 }

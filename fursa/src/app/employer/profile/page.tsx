@@ -2,6 +2,8 @@ import { redirect } from "next/navigation";
 import EmployerHeader from "@/components/EmployerHeader";
 import AccountSettingsForm from "@/components/AccountSettingsForm";
 import { getCurrentEmployer } from "@/lib/session";
+import AccountAvatar from "@/components/AccountAvatar";
+import ProfileImageForm from "@/components/ProfileImageForm";
 
 export default async function EmployerProfile() {
   const ctx = await getCurrentEmployer();
@@ -13,9 +15,10 @@ export default async function EmployerProfile() {
     <div className="employer-detail-content account-profile-content">
       <span className="eyebrow">Account profile</span><h1 className="page-title">Your profile</h1><p className="muted">View your organization identity and manage your sign-in details.</p>
       <div className="account-profile-grid">
-        <section className="card account-identity"><i>{initials}</i><div><h2>{ctx.user.name}</h2><p>{ctx.employer.company}</p><span>Employer administrator</span></div></section>
+        <section className="card account-identity"><AccountAvatar initials={initials} className="account-avatar--large"/><div><h2>{ctx.user.name}</h2><p>{ctx.employer.company}</p><span>Employer administrator</span></div></section>
         <section className="card account-verification"><span className="eyebrow">Verified organization</span><h2>@{verifiedDomain}</h2><p className="muted">Only email addresses on this domain can be used for this employer account.</p></section>
       </div>
+      <section className="card account-security"><h2>Profile photo</h2><p className="muted">Add a recognizable image for your employer workspace.</p><ProfileImageForm/></section>
       <section className="card account-security"><h2>Sign-in and security</h2><p className="muted">Changing your email requires continued access to your organization&apos;s verified domain.</p><AccountSettingsForm email={ctx.user.email} verifiedDomain={verifiedDomain}/></section>
     </div>
   </main>;

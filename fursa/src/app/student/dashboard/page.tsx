@@ -124,13 +124,10 @@ export default async function StudentDashboard() {
         </div>
       </section>
 
-      <section className="card" id="feedback" style={{ marginTop: 18, scrollMarginTop: 80 }}>
-        <span className="eyebrow">Workforce feedback loop</span>
-        <h2>Employer feedback on your work</h2>
-        <p className="muted" style={{ marginTop: -8, marginBottom: 4 }}>
-          Structured feedback from employers after a hire — this is what feeds back into the AI&apos;s learning recommendations.
-        </p>
+      <section className="card student-feedback-section" id="feedback">
+        <header><span className="eyebrow">Workforce feedback loop</span><h2>Employer feedback on your work</h2><p className="muted">Structured feedback from employers after a hire — this is what feeds back into the AI&apos;s learning recommendations.</p></header>
         <div className="rating-scale-note" role="note"><strong>How ratings are interpreted</strong><span><b>1</b> Poor</span><span><b>3</b> Meets expectations</span><span><b>5</b> Excellent</span></div>
+        <div className="student-feedback-list">
         {feedbacks.length ? (
           feedbacks.map((f) => {
             const avg = Math.round((f.technical + f.communication + f.teamwork + f.problemSolving + f.adaptability + f.overall) / 6 * 20);
@@ -147,6 +144,7 @@ export default async function StudentDashboard() {
         ) : (
           <div className="notice">No employer feedback yet — this appears once an employer you&apos;ve been hired by submits a review.</div>
         )}
+        </div>
       </section>
     </main>
   );

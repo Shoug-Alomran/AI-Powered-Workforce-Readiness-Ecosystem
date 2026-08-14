@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { logout } from "@/actions/auth";
+import AccountAvatar from "@/components/AccountAvatar";
 
 type Item = { label: string; href: string; icon: ReactNode; match?: string[] };
 
@@ -63,7 +64,7 @@ export default function AdminSidebar({ personName }: { personName: string }) {
     <div className="admin-header-main">
       <Link className="admin-header-brand" href="/admin/dashboard"><span>✦</span><b>FURSA</b><small>Admin Console</small></Link>
       <nav className="admin-primary-nav" aria-label="Administration pages">{primary.map(item => <Link key={item.href} className={pathname === item.href ? "is-active" : ""} href={item.href} aria-current={pathname === item.href ? "page" : undefined}>{item.label}</Link>)}</nav>
-      <div className="admin-header-account"><Link href="/admin/dashboard#user-directory"><i>{initials}</i><span><b>{personName}</b><small>Platform administrator</small></span></Link><form action={logout}><button type="submit">Log out</button></form></div>
+      <div className="admin-header-account"><Link href="/admin/profile" aria-label="Open your account profile"><AccountAvatar initials={initials}/><span><b>{personName}</b><small>Platform administrator</small></span></Link><form action={logout}><button type="submit">Log out</button></form></div>
     </div>
     <nav className="admin-page-menu" aria-label="On this page"><strong>ON THIS PAGE</strong>{currentSection.map(item => <Link key={item.label} href={item.href}>{item.icon}<span>{item.label}</span></Link>)}</nav>
   </header>;

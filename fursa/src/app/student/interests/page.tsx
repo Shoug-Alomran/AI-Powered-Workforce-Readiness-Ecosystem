@@ -6,6 +6,7 @@ import { computeJobMatch, computeReadinessScore, getTrackGaps, matchOfferingsToG
 import { getAllCareerTracksAsync } from "@/lib/careerTracks.server";
 import { setPrimaryCareerTrack, toggleFavoriteCompany, toggleFavoriteCareerTrack } from "@/actions/student";
 import PageToc from "@/components/PageToc";
+import CareerMajorSelector from "@/components/CareerMajorSelector";
 
 export default async function StudentInterests({
   searchParams,
@@ -77,11 +78,7 @@ export default async function StudentInterests({
         <span className="eyebrow">Set up your recommendations</span>
         <h2>Choose your career direction</h2>
         <p className="muted">Start with the area closest to your major, then choose a career within it. You can change this later.</p>
-        {[
-          {major:"Computing & Information Technology",test:(label:string)=>/software|data|cyber/i.test(label)},
-          {major:"Business & Finance",test:(label:string)=>/financial|business|account|market/i.test(label)},
-          {major:"Design & Creative",test:(label:string)=>/design|ux|ui|creative/i.test(label)},
-        ].map(group=>{const options=tracks.filter(track=>group.test(track.label));return options.length?<div className="student-major-group" key={group.major}><h3>{group.major}</h3><div>{options.map(track=><form action={setPrimaryCareerTrack} key={track.id}><input type="hidden" name="careerTrackId" value={track.id}/><button className="button secondary">{track.label}<span>Choose →</span></button></form>)}</div></div>:null})}
+        <form action={setPrimaryCareerTrack} className="student-career-selector-form"><CareerMajorSelector tracks={tracks.map(({id,label})=>({id,label}))} initialCareer={hasPrimaryCareer?student.targetCareer:""} careerName="careerTrackId"/><button className="button primary">Save target career</button></form>
       </section>}
 
       <section className="card student-ai-section" id="recommendations" style={{ marginTop: 26, scrollMarginTop: 80 }}>

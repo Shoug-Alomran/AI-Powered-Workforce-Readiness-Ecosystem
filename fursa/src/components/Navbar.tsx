@@ -3,6 +3,7 @@ import Image from "next/image";
 import { getCurrentUser } from "@/lib/session";
 import { logout } from "@/actions/auth";
 import PortalNavLinks from "@/components/PortalNavLinks";
+import AccountAvatar from "@/components/AccountAvatar";
 
 export default async function Navbar() {
   const user = await getCurrentUser();
@@ -14,6 +15,7 @@ export default async function Navbar() {
       { href: "/student/dashboard", label: "Dashboard" },
       { href: "/student/interests", label: "Career Interests" },
       { href: "/student/jobs", label: "Job Discovery" },
+      { href: "/student/applications", label: "Applications" },
       { href: "/student/roadmap", label: "Career Roadmap" },
       { href: "/student/profile", label: "Skills Passport" },
     ];
@@ -22,8 +24,7 @@ export default async function Navbar() {
         <Link href="/student/dashboard" className="student-brand"><Image src="/logo.svg" alt="" width={36} height={36}/><strong>FURSA</strong></Link>
         <PortalNavLinks links={links} className="student-nav" />
         <div className="student-account">
-          <Link href="/student/applications" className="student-utility-link">Applications</Link>
-          <Link href="/student/account" className="student-profile-link" aria-label={`Open ${user.name}'s account profile`}><span>{user.name.split(" ").map(part => part[0]).slice(0,2).join("")}</span><b>{user.name}<small>View profile</small></b></Link>
+          <Link href="/student/account" className="student-profile-link" aria-label={`Open ${user.name}'s account profile`}><AccountAvatar initials={user.name.split(" ").map(part => part[0]).slice(0,2).join("")}/><b>{user.name}<small>View profile</small></b></Link>
           <form action={logout}><button type="submit" className="student-logout">Log out</button></form>
         </div>
       </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { logout } from "@/actions/auth";
+import AccountAvatar from "@/components/AccountAvatar";
 
 function HeaderIcon({name}:{name:"brand"|"search"}) {
   return <svg className="erd-svg" viewBox="0 0 24 24" aria-hidden="true">
@@ -18,6 +19,6 @@ export default function EmployerHeader({company,userName,active,pageLabel}:{comp
       <Link className={active==="post"?"active":""} href="/employer/jobs/new">Post a Job</Link>
     </nav>
     <form className="erd-search" action="/employer/dashboard"><HeaderIcon name="search"/><input name="q" aria-label="Search employer roles" placeholder="Search roles"/></form>
-    <div className="erd-user"><Link className="erd-user-profile" href="/employer/profile"><span><b>{userName}</b><small>HR Director</small></span><i>{initials}</i></Link><form action={logout}><button type="submit">Log out</button></form></div>
+    <div className="erd-user"><Link className="erd-user-profile" href="/employer/profile"><span><b>{userName}</b><small>HR Director</small></span><AccountAvatar initials={initials}/></Link><form action={logout}><button type="submit">Log out</button></form></div>
   </header>;
 }

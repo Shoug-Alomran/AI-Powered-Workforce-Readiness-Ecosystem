@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { logout } from "@/actions/auth";
+import AccountAvatar from "@/components/AccountAvatar";
 
 const links = [
   ["/university/dashboard", "Dashboard"], ["/university/curriculum", "Courses & Certifications"],
@@ -24,7 +25,7 @@ export default function UniversityTopbar({institution,personName}:{institution:s
   return <header className="uni-only-header"><div className="uni-only-main">
     <Link className="uni-only-brand" href="/university/dashboard"><span>🎓</span><b>FURSA</b></Link>
     <nav>{links.map(([href,label])=><Link className={pathname===href||(href==="/university/actions"&&pathname.startsWith("/university/actions/"))?"active":""} href={href} key={href}>{label}</Link>)}</nav>
-    <div className="uni-only-user"><Link href="/university/profile"><i>{initials||"U"}</i><span><b>{personName}</b><small>{institution}</small></span></Link><Link href="/university/settings" aria-label="Settings">⚙</Link><form action={logout}><button type="submit">Log out</button></form></div>
+    <div className="uni-only-user"><Link href="/university/profile"><AccountAvatar initials={initials||"U"}/><span><b>{personName}</b><small>{institution}</small></span></Link><Link href="/university/settings" aria-label="Settings">⚙</Link><form action={logout}><button type="submit">Log out</button></form></div>
   </div><div className="uni-only-context"><div><small>{subtitle}</small><h1>{title}</h1></div><div className="uni-only-actions">
     {pathname==="/university/actions"&&<><a href="/api/university/export">⇧ Export Report</a><Link className="primary" href="/university/actions/new">＋ Create New Action</Link></>}
     {pathname==="/university/curriculum"&&<><a href="/api/university/export">⇩ Export</a><Link className="primary" href="/university/offerings#add-course">⊕ Add Course</Link></>}

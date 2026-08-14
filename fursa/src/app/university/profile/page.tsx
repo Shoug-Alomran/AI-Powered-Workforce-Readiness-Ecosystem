@@ -1,6 +1,8 @@
 import { redirect } from "next/navigation";
 import { getCurrentUniversity } from "@/lib/session";
 import AccountSettingsForm from "@/components/AccountSettingsForm";
+import AccountAvatar from "@/components/AccountAvatar";
+import ProfileImageForm from "@/components/ProfileImageForm";
 
 export default async function UniversityProfile() {
   const ctx = await getCurrentUniversity();
@@ -16,7 +18,7 @@ export default async function UniversityProfile() {
 
       <div className="account-profile-grid">
         <section className="card account-identity">
-          <i>{initials || "U"}</i>
+          <AccountAvatar initials={initials || "U"} className="account-avatar--large"/>
           <div>
             <h2>{ctx.user.name}</h2>
             <p>{ctx.university.institution}</p>
@@ -43,6 +45,12 @@ export default async function UniversityProfile() {
           <span className="muted">Account email</span>
           <strong>{ctx.user.email}</strong>
         </div>
+      </section>
+
+      <section className="card account-security">
+        <h2>Profile photo</h2>
+        <p className="muted">Add a recognizable image for your university workspace.</p>
+        <ProfileImageForm/>
       </section>
 
       <section className="card account-security">

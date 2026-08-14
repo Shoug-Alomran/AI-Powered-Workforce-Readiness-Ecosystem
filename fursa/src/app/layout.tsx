@@ -6,6 +6,8 @@ import "./globals.css";
 import Navbar from "@/components/Navbar";
 import PreferencesControls from "@/components/PreferencesControls";
 import AccessibleViewControls from "@/components/AccessibleViewControls";
+import ContextualWalkthrough from "@/components/ContextualWalkthrough";
+import { getCurrentUser } from "@/lib/session";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://fursah.org"),
@@ -24,14 +26,15 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
+  const user = await getCurrentUser();
   return (
     <html
       lang="en"
       className="h-full antialiased"
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col"><Navbar />{children}<AccessibleViewControls /><PreferencesControls /><Analytics /><SpeedInsights /></body>
+      <body className="min-h-full flex flex-col"><Navbar />{children}{user && <ContextualWalkthrough role={user.role} />}<AccessibleViewControls /><PreferencesControls /><Analytics /><SpeedInsights /></body>
     </html>
   );
 }
