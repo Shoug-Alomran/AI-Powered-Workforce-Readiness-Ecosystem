@@ -3,7 +3,6 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { setSessionUserId, clearSession } from "@/lib/session";
-import { CAREER_TRACKS } from "@/lib/careerTracks";
 
 export async function loginAsUser(userId: string) {
   const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -33,7 +32,7 @@ export async function logout() {
 export async function createStudentAccount(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const targetCareer = String(formData.get("targetCareer") ?? CAREER_TRACKS[0].id);
+  const targetCareer = "undecided";
   const university = String(formData.get("university") ?? "").trim();
   const degree = String(formData.get("degree") ?? "").trim();
 

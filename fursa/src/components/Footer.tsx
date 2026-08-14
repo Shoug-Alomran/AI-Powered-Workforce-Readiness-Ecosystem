@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 
 const roleLinks = {
-  STUDENT: [["Dashboard","/student/dashboard"],["Opportunities","/student/jobs"],["Career Roadmap","/student/roadmap"],["Skills Passport","/student/evidence"]],
+  STUDENT: [["Dashboard","/student/dashboard"],["Opportunities","/student/jobs"],["Career Roadmap","/student/roadmap"],["Skills Passport","/student/profile"]],
   EMPLOYER: [["Employer Dashboard","/employer/dashboard"],["Post a Job","/employer/jobs/new"]],
   UNIVERSITY: [["University Dashboard","/university/dashboard"],["Courses & Certifications","/university/curriculum"],["Workforce Demand","/university/job-demand"],["Action Plan","/university/actions"]],
   ADMIN: [["Admin Dashboard","/admin/dashboard"],["Career Taxonomy","/admin/career-tracks"],["Trust & Governance","/admin/governance"],["Model Monitoring","/admin/monitoring"]],

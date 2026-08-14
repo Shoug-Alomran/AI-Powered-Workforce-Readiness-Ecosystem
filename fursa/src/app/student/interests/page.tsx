@@ -4,17 +4,17 @@ import { prisma } from "@/lib/db";
 import { getCurrentStudent } from "@/lib/session";
 import { computeJobMatch, computeReadinessScore, getTrackGaps, matchOfferingsToGaps, readinessBand } from "@/lib/ai";
 import { getAllCareerTracksAsync } from "@/lib/careerTracks.server";
-import { toggleFavoriteCompany, toggleFavoriteCareerTrack } from "@/actions/student";
+import { setPrimaryCareerTrack, toggleFavoriteCompany, toggleFavoriteCareerTrack } from "@/actions/student";
 import PageToc from "@/components/PageToc";
 
 export default async function StudentInterests({
   searchParams,
 }: {
-  searchParams: Promise<{ trackQ?: string; companyQ?: string }>;
+  searchParams: Promise<{ trackQ?: string; companyQ?: string; setup?: string }>;
 }) {
   const ctx = await getCurrentStudent();
   if (!ctx) redirect("/login");
-  const { trackQ = "", companyQ = "" } = await searchParams;
+  const { trackQ = "", companyQ = "", setup = "" } = await searchParams;
 
   const [student, tracks, employers, offerings] = await Promise.all([
     prisma.student.findUniqueOrThrow({
@@ -50,6 +50,9 @@ export default async function StudentInterests({
 
   const favoriteTracks = [...favoriteTrackIds].map((id) => trackById.get(id)).filter((t): t is NonNullable<typeof t> => Boolean(t));
   const favoriteEmployers = employers.filter((e) => favoriteEmployerIds.has(e.id));
+  const hasPrimaryCareer = student.targetCareer !== "undecided" && trackById.has(student.targetCareer);
+  const primaryTrack = hasPrimaryCareer ? trackById.get(student.targetCareer) : undefined;
+  const primaryReadiness = primaryTrack ? computeReadinessScore(student, primaryTrack) : null;
 
   const visibleTracks = trackQ
     ? tracks.filter((t) => t.label.toLowerCase().includes(trackQ.trim().toLowerCase()))
@@ -60,12 +63,7 @@ export default async function StudentInterests({
 
   return (
     <main className="page-shell student-career-interests">
-      <span className="eyebrow">Career interests</span>
-      <h1 className="page-title">What are you working toward?</h1>
-      <p className="muted">
-        Follow companies and career tracks you care about. The AI checks your fit continuously — when you&apos;re ready, it
-        surfaces the match; when you&apos;re close, it recommends the exact course or certification to close the gap.
-      </p>
+      <section className="student-design-hero student-interests-hero"><div className="student-hero-copy"><span className="eyebrow">CAREER INTERESTS</span><h1>Career Interests</h1><p>Intelligent discovery and workforce alignment based on your verified profile.</p><div className="student-interest-stats"><span><small>TARGET CAREER</small><b>{primaryTrack?.label ?? "Choose a career"}</b></span><span><small>FOLLOWING</small><b>{favoriteTracks.length} tracks</b></span><span><small>RECOMMENDED</small><b>{Math.max(0,tracks.length-favoriteTracks.length)} careers</b></span><span><small>COMPANIES</small><b>{favoriteEmployers.length} followed</b></span></div><div className="student-ai-callout"><b>✦</b><p><strong>AI Insight:</strong> Following relevant tracks and employers improves your personalized job, course, and certification recommendations.</p></div><div className="student-hero-actions"><a href="#career-tracks">Explore Career Tracks</a><a href="#companies">Explore Companies</a></div></div><aside className="student-score-card"><span>Readiness score</span><strong>{primaryReadiness?.score ?? 0}<small>%</small></strong><div className="bar"><i style={{width:`${primaryReadiness?.score ?? 0}%`}}/></div><p>{primaryReadiness ? readinessBand(primaryReadiness.score).label : "Complete your profile to begin"}</p></aside></section>
 
       <PageToc
         items={[
@@ -75,7 +73,18 @@ export default async function StudentInterests({
         ]}
       />
 
-      <section className="card" id="recommendations" style={{ marginTop: 26, scrollMarginTop: 80 }}>
+      {(setup === "career" || !hasPrimaryCareer) && <section className="card student-career-setup" id="choose-career">
+        <span className="eyebrow">Set up your recommendations</span>
+        <h2>Choose your career direction</h2>
+        <p className="muted">Start with the area closest to your major, then choose a career within it. You can change this later.</p>
+        {[
+          {major:"Computing & Information Technology",test:(label:string)=>/software|data|cyber/i.test(label)},
+          {major:"Business & Finance",test:(label:string)=>/financial|business|account|market/i.test(label)},
+          {major:"Design & Creative",test:(label:string)=>/design|ux|ui|creative/i.test(label)},
+        ].map(group=>{const options=tracks.filter(track=>group.test(track.label));return options.length?<div className="student-major-group" key={group.major}><h3>{group.major}</h3><div>{options.map(track=><form action={setPrimaryCareerTrack} key={track.id}><input type="hidden" name="careerTrackId" value={track.id}/><button className="button secondary">{track.label}<span>Choose →</span></button></form>)}</div></div>:null})}
+      </section>}
+
+      <section className="card student-ai-section" id="recommendations" style={{ marginTop: 26, scrollMarginTop: 80 }}>
         <span className="eyebrow">AI career interest matching</span>
         <h2>Your matches & recommendations</h2>
 
@@ -229,10 +238,10 @@ export default async function StudentInterests({
             return (
               <div className="data-row" key={track.id}>
                 <span>{track.label}{track.id === student.targetCareer ? " (primary)" : ""}</span>
-                <form action={toggleFavoriteCareerTrack}>
+                <div className="student-track-actions">{track.id !== student.targetCareer && <form action={setPrimaryCareerTrack}><input type="hidden" name="careerTrackId" value={track.id}/><button className="button secondary">Set as target</button></form>}<form action={toggleFavoriteCareerTrack}>
                   <input type="hidden" name="careerTrackId" value={track.id} />
                   <button className={`button ${isFavorite ? "secondary" : "primary"}`}>{isFavorite ? "Following ✓" : "Follow"}</button>
-                </form>
+                </form></div>
               </div>
             );
           })}

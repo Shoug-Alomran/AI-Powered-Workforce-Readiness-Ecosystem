@@ -10,7 +10,6 @@ import {
 } from "firebase/auth";
 import { getFirebaseClientAuth } from "@/lib/firebase-client";
 import type { FirebaseRole } from "@/lib/firebase-types";
-import { CAREER_TRACKS } from "@/lib/careerTracks";
 import Link from "next/link";
 
 export default function FirebaseAuthPanel({ configured, serverReady }: { configured: boolean; serverReady: boolean }) {
@@ -36,11 +35,11 @@ export default function FirebaseAuthPanel({ configured, serverReady }: { configu
       const credential = mode === "signup" ? await createUserWithEmailAndPassword(auth, email, password) : await signInWithEmailAndPassword(auth, email, password);
       if (mode === "signup") await updateProfile(credential.user, { displayName: name });
       const idToken = await credential.user.getIdToken(true);
-      const response = await fetch("/api/auth/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idToken, role, name, targetCareer: formData.get("targetCareer"), university: formData.get("university"), company: formData.get("company"), industry: formData.get("industry"), institution: formData.get("institution"), region: formData.get("region") }) });
+      const response = await fetch("/api/auth/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idToken, role, name, university: formData.get("university"), company: formData.get("company"), industry: formData.get("industry"), institution: formData.get("institution"), region: formData.get("region") }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "Unable to create session");
       await signOut(auth);
-      window.location.assign(result.role === "STUDENT" ? "/student/dashboard" : result.role === "EMPLOYER" ? "/employer/dashboard" : result.role === "ADMIN" ? "/admin/dashboard" : "/university/dashboard");
+      window.location.assign(result.role === "STUDENT" ? (mode === "signup" ? "/student/interests?setup=career" : "/student/dashboard") : result.role === "EMPLOYER" ? "/employer/dashboard" : result.role === "ADMIN" ? "/admin/dashboard" : "/university/dashboard");
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "Authentication failed";
       setError(message.replace("Firebase: ", "").replace(/\(auth\/.+\)\.?/, "")); setLoading(false);
@@ -71,7 +70,7 @@ export default function FirebaseAuthPanel({ configured, serverReady }: { configu
     {mode === "signup" && <><label>Account type<select className="input" value={role} onChange={event => setRole(event.target.value as FirebaseRole)}><option value="STUDENT">Student</option><option value="EMPLOYER">Employer</option><option value="UNIVERSITY">University</option></select></label><label>Full name<input className="input" name="name" required /></label></>}
     <label>Email<input className="input" type="email" name="email" autoComplete="email" required /></label>{mode !== "forgot" && <label>Password<input className="input" type="password" name="password" autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={6} required /><small className="muted">At least 6 characters.</small></label>}
     {mode === "signin" && <button type="button" className="forgot-link" onClick={() => changeMode("forgot")}><span data-i18n="auth.forgot">Forgot password?</span></button>}
-    {mode === "signup" && role === "STUDENT" && <><label>Target career<select className="input" name="targetCareer">{CAREER_TRACKS.map(track => <option value={track.id} key={track.id}>{track.label}</option>)}</select></label><label>University<input className="input" name="university" /></label></>}
+    {mode === "signup" && role === "STUDENT" && <label>University <span className="muted">(optional)</span><input className="input" name="university" /><small className="muted">You will choose your major and career direction after creating your account.</small></label>}
     {mode === "signup" && role === "EMPLOYER" && <><label>Company<input className="input" name="company" required /></label><label>Industry<input className="input" name="industry" /></label></>}
     {mode === "signup" && role === "UNIVERSITY" && <><label>Institution<input className="input" name="institution" required /></label><label>Region<input className="input" name="region" /></label></>}
     {mode !== "forgot" && !serverReady && <div className="notice">Secure account sign-in is waiting for the Firebase Admin credential. You can still use a prepared account below.</div>}{error && <div className="auth-error">{error}</div>}{success && <div className="auth-success" role="status">{success}</div>}<button className="button primary" disabled={loading || (mode !== "forgot" && !serverReady)}>{loading ? "Please wait…" : mode === "signup" ? "Create account" : mode === "forgot" ? "Send reset link" : "Sign in"}</button>{mode !== "forgot"&&!serverReady&&<Link className="button secondary" href="/login/demo">Choose a prepared account</Link>}

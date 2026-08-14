@@ -51,5 +51,6 @@ export async function updateAccountCredentials(_previous: AccountUpdateState, fo
   if (email !== user.email) await prisma.user.update({ where: { id: user.id }, data: { email } });
   revalidatePath("/employer/profile");
   revalidatePath("/university/profile");
+  revalidatePath("/student/account");
   return { success: password ? "Email and password updated." : "Email updated." };
 }

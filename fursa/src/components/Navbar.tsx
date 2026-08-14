@@ -23,7 +23,7 @@ export default async function Navbar() {
         <PortalNavLinks links={links} className="student-nav" />
         <div className="student-account">
           <Link href="/student/applications" className="student-utility-link">Applications</Link>
-          <Link href="/student/profile" className="student-profile-link"><span>{user.name.split(" ").map(part => part[0]).slice(0,2).join("")}</span><b>{user.name}<small>Student</small></b></Link>
+          <Link href="/student/account" className="student-profile-link" aria-label={`Open ${user.name}'s account profile`}><span>{user.name.split(" ").map(part => part[0]).slice(0,2).join("")}</span><b>{user.name}<small>View profile</small></b></Link>
           <form action={logout}><button type="submit" className="student-logout">Log out</button></form>
         </div>
       </div>

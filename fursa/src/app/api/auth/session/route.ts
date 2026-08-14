@@ -37,7 +37,7 @@ export async function POST(request: Request) {
       role,
       createdAt: existingData?.createdAt ?? now,
       updatedAt: now,
-      ...(role === "STUDENT" ? { targetCareer: String(body.targetCareer ?? existingData?.targetCareer ?? "software-engineer"), university: String(body.university ?? existingData?.university ?? "") } : {}),
+      ...(role === "STUDENT" ? { targetCareer: String(existingData?.targetCareer ?? "undecided"), university: String(body.university ?? existingData?.university ?? "") } : {}),
       ...(role === "EMPLOYER" ? { company: String(body.company ?? existingData?.company ?? ""), industry: String(body.industry ?? existingData?.industry ?? "") } : {}),
       ...(role === "UNIVERSITY" ? { institution: String(body.institution ?? existingData?.institution ?? ""), region: String(body.region ?? existingData?.region ?? "") } : {}),
     };
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
       await prisma.user.create({ data: {
         id: decoded.uid, role,
         name: profile.name, email: profile.email,
-        ...(role === "STUDENT" ? { student: { create: { targetCareer: profile.targetCareer ?? "software-engineer", university: profile.university || null } } } : {}),
+        ...(role === "STUDENT" ? { student: { create: { targetCareer: profile.targetCareer ?? "undecided", university: profile.university || null } } } : {}),
         ...(role === "EMPLOYER" ? { employer: { create: { company: profile.company || "Independent Employer", industry: profile.industry || null } } } : {}),
         ...(role === "UNIVERSITY" ? { university: { create: { institution: profile.institution || "University", region: profile.region || null } } } : {}),
       } });

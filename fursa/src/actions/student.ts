@@ -37,6 +37,18 @@ export async function updateStudentProfile(formData: FormData) {
   revalidatePath("/student/profile");
 }
 
+export async function setPrimaryCareerTrack(formData: FormData) {
+  const student = await requireStudent();
+  const careerTrackId = String(formData.get("careerTrackId") ?? "").trim();
+  if (!careerTrackId) return;
+  const track = await getCareerTrackAsync(careerTrackId);
+  await prisma.student.update({ where: { id: student.id }, data: { targetCareer: track.id } });
+  revalidatePath("/student/interests");
+  revalidatePath("/student/dashboard");
+  revalidatePath("/student/roadmap");
+  revalidatePath("/student/profile");
+}
+
 export async function addOrUpdateSkill(formData: FormData) {
   const student = await requireStudent();
   const skillName = String(formData.get("skillName") ?? "").trim();

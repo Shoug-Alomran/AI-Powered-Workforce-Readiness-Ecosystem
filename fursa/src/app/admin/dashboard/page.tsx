@@ -35,7 +35,12 @@ export default async function AdminDashboard({
     }),
     prisma.user.findMany({ orderBy: [{ name: "asc" }] }),
     prisma.curriculumAction.findMany({ where: { status: "AWAITING_HUMAN_REVIEW" }, include: { university: true }, orderBy: { createdAt: "asc" } }),
-    prisma.evidenceDocument.findMany({ where: { contextType: "CURRICULUM_ACTION" }, orderBy: { createdAt: "asc" } }),
+    prisma.evidenceDocument.findMany({ where: { contextType: "CURRICULUM_ACTION" }, orderBy: { createdAt: "asc" } }).catch((error) => {
+      // Keep the governance dashboard available while a newly deployed
+      // evidence-storage migration is still being applied to production.
+      console.error("Unable to load curriculum evidence documents", error);
+      return [];
+    }),
   ]);
 
   const pendingCerts = submissions.filter((item) => item.verificationStatus === "PENDING" && item.evidencePath);

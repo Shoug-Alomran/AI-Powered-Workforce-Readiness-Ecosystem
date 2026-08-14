@@ -21,6 +21,7 @@ export default async function StudentDashboard() {
       bookmarks: true,
     },
   });
+  if (student.targetCareer === "undecided") redirect("/student/interests?setup=career");
   const [jobs, feedbacks, track] = await Promise.all([
     prisma.job.findMany({
       where: { status: "open" },
@@ -43,12 +44,10 @@ export default async function StudentDashboard() {
 
   return (
     <main className="page-shell student-dashboard-design">
-      <span className="eyebrow">Student workspace</span>
-      <h1 className="page-title">Welcome back, {ctx.user.name.split(" ")[0]}.</h1>
-      <p className="muted">
-        Your personalized path toward {track.label}.{" "}
-        <Link className="link" href="/student/interests">Follow companies & career tracks →</Link>
-      </p>
+      <section className="student-design-hero student-dashboard-hero">
+        <div className="student-hero-copy"><span className="eyebrow">STUDENT WORKSPACE</span><h1>Welcome back, {ctx.user.name.split(" ")[0]}</h1><div className="student-hero-tags"><span>◎ Target: {track.label}</span><span>↗ Career stage: {band.label}</span><span>◷ Next goal: {Math.min(100,Math.ceil((readiness.score+1)/10)*10)}% readiness</span></div><div className="student-ai-callout"><b>✦</b><p><strong>AI Insight:</strong> {readiness.nextActions[0] || `Keep building verified evidence for ${track.label}.`} Your roadmap adjusts as your skills and career goals change.</p></div></div>
+        <div className="student-hero-actions"><Link href="/student/roadmap">Continue Roadmap　→</Link><Link href="/student/profile">Update Passport</Link></div>
+      </section>
 
       <PageToc
         items={[
@@ -59,7 +58,7 @@ export default async function StudentDashboard() {
         ]}
       />
 
-      <div className="grid-3" style={{ marginTop: 26 }}>
+      <div className="grid-3 student-summary-metrics" style={{ marginTop: 26 }}>
         <div className="card">
           <span className="muted">Readiness score</span>
           <div className="metric">{readiness.score}<small>/100</small></div>
@@ -79,7 +78,12 @@ export default async function StudentDashboard() {
         </div>
       </div>
 
-      <div className="grid-2" style={{ marginTop: 18, alignItems: "start" }}>
+      <section className="student-readiness-panel" id="breakdown">
+        <div className="student-readiness-ring" style={{"--student-score":`${readiness.score * 3.6}deg`} as React.CSSProperties}><div><strong>{readiness.score}</strong><span>READINESS</span></div></div>
+        <div><span className="eyebrow">CAREER READINESS SCORE</span><h2>{band.label}</h2><p>Your score is based on verified skills, certifications, applied experience, and portfolio evidence.</p><div className="student-readiness-mini"><span><small>PROFILE EVIDENCE</small><b>{student.skills.length + student.certifications.length + student.experiences.length + student.projects.length} items</b></span><span><small>NEXT POTENTIAL GAIN</small><b>+{readiness.nextActions.length * 4}%</b></span></div></div>
+      </section>
+
+      <div className="grid-2 student-dashboard-grid" style={{ marginTop: 18, alignItems: "start" }}>
         <section className="card" id="roadmap" style={{ scrollMarginTop: 80 }}>
           <div className="data-row">
             <div><span className="eyebrow">Adaptive roadmap</span><h2>Highest-impact actions</h2></div>
@@ -106,7 +110,7 @@ export default async function StudentDashboard() {
         </section>
       </div>
 
-      <section className="card" id="breakdown" style={{ marginTop: 18, scrollMarginTop: 80 }}>
+      <section className="card student-breakdown" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">Why this score</span>
         <h2>Transparent readiness breakdown</h2>
         <div className="grid-3">
