@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/session";
-import { reviewCertification, reviewEmployer, toggleUserActive } from "@/actions/admin";
+import { reviewCertification, reviewCurriculumCompletion, reviewEmployer, toggleUserActive } from "@/actions/admin";
 import PageToc from "@/components/PageToc";
 import AZStrip from "@/components/AZStrip";
 
@@ -24,7 +24,7 @@ export default async function AdminDashboard({
 
   const { q = "", role = "", letter = "" } = await searchParams;
 
-  const [submissions, employers, users] = await Promise.all([
+  const [submissions, employers, users, curriculumReviews, curriculumDocuments] = await Promise.all([
     prisma.studentCertification.findMany({
       include: { certification: true, student: { include: { user: true } } },
       orderBy: { earnedAt: "desc" },
@@ -34,6 +34,8 @@ export default async function AdminDashboard({
       orderBy: { createdAt: "desc" },
     }),
     prisma.user.findMany({ orderBy: [{ name: "asc" }] }),
+    prisma.curriculumAction.findMany({ where: { status: "AWAITING_HUMAN_REVIEW" }, include: { university: true }, orderBy: { createdAt: "asc" } }),
+    prisma.evidenceDocument.findMany({ where: { contextType: "CURRICULUM_ACTION" }, orderBy: { createdAt: "asc" } }),
   ]);
 
   const pendingCerts = submissions.filter((item) => item.verificationStatus === "PENDING" && item.evidencePath);
@@ -79,6 +81,7 @@ export default async function AdminDashboard({
         items={[
           { id: "employer-verification", label: `Employer verification (${pendingEmployers.length})` },
           { id: "certificate-review", label: `Certificate review (${pendingCerts.length})` },
+          { id: "curriculum-review", label: `Curriculum completion (${curriculumReviews.length})` },
           { id: "user-directory", label: `User directory (${users.length})` },
         ]}
       />
@@ -130,7 +133,7 @@ export default async function AdminDashboard({
                 <p><strong>{item.student.user.name}</strong><br /><span className="muted">{item.student.user.email} · submitted {item.earnedAt.toLocaleDateString()}</span></p>
                 <form action={reviewCertification} className="form-grid">
                   <input type="hidden" name="submissionId" value={item.id} />
-                  <label>Review note<textarea className="input" name="reviewNote" placeholder="Required when rejecting; optional when approving." /></label>
+                  <label>Human review note<textarea className="input" name="reviewNote" required placeholder="Record what you checked and why you approved or rejected this evidence." /></label>
                   <div className="actions" style={{ margin: 0 }}>
                     <button className="button primary" name="decision" value="APPROVED">Approve evidence</button>
                     <button className="button danger" name="decision" value="REJECTED">Reject evidence</button>
@@ -139,6 +142,32 @@ export default async function AdminDashboard({
               </div>
             </article>
           )) : <div className="notice">There are no pending certificate submissions.</div>}
+        </div>
+      </section>
+
+      <section className="card" id="curriculum-review" style={{ marginTop: 18, scrollMarginTop: 80 }}>
+        <span className="eyebrow">Human-in-the-loop review</span>
+        <h2>Curriculum completion evidence</h2>
+        <p className="muted">AI has checked these submissions for completeness only. Inspect the stated institutional evidence before recording the final human decision.</p>
+        <div className="stack" style={{ marginTop: 12 }}>
+          {curriculumReviews.length ? curriculumReviews.map((item) => (
+            <article className="card" key={item.id} style={{ boxShadow: "none" }}>
+              <div className="data-row"><div><strong>{item.title}</strong><div className="muted">{item.university.institution} · Owner: {item.owner ?? "Not assigned"}</div></div><span className="pill status-pending">AI checked · Human review required</span></div>
+              <pre className="admin-evidence-note">{item.outcomeNote}</pre>
+              {curriculumDocuments.filter((document) => document.contextId === item.id).map((document) => (
+                <div className="data-row" key={document.id}>
+                  <div><strong>{document.originalName}</strong><div className="muted">{document.purpose} · Automated screen: {document.aiStatus}</div></div>
+                  <div className="actions"><span className={`pill status-${document.reviewStatus.toLowerCase()}`}>{document.reviewStatus}</span><a className="button secondary" href={`/api/documents/${document.id}`}>Inspect document</a></div>
+                </div>
+              ))}
+              {curriculumDocuments.some((document) => document.contextId === item.id && document.reviewStatus !== "APPROVED") && <div className="notice">Approve each attached document in <Link className="link" href="/admin/evidence">Document review</Link> before verifying completion.</div>}
+              <form action={reviewCurriculumCompletion} className="form-grid">
+                <input type="hidden" name="actionId" value={item.id}/>
+                <label>Human review note<textarea className="input" name="reviewNote" required placeholder="Record what you inspected and why the evidence is sufficient, or explain what must be corrected."/></label>
+                <div className="actions" style={{ margin: 0 }}><button className="button primary" name="decision" value="APPROVED">Verify completion</button><button className="button danger" name="decision" value="CHANGES_REQUESTED">Request changes</button></div>
+              </form>
+            </article>
+          )) : <div className="notice">No curriculum initiatives are awaiting human review.</div>}
         </div>
       </section>
 

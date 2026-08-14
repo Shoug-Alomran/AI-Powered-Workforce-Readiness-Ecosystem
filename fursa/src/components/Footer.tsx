@@ -1,48 +1,21 @@
 import Link from "next/link";
+import { getCurrentUser } from "@/lib/session";
 
-export default function Footer() {
-  return (
-    <footer className="mt-auto border-t border-slate-200 bg-slate-950 text-slate-300">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.5fr_1fr_1fr]">
-        <div>
-          <Link href="/" className="text-xl font-semibold text-white">Fursah</Link>
-          <p className="mt-3 max-w-md text-sm leading-6 text-slate-400">
-            Responsible career-readiness intelligence connecting students, employers, and universities.
-          </p>
-        </div>
-        <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Policies</h2>
-          <nav aria-label="Policy links" className="mt-4 flex flex-col gap-3 text-sm">
-            <Link className="hover:text-white" href="/policies/privacy">Privacy policy</Link>
-            <Link className="hover:text-white" href="/policies/terms">Terms of use</Link>
-            <Link className="hover:text-white" href="/policies/responsible-ai">Responsible AI</Link>
-            <Link className="hover:text-white" href="/policies/accessibility">Accessibility</Link>
-            <Link className="hover:text-white" href="/ar/policies/privacy">السياسات بالعربية</Link>
-          </nav>
-        </div>
-        <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-white">Help and governance</h2>
-          <nav aria-label="Support links" className="mt-4 flex flex-col gap-3 text-sm">
-            <Link className="hover:text-white" href="/support">Customer support</Link>
-            <a className="hover:text-white" href="mailto:support@fursah.sa">support@fursah.sa</a>
-            <Link className="hover:text-white" href="/student/privacy">Privacy controls and appeals</Link>
-            <Link className="hover:text-white" href="/student/data-rights">Data requests</Link>
-            <Link className="hover:text-white" href="/student/passport-sharing">Passport sharing</Link>
-            <Link className="hover:text-white" href="/student/evidence">Portfolio evidence</Link>
-            <Link className="hover:text-white" href="/admin/governance">AI governance</Link>
-            <Link className="hover:text-white" href="/admin/monitoring">Model monitoring</Link>
-            <Link className="hover:text-white" href="/admin/evidence">Evidence review</Link>
-            <Link className="hover:text-white" href="/admin/data-requests">Data-request queue</Link>
-            <Link className="hover:text-white" href="/admin/support">Support queue</Link>
-          </nav>
-        </div>
-      </div>
-      <div className="border-t border-slate-800">
-        <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-          <span>© {new Date().getFullYear()} Fursah. All rights reserved.</span>
-          <span>AI supports decisions; people remain accountable.</span>
-        </div>
-      </div>
-    </footer>
-  );
+const roleLinks = {
+  STUDENT: [["Dashboard","/student/dashboard"],["Opportunities","/student/jobs"],["Career Roadmap","/student/roadmap"],["Skills Passport","/student/evidence"]],
+  EMPLOYER: [["Employer Dashboard","/employer/dashboard"],["Post a Job","/employer/jobs/new"]],
+  UNIVERSITY: [["University Dashboard","/university/dashboard"],["Courses & Certifications","/university/curriculum"],["Workforce Demand","/university/job-demand"],["Action Plan","/university/actions"]],
+  ADMIN: [["Admin Dashboard","/admin/dashboard"],["Career Taxonomy","/admin/career-tracks"],["Trust & Governance","/admin/governance"],["Model Monitoring","/admin/monitoring"]],
+} as const;
+
+export default async function Footer(){
+  const user=await getCurrentUser();
+  const accountLinks=user?roleLinks[user.role]:null;
+  return <footer className="site-footer"><div className="site-footer-grid">
+    <section><Link href="/" className="site-footer-brand"><span>ϟ</span><b>FURSA</b></Link><p>An intelligent AI platform purpose-built for the Saudi workforce ecosystem.</p>{user&&<small>Signed in as {user.name}</small>}</section>
+    <section><h2>{user?"Your Workspace":"Platform"}</h2>{accountLinks?accountLinks.map(([label,href])=><Link href={href} key={href}>{label}</Link>):<><Link href="/#how-it-works">How it Works</Link><Link href="/#ai-ethics">Explainable AI</Link><Link href="/#solutions">Skill Mapping</Link><Link href="/workforce-intelligence">Workforce Intelligence</Link></>}</section>
+    <section><h2>{user?"Account & Help":"Solutions"}</h2>{user?<><Link href="/support">Customer Support</Link>{user.role==="STUDENT"&&<><Link href="/student/privacy">Privacy Controls</Link><Link href="/student/data-rights">Data Requests</Link><Link href="/student/passport-sharing">Passport Sharing</Link></>}</>:<><Link href="/#solutions">For Students</Link><Link href="/#solutions">For Employers</Link><Link href="/#solutions">For Universities</Link><Link href="/login">Sign In</Link></>}</section>
+    <section><h2>Company</h2><Link href="/policies/privacy">Privacy Policy</Link><Link href="/policies/terms">Terms of Service</Link><Link href="/policies/responsible-ai">Responsible AI</Link><Link href="/policies/accessibility">Accessibility</Link></section>
+    <section><h2>Contact</h2><a href="mailto:info@fursa.sa">info@fursa.sa</a><a href="tel:+966110000000">+966 11 000 0000</a><p>Riyadh, Saudi Arabia</p></section>
+  </div><div className="site-footer-bottom"><span>© {new Date().getFullYear()} Fursa AI. All rights reserved.</span></div></footer>;
 }

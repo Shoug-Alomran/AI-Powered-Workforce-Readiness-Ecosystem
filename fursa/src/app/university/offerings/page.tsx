@@ -1,84 +1,50 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db";
 import { getCurrentUniversity } from "@/lib/session";
-import { createOffering, deleteOffering } from "@/actions/university";
+import { createOffering } from "@/actions/university";
+import DocumentUpload from "@/components/DocumentUpload";
 
-export default async function UniversityOfferings() {
-  const ctx = await getCurrentUniversity();
-  if (!ctx) redirect("/login");
+export default async function UniversityOfferings({searchParams}:{searchParams:Promise<{created?:string}>}) {
+  const ctx=await getCurrentUniversity();
+  if(!ctx)redirect("/login");
+  const params=await searchParams;
 
-  const offerings = await prisma.offering.findMany({
-    where: { universityId: ctx.university.id },
-    include: { skills: { include: { skill: true } }, certification: true },
-    orderBy: { createdAt: "desc" },
-  });
+  return <main className="uo-page">
+    <header className="uo-heading">
+      <div><span>CURRICULUM MANAGEMENT　/　NEW COURSE</span><h1>Add a Course</h1><p>Create a course that can be matched to student skill gaps and workforce demand.</p></div>
+      <Link href="/university/curriculum">← Back to Courses &amp; Certifications</Link>
+    </header>
 
-  return (
-    <main className="page-shell">
-      <div className="data-row">
-        <div>
-          <span className="eyebrow">{ctx.university.institution}</span>
-          <h1 className="page-title">Courses & certifications</h1>
-        </div>
-        <Link className="link" href="/university/dashboard">← Back to dashboard</Link>
-      </div>
-      <p className="muted">
-        List the courses and certifications you offer. When a student is following a career track or company and is missing a
-        skill your offering teaches, the AI recommends it directly to them.
-      </p>
+    {params.created==="1"&&<div className="uo-success" role="status">✓ Course added successfully. It is now available for curriculum matching.</div>}
 
-      <div className="stack" style={{ marginTop: 26 }}>
-        {offerings.length ? offerings.map((o) => (
-          <article className="card" key={o.id}>
-            <div className="data-row">
-              <div>
-                <strong>{o.title}</strong>
-                <div className="muted">{o.type}{o.certification ? ` · grants "${o.certification.name}"` : ""}</div>
-              </div>
-              <form action={deleteOffering}>
-                <input type="hidden" name="offeringId" value={o.id} />
-                <button className="button danger">Remove</button>
-              </form>
-            </div>
-            {o.description && <p className="muted">{o.description}</p>}
-            <p className="muted" style={{ fontSize: 13 }}>
-              Skills covered: {o.skills.map((s) => s.skill.name).join(", ") || "None specified"}
-            </p>
-            {o.url && <a className="link" href={o.url} target="_blank" rel="noreferrer">{o.url}</a>}
-          </article>
-        )) : <div className="notice">No offerings listed yet. Add your first course or certification below.</div>}
-      </div>
+    <div className="uo-layout">
+      <form action={createOffering} className="uo-form" id="add-course">
+        <section>
+          <header><span>01</span><div><h2>Basic Information</h2><p>Identify the offering students and advisors will see.</p></div></header>
+          <label>Course title <input name="title" placeholder="e.g. Advanced Cloud Architecture" required autoFocus/></label>
+          <label>Course description <textarea name="description" placeholder="Describe the learning outcomes, subject coverage, and intended students." rows={5}/></label>
+        </section>
 
-      <section className="card" style={{ marginTop: 18 }}>
-        <span className="eyebrow">New offering</span>
-        <h2>Add a course or certification</h2>
-        <form action={createOffering} className="form-grid">
-          <div className="grid-2">
-            <label>Title<input className="input" name="title" placeholder="e.g. Intro to Machine Learning" required /></label>
-            <label>
-              Type
-              <select className="input" name="type" defaultValue="course">
-                <option value="course">Course</option>
-                <option value="certification">Certification</option>
-              </select>
-            </label>
-          </div>
-          <label>Description<textarea className="input" name="description" placeholder="What students will learn" /></label>
-          <label>Link (optional)<input className="input" name="url" type="url" placeholder="https://..." /></label>
-          <label>
-            Skills covered
-            <input className="input" name="skills" placeholder="Python, Machine Learning, SQL" />
-            <small className="muted">Comma-separated. Matched against career-track skill gaps for recommendations.</small>
-          </label>
-          <label>
-            Grants certification (optional)
-            <input className="input" name="certificationName" placeholder="e.g. Google Data Analytics" />
-            <small className="muted">Only fill this in if completing the offering awards a recognized certification.</small>
-          </label>
-          <button className="button primary">Add offering</button>
-        </form>
-      </section>
-    </main>
-  );
+        <section>
+          <header><span>02</span><div><h2>Skills and Outcomes</h2><p>These fields power readiness analysis and student recommendations.</p></div></header>
+          <label>Skills covered <input name="skills" placeholder="Python, Machine Learning, SQL"/><small>Separate skills with commas. Use clear, recognized skill names.</small></label>
+          <label>Certification awarded <input name="certificationName" placeholder="e.g. AWS Cloud Practitioner"/><small>Optional. Add only when completing this offering awards the credential.</small></label>
+        </section>
+
+        <section>
+          <header><span>03</span><div><h2>Access Information</h2><p>Provide the official page students should use to learn more or enroll.</p></div></header>
+          <label>Course URL <input name="url" type="url" placeholder="https://university.edu.sa/courses/..."/><small>Optional. The link must begin with http:// or https://.</small></label>
+          <DocumentUpload label="Approved syllabus or course specification"/>
+        </section>
+
+        <footer><Link href="/university/curriculum">Cancel</Link><button type="submit">Add Course</button></footer>
+      </form>
+
+      <aside className="uo-aside">
+        <section className="uo-ai"><header><span>✦</span><div><h2>AI Curriculum Guidance</h2><p>Recommendations update as offering data improves.</p></div></header><ul><li>Use a specific title that describes the subject level.</li><li>Map only skills directly taught and assessed.</li><li>Add a recognized credential only when it is awarded.</li><li>Include an official URL so students can verify details.</li></ul><div><small>EXPECTED IMPACT</small><strong>Better skill-gap matching</strong><p>Complete course data helps Fursa recommend the right learning pathway.</p></div></section>
+        <section className="uo-help"><h2>Before publishing</h2><p>Confirm that curriculum information is approved by the responsible academic department.</p><Link href="/support">Contact support</Link></section>
+      </aside>
+    </div>
+
+  </main>;
 }

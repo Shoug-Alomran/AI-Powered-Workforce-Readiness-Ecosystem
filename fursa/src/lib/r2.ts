@@ -23,7 +23,7 @@ function getR2Client() {
   };
 }
 
-export async function uploadPrivateCertificate(key: string, body: Uint8Array, contentType: string) {
+export async function uploadPrivateDocument(key: string, body: Uint8Array, contentType: string) {
   const { client, bucket } = getR2Client();
   await client.send(new PutObjectCommand({
     Bucket: bucket,
@@ -34,9 +34,12 @@ export async function uploadPrivateCertificate(key: string, body: Uint8Array, co
   }));
 }
 
-export async function downloadPrivateCertificate(key: string) {
+export async function downloadPrivateDocument(key: string) {
   const { client, bucket } = getR2Client();
   const result = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-  if (!result.Body) throw new Error("Certificate evidence is empty");
+  if (!result.Body) throw new Error("Private document is empty");
   return result.Body.transformToByteArray();
 }
+
+export const uploadPrivateCertificate = uploadPrivateDocument;
+export const downloadPrivateCertificate = downloadPrivateDocument;

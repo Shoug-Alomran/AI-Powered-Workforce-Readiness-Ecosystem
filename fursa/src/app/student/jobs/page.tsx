@@ -5,6 +5,7 @@ import { computeJobMatch } from "@/lib/ai";
 import { applyToJob, toggleBookmark } from "@/actions/student";
 import { getAllCareerTracksAsync } from "@/lib/careerTracks.server";
 import type { Prisma } from "@/generated/prisma/client";
+import DocumentUpload from "@/components/DocumentUpload";
 
 export default async function Jobs({
   searchParams,
@@ -52,7 +53,7 @@ export default async function Jobs({
   ]);
 
   return (
-    <main className="page-shell">
+    <main className="page-shell student-job-discovery">
       <span className="eyebrow">Explainable matching</span>
       <h1 className="page-title">Opportunities matched to you</h1>
       <p className="muted">Scores show both strengths and gaps—never a black-box rejection.</p>
@@ -95,6 +96,7 @@ export default async function Jobs({
                   </form>
                   <form action={applyToJob}>
                     <input type="hidden" name="jobId" value={job.id} />
+                    {!applied&&<DocumentUpload label="Application documents" compact/>}
                     <button className="button primary">{applied ? "Applied ✓" : "Apply"}</button>
                   </form>
                 </div>

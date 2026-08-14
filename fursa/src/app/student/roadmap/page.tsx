@@ -10,7 +10,7 @@ export default async function RoadmapPage() {
   if (!ctx) redirect("/login");
   const items = await prisma.roadmapItem.findMany({ where: { studentId: ctx.student.id }, orderBy: [{ status: "asc" }, { createdAt: "desc" }] });
   const completed = items.filter((item) => item.status === "COMPLETED").length;
-  return <main className="page-shell">
+  return <main className="page-shell student-career-roadmap">
     <div className="data-row"><div><span className="eyebrow">Adaptive learning plan</span><h1 className="page-title">Your living roadmap</h1></div><form action={syncRoadmap}><button className="button primary">Refresh recommendations</button></form></div>
     <p className="muted">Progress is saved. Marking an action as difficult or skipped creates a different route toward the same career goal.</p>
     <div className="grid-3" style={{ marginTop: 26 }}><div className="card"><span className="muted">Milestones</span><div className="metric">{items.length}</div></div><div className="card"><span className="muted">Completed</span><div className="metric">{completed}</div></div><div className="card"><span className="muted">Potential readiness gain</span><div className="metric">+{items.filter(i => i.status !== "COMPLETED").reduce((n, i) => n + i.expectedImpact, 0)}</div></div></div>

@@ -13,12 +13,16 @@ export async function reviewCertification(formData: FormData) {
   const decision = String(formData.get("decision") ?? "");
   const reviewNote = String(formData.get("reviewNote") ?? "").trim();
   if (!id || !["APPROVED", "REJECTED"].includes(decision)) throw new Error("Invalid review decision");
-  if (decision === "REJECTED" && !reviewNote) throw new Error("A reason is required when rejecting evidence");
+  if (!reviewNote) throw new Error("A human review note is required");
 
   const submission = await prisma.studentCertification.update({
     where: { id },
     data: { verificationStatus: decision, reviewNote: reviewNote || null, reviewedAt: new Date(), reviewedBy: ctx.user.id },
     include: { student: { include: { user: true } }, certification: true },
+  });
+  await prisma.evidenceDocument.updateMany({
+    where: { ownerUserId: submission.student.user.id, contextType: "CERTIFICATION", contextId: submission.certificationId },
+    data: { reviewStatus: decision, reviewNote, reviewedAt: new Date(), reviewedBy: ctx.user.id },
   });
   if (firebaseAdminConfigured) {
     try {
@@ -48,6 +52,33 @@ export async function reviewEmployer(formData: FormData) {
 
   revalidatePath("/admin/dashboard");
   revalidatePath("/employer/dashboard");
+}
+
+export async function reviewCurriculumCompletion(formData: FormData) {
+  const ctx = await getCurrentAdmin();
+  if (!ctx) throw new Error("Administrator access required");
+  const actionId = String(formData.get("actionId") ?? "");
+  const decision = String(formData.get("decision") ?? "");
+  const reviewNote = String(formData.get("reviewNote") ?? "").trim();
+  if (!actionId || !["APPROVED", "CHANGES_REQUESTED"].includes(decision)) throw new Error("Invalid completion decision");
+  if (!reviewNote) throw new Error("A human review note is required");
+
+  const item = await prisma.curriculumAction.findUniqueOrThrow({ where: { id: actionId }, include: { university: { include: { user: true } } } });
+  if (item.status !== "AWAITING_HUMAN_REVIEW") throw new Error("This initiative is not awaiting human review");
+  const documents = await prisma.evidenceDocument.findMany({ where: { contextType: "CURRICULUM_ACTION", contextId: actionId } });
+  if (decision === "APPROVED" && documents.some((document) => document.reviewStatus !== "APPROVED")) {
+    throw new Error("Review and approve every attached document before verifying completion");
+  }
+  const status = decision === "APPROVED" ? "COMPLETED" : "CHANGES_REQUESTED";
+  const outcomeNote = `${item.outcomeNote ?? ""}\n\nHuman review by ${ctx.user.name}:\n${reviewNote}`.trim();
+
+  await prisma.$transaction([
+    prisma.curriculumAction.update({ where: { id: actionId }, data: { status, outcomeNote } }),
+    prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: decision === "APPROVED" ? "CURRICULUM_COMPLETION_VERIFIED" : "CURRICULUM_CHANGES_REQUESTED", entityType: "CurriculumAction", entityId: actionId, explanation: reviewNote } }),
+    prisma.notification.create({ data: { userId: item.university.userId, type: "CURRICULUM_REVIEW", title: decision === "APPROVED" ? "Initiative completion verified" : "Changes requested for initiative", body: `${item.title}: ${reviewNote}` } }),
+  ]);
+  revalidatePath("/admin/dashboard");
+  revalidatePath("/university/actions");
 }
 
 export async function toggleUserActive(formData: FormData) {

@@ -59,7 +59,7 @@ export default async function StudentInterests({
     : employers;
 
   return (
-    <main className="page-shell">
+    <main className="page-shell student-career-interests">
       <span className="eyebrow">Career interests</span>
       <h1 className="page-title">What are you working toward?</h1>
       <p className="muted">

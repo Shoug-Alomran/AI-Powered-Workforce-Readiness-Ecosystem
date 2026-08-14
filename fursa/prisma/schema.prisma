@@ -30,6 +30,31 @@ model User {
   auditEvents   AuditEvent[]
   notifications Notification[]
   supportTickets SupportTicket[]
+  documents     EvidenceDocument[]
+}
+
+model EvidenceDocument {
+  id             String   @id @default(cuid())
+  ownerUserId    String
+  owner          User     @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+  contextType    String   // CERTIFICATION | PROJECT | EXPERIENCE | APPLICATION | JOB | CURRICULUM_ACTION | OFFERING
+  contextId      String
+  purpose        String
+  storageKey     String   @unique
+  originalName   String
+  mimeType       String
+  sizeBytes      Int
+  aiStatus       String   @default("PASSED") // PASSED | FLAGGED
+  aiNote         String?
+  reviewStatus   String   @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewNote     String?
+  reviewedBy     String?
+  reviewedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  @@index([contextType, contextId])
+  @@index([reviewStatus, createdAt])
+  @@index([ownerUserId, createdAt])
 }
 
 model University {

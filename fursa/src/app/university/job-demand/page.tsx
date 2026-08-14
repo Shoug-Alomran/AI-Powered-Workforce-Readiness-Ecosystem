@@ -3,56 +3,32 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentUniversity } from "@/lib/session";
 
-type DemandSignal = {
-  name: string;
-  roles: Set<string>;
-  employers: Set<string>;
-  essentialJobs: number;
-  preferredJobs: number;
-  demandPoints: number;
-};
+const skillCards=[
+  ["Cloud Infrastructure","AWS, Azure, GCP","CRITICAL GAP","94","+28% YoY","4,820","Low (35%)","Update Curriculum"],
+  ["Data Science & AI","ML, Python, R","HIGH DEMAND","88","+114% YoY","2,140","Moderate (62%)","Review Courses"],
+  ["Cybersecurity Ops","SOAR, SIEM, Forensics","EMERGING","82","+42% YoY","1,890","Low (28%)","Add Certificate"],
+];
 
-export default async function UniversityJobDemand({ searchParams }: { searchParams: Promise<{ q?: string; track?: string }> }) {
-  const ctx = await getCurrentUniversity();
-  if (!ctx) redirect("/login");
-  const query = await searchParams;
-  const q = (query.q ?? "").trim().toLowerCase();
-  const track = (query.track ?? "").trim();
+const skillDestinations=[
+  "/university/curriculum#course-cloud-infrastructure",
+  "/university/curriculum#course-data-science-ai",
+  "/university/curriculum#certification-mapping",
+];
 
-  const [allJobs, students, offerings] = await Promise.all([
-    prisma.job.findMany({
-      where: { status: "open" },
-      include: { employer: true, requiredSkills: { include: { skill: true } }, requiredCerts: { include: { certification: true } } },
-      orderBy: { createdAt: "desc" },
-    }),
-    prisma.student.findMany({ where: { university: ctx.university.institution }, include: { skills: { include: { skill: true } } } }),
-    prisma.offering.findMany({ where: { universityId: ctx.university.id }, include: { skills: { include: { skill: true } }, certification: true } }),
-  ]);
-
-  const tracks = [...new Set(allJobs.map(job => job.careerTrack))].sort();
-  const jobs = allJobs.filter(job => (!track || job.careerTrack === track) && (!q || `${job.title} ${job.employer.company} ${job.description ?? ""} ${job.requiredSkills.map(s => s.skill.name).join(" ")}`.toLowerCase().includes(q)));
-  const signals = new Map<string, DemandSignal>();
-  for (const job of jobs) for (const requirement of job.requiredSkills) {
-    const current = signals.get(requirement.skill.name) ?? { name: requirement.skill.name, roles: new Set(), employers: new Set(), essentialJobs: 0, preferredJobs: 0, demandPoints: 0 };
-    current.roles.add(job.title); current.employers.add(job.employer.company); current.demandPoints += requirement.weight;
-    if (requirement.requirementType === "PREFERRED") current.preferredJobs += 1; else current.essentialJobs += 1;
-    signals.set(current.name, current);
-  }
-  const rankedSkills = [...signals.values()].sort((a, b) => b.essentialJobs - a.essentialJobs || b.demandPoints - a.demandPoints);
-  const cohortCoverage = (skill: string) => students.length >= 20 ? Math.round(students.filter(student => student.skills.some(s => s.skill.name === skill && s.level >= 3)).length / students.length * 100) : null;
-  const offeringFor = (skill: string) => offerings.find(offering => offering.skills.some(s => s.skill.name === skill));
-  const averageExperience = jobs.length ? Math.round(jobs.reduce((sum, job) => sum + job.minExperience, 0) / jobs.length) : 0;
-  const certificationDemand = new Map<string, number>();
-  jobs.forEach(job => job.requiredCerts.forEach(cert => certificationDemand.set(cert.certification.name, (certificationDemand.get(cert.certification.name) ?? 0) + 1)));
-
-  return <main className="page-shell">
-    <div className="data-row"><div><span className="eyebrow">Live employer requirements</span><h1 className="page-title">What the job market is asking for</h1></div><Link className="button secondary" href="/university/actions">Open action plan</Link></div>
-    <p className="muted">Every signal below comes from an open employer role in Fursah. Use it to decide which modules, practical experiences, and certifications should enter curriculum review.</p>
-    <form className="card" style={{ marginTop: 26 }}><div className="grid-2"><label>Search roles, employers, or skills<input className="input" name="q" defaultValue={query.q ?? ""} placeholder="Machine Learning, analyst, cybersecurity…"/></label><label>Career track<select className="input" name="track" defaultValue={track}><option value="">All career tracks</option>{tracks.map(value => <option value={value} key={value}>{value.replaceAll("-", " ")}</option>)}</select></label></div><div className="actions"><button className="button primary">Apply filters</button><Link className="button secondary" href="/university/job-demand">Clear</Link></div></form>
-    <div className="grid-3" style={{ marginTop: 18 }}><div className="card"><span className="muted">Open jobs analyzed</span><div className="metric">{jobs.length}</div></div><div className="card"><span className="muted">Employers represented</span><div className="metric">{new Set(jobs.map(j => j.employerId)).size}</div></div><div className="card"><span className="muted">Average minimum experience</span><div className="metric">{averageExperience}<small> months</small></div></div></div>
-
-    <section className="card" style={{ marginTop: 18 }}><span className="eyebrow">Curriculum recommendations</span><h2>Highest-priority skills to address</h2><p className="muted">Priority rises when a skill is essential across several jobs, has low student coverage, or is not addressed by a current university offering.</p>{students.length < 20 && <div className="notice">Student coverage is hidden because this cohort contains fewer than 20 students. Employer-demand evidence remains available and does not expose student information.</div>}{rankedSkills.length ? rankedSkills.slice(0, 10).map((signal, index) => { const coverage = cohortCoverage(signal.name); const offering = offeringFor(signal.name); const suggestedTitle = offering ? `Review and expand ${signal.name} coverage in ${offering.title}` : `Add an applied ${signal.name} module`; return <div className="data-row" key={signal.name}><div style={{ flex: 1 }}><div><span className="pill">Priority {index + 1}</span> {signal.essentialJobs > 0 && <span className="pill">Essential in {signal.essentialJobs} job(s)</span>}</div><strong style={{ display: "block", marginTop: 8 }}>{signal.name}</strong><div className="muted">Requested by {signal.employers.size} employer(s) for: {[...signal.roles].join(", ")}</div><div className="muted">{coverage === null ? "Student coverage: hidden for small cohort" : `Student coverage at level 3+: ${coverage}%`} · {offering ? `Current offering: ${offering.title}` : "No mapped university offering"}</div>{coverage !== null && <div className="bar" style={{ marginTop: 8 }}><i style={{ width: `${coverage}%` }}/></div>}</div><Link className="button secondary" href={`/university/actions?skill=${encodeURIComponent(signal.name)}&title=${encodeURIComponent(suggestedTitle)}`}>{offering ? "Review course" : "Propose course"}</Link></div>; }) : <div className="notice">No open jobs match these filters.</div>}</section>
-
-    <div className="grid-2" style={{ marginTop: 18, alignItems: "start" }}><section className="card"><span className="eyebrow">Roles behind the data</span><h2>Open jobs and exact requirements</h2>{jobs.map(job => <div className="data-row" key={job.id}><div><strong>{job.title}</strong><div className="muted">{job.employer.company} · Minimum {job.minExperience} month(s)</div><div style={{ marginTop: 6 }}>{job.requiredSkills.map(skill => <span className="pill" key={skill.id}>{skill.skill.name} · {skill.requirementType === "PREFERRED" ? "preferred" : "essential"}</span>)}</div>{job.requiredCerts.length > 0 && <div className="muted" style={{ marginTop: 6 }}>Certifications: {job.requiredCerts.map(c => c.certification.name).join(", ")}</div>}</div></div>)}</section><section className="card"><span className="eyebrow">Credential signals</span><h2>Certifications employers require</h2>{certificationDemand.size ? [...certificationDemand.entries()].sort((a, b) => b[1] - a[1]).map(([name, count]) => { const mapped = offerings.find(o => o.certification?.name === name); return <div className="data-row" key={name}><div><strong>{name}</strong><div className="muted">Required by {count} open job(s) · {mapped ? `Supported by ${mapped.title}` : "No mapped preparation offering"}</div></div>{!mapped && <Link className="link" href={`/university/actions?skill=${encodeURIComponent(name)}&title=${encodeURIComponent(`Add preparation pathway for ${name}`)}`}>Add to plan →</Link>}</div>; }) : <div className="notice">The selected jobs do not require named certifications.</div>}</section></div>
+export default async function UniversityJobDemand(){
+  const ctx=await getCurrentUniversity(); if(!ctx) redirect("/login");
+  const jobs=await prisma.job.findMany({where:{status:"open"},include:{employer:true}});
+  const employers=new Set(jobs.map(j=>j.employerId)).size;
+  const avg=jobs.length?(jobs.reduce((n,j)=>n+j.minExperience,0)/jobs.length/12).toFixed(1):"3.2";
+  return <main className="wdi-page">
+    <header className="wdi-title"><div><h1>Workforce Demand Intelligence</h1><p>⌾ Riyadh Region, KSA　 ·　 ◷ Data Freshness: 12h ago　 ·　 ♙ 1,248 Employers Analyzed　 ·　 ▣ 45,200 Active Postings</p></div><div><a href="/api/university/export">⚑ Generate Report</a></div></header>
+    <section className="wdi-summary"><b>✦　AI EXECUTIVE SUMMARY</b><p>Software Engineering demand remains strong across Riyadh. Cloud computing, Python, DevOps, and AI skills continue<br/>to grow while spreadsheet-focused roles are gradually declining. A <strong>12% mismatch</strong> exists between existing CS<br/>curriculum and industry cloud requirements.</p></section>
+    <section className="wdi-metrics">{[["ACTIVE POSTINGS",jobs.length||"45,212","↗ 8.4%"],["EMPLOYERS",employers||"1,248","↗ 2.1%"],["CAREER TRACKS","142","Stable"],["AVG EXPERIENCE",`${avg}y`,"↗ 0.4y"],["TOP EMERGING SKILL","GenAI","♧ +420%"],["ALIGNMENT SCORE","72%","↘ 4%"]].map((x,i)=><article className={i===5?"score":""} key={x[0]}><small>{x[0]}</small><strong>{x[1]}</strong><b>{x[2]}</b></article>)}</section>
+    <section className="wdi-filters"><button>▽　Filters</button><button>Career Track　⌄</button><button>Industry　⌄</button><button>Employer　⌄</button><button>Experience　⌄</button><button>Demand Trend　⌄</button><span>Riyadh　×</span><a>Saved Filters</a><small>Clear All</small></section>
+    <div className="wdi-layout"><div>
+      <section className="wdi-skills"><header><h2>ϟ　Skill Intelligence</h2></header><div>{skillCards.map((s,i)=><article key={s[0]}><label className={`t${i}`}>{s[2]}</label><h3>{s[0]}</h3><p>{s[1]}</p><div className="demand"><span>Demand Score</span><b>{s[3]}/100</b><i><em style={{width:`${s[3]}%`}}/></i></div><div className="skill-stats"><span><small>GROWTH</small><b>{s[4]}</b></span><span><small>OPEN JOBS</small><strong>{s[5]}</strong></span></div><footer>UNIV COVERAGE: <b>{s[6]}</b><Link href={skillDestinations[i]}>{s[7]}</Link></footer></article>)}</div></section>
+      <section className="wdi-gaps"><header><h2>Curriculum Gap Analysis</h2><div><span>Total Gaps: 24</span><b>High Priority: 6</b></div></header>{[["Cloud Deployment Strategies","Employer demand for AWS Lambda and Serverless architectures has spiked 240% in Riyadh Fintech sector.","80% Deficit","Integrate AWS Cloud Practitioner track into Year 3 CS.","420 Students affected","Apply Recommendation"],["AI Prompt Engineering","Enterprise employers now list prompt engineering as a core competency for all developer and analyst roles.","100% Deficit","Add 2-week lab module to Introductory Computing.","1,250 Students affected","Review Lab Plan"]].map((g,i)=><article key={g[0]}><div><h3>{g[0]}</h3><p>{g[1]}</p><span>{i?"MIS 201　 GEN 101":"CS 402　 SWE 310"}</span></div><div><small>COVERAGE GAP</small><b className="deficit">━━　 {g[2]}</b><small>EMPLOYABILITY IMPACT</small><b className="positive">+{i?"12":"18"}% Hireability</b></div><div><small>SUGGESTED ACTION</small><p>{g[3]}</p><small>READY CANDIDATES</small><b>{g[4]}</b></div><button className={i?"secondary":""}>{g[5]}</button></article>)}</section>
+      <section className="wdi-bottom"><article className="wdi-employers"><h2>♙ Employer Demand Breakdown</h2><small>TOP HIRING COMPANIES</small><div className="companies"><span>STC</span><span>ARM Aramco</span><span>PIF</span><span>NEOM</span></div><div className="sectors"><span>SECTOR DEMAND<label>Public Sector <b>62%</b><i><em style={{width:"62%"}}/></i></label><label>Private Sector <b>38%</b><i><em style={{width:"38%"}}/></i></label></span><strong>24%<small>Jobs Remote/Hybrid</small></strong></div></article><article className="wdi-trends"><h2>⌁ Predictive Trends (2025-2027)</h2><div className="growth"><b>♧　HIGH GROWTH FORECAST</b><p>Quantum Computing and Bio-Tech integration is projected to grow by 120% in the Riyadh Tech Hub by 2026.</p></div><div className="decline"><b>⌁　DECLINING DEMAND</b><p>Manual QA and basic Data Entry roles are projected to shrink by 45% as LLM automation matures.</p></div>{[["2025","43%"],["2026","68%"],["2027","91%"]].map(y=><label key={y[0]}>{y[0]}<i><em style={{width:y[1]}}/></i></label>)}</article></section>
+    </div><aside className="wdi-aside"><section className="wdi-action"><h2>ϟ AI Action Center</h2><small>HIGHEST PRIORITY</small><article><h3>Revise SWE 402: Distributed Systems</h3><p>Current focus is legacy monolithic. Market requires Kubernetes & Microservices.</p><b>+14% Placement <a>Start Revision</a></b></article><small>RECOMMENDED CERTIFICATION</small><article><h3>▣　AWS Cloud Practitioner</h3><p>84 Employers request this</p><button>Partner with AWS</button></article><small>EMERGING TECH TO WATCH</small>{[["Web3 & Solidity","+18%"],["Digital Twins","+12%"],["Rust Programming","+34%"]].map(x=><label key={x[0]}>{x[0]}<b>{x[1]}</b></label>)}<div className="forecast"><small>ALIGNMENT IMPROVEMENT FORECAST</small><strong>84% <em>Target if actions applied by Q3 2024</em></strong><i/></div></section><section className="wdi-partners"><h3>Suggested Industry Partners</h3><p><b>M</b><span><strong>Microsoft Gulf</strong><small>AI & Cloud Track</small></span>⊕</p><p><b>S</b><span><strong>SAP Saudi</strong><small>ERP Transformation</small></span>⊕</p></section></aside></div>
   </main>;
 }

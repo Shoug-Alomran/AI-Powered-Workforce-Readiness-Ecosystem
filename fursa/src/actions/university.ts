@@ -1,8 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentUniversity } from "@/lib/session";
+import { storeEvidenceDocuments } from "@/lib/documents";
 
 async function requireUniversity() {
   const ctx = await getCurrentUniversity();
@@ -56,8 +58,12 @@ export async function createOffering(formData: FormData) {
     await prisma.offeringSkill.create({ data: { offeringId: offering.id, skillId: skill.id } });
   }
 
+  const files=formData.getAll("documents");
+  if(files.some(file=>file instanceof File&&file.size>0)) await storeEvidenceDocuments({files,ownerUserId:university.userId,contextType:"OFFERING",contextId:offering.id,purpose:"Approved course specification and curriculum evidence"});
+
   revalidatePath("/university/offerings");
   revalidatePath("/student/interests");
+  redirect("/university/offerings?created=1");
 }
 
 export async function deleteOffering(formData: FormData) {
@@ -69,4 +75,5 @@ export async function deleteOffering(formData: FormData) {
 
   revalidatePath("/university/offerings");
   revalidatePath("/student/interests");
+  redirect("/university/offerings?removed=1");
 }

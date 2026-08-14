@@ -5,6 +5,7 @@ import { getCurrentEmployer } from "@/lib/session";
 import { computeJobMatch } from "@/lib/ai";
 import { closeJob, reopenJob } from "@/actions/employer";
 import PageToc from "@/components/PageToc";
+import EmployerHeader from "@/components/EmployerHeader";
 
 const STATUS_LABEL: Record<string, string> = {
   applied: "Applied",
@@ -44,20 +45,27 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
 
   if (!job || job.employerId !== ctx.employer.id) notFound();
 
+  const jobDocuments = await prisma.evidenceDocument.findMany({
+    where: { contextType: "JOB", contextId: job.id },
+    orderBy: { createdAt: "asc" },
+  });
+
   const feedbackByStudent = new Map(job.feedbacks.map((f) => [f.studentId, f]));
   const candidates = job.applications
     .map((a) => ({ application: a, match: computeJobMatch(a.student, job) }))
     .sort((a, b) => b.match.score - a.match.score);
 
   return (
-    <main className="page-shell">
+    <main className="employer-detail-page">
+      <EmployerHeader company={ctx.employer.company} userName={ctx.user.name} active="dashboard" pageLabel="Opportunity Details"/>
+      <div className="employer-detail-content">
       <div className="data-row">
         <div>
           <span className="eyebrow">{job.employer.company}</span>
           <h1 className="page-title">{job.title}</h1>
         </div>
         <div className="actions">
-          <span className={`pill ${job.status === "open" ? "status-approved" : "status-rejected"}`}>{job.status}</span>
+          <span className={`employer-role-status ${job.status === "open" ? "is-open" : "is-closed"}`}><i aria-hidden="true" />{job.status === "open" ? "Open" : "Closed"}</span>
           {job.status === "open" ? (
             <form action={closeJob}><input type="hidden" name="jobId" value={job.id} /><button className="button secondary">Close role</button></form>
           ) : (
@@ -95,6 +103,10 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
             <p className="muted">{job.minExperience} month(s)</p>
           </div>
         </div>
+        {jobDocuments.length > 0 && <div style={{ marginTop: 14 }}>
+          <strong>Private role documents</strong>
+          {jobDocuments.map((document) => <div className="data-row" key={document.id}><span>{document.originalName}</span><a className="button secondary" href={`/api/documents/${document.id}`}>Download</a></div>)}
+        </div>}
       </section>
 
       <section className="card" id="candidates" style={{ marginTop: 18, scrollMarginTop: 80 }}>
@@ -134,6 +146,7 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
       </section>
 
       <Link className="link" href="/employer/dashboard" style={{ display: "inline-block", marginTop: 18 }}>← Back to dashboard</Link>
+      </div>
     </main>
   );
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentEmployer } from "@/lib/session";
+import { storeEvidenceDocuments } from "@/lib/documents";
 
 async function requireEmployer() {
   const ctx = await getCurrentEmployer();
@@ -68,6 +69,9 @@ export async function createJob(formData: FormData) {
     await prisma.jobCertification.create({ data: { jobId: job.id, certificationId: cert.id } });
   }
 
+  const files=formData.getAll("documents");
+  if(files.some(file=>file instanceof File&&file.size>0)) await storeEvidenceDocuments({files,ownerUserId:employer.userId,contextType:"JOB",contextId:job.id,purpose:"Opportunity requirements and supporting material"});
+
   revalidatePath("/employer/dashboard");
   redirect(`/employer/jobs/${job.id}`);
 }
@@ -111,6 +115,12 @@ export async function updateApplicationStatus(formData: FormData) {
   if (!application || application.job.employerId !== employer.id) {
     throw new Error("Application not found for this employer");
   }
+  if (application.status === "hired") {
+    throw new Error("This candidate has already been hired and the decision is final.");
+  }
+  if (application.status === status) {
+    throw new Error(`This candidate is already ${status}.`);
+  }
   if (["rejected", "shortlisted", "hired"].includes(status) && !decisionReason) throw new Error("A structured decision reason is required");
 
   await prisma.application.update({
@@ -122,6 +132,7 @@ export async function updateApplicationStatus(formData: FormData) {
   await prisma.auditEvent.create({ data: { actorUserId: employer.userId, action: `APPLICATION_${status.toUpperCase()}`, entityType: "APPLICATION", entityId: application.id, explanation: decisionReason } });
 
   revalidatePath(`/employer/jobs/${jobId}`);
+  revalidatePath(`/employer/jobs/${jobId}/candidates/${applicationId}`);
   revalidatePath("/student/applications");
 }
 
@@ -162,5 +173,6 @@ export async function submitFeedback(formData: FormData) {
   });
 
   revalidatePath(`/employer/jobs/${jobId}`);
+  revalidatePath(`/employer/jobs/${jobId}/candidates/${hiredApplication.id}`);
   revalidatePath("/workforce-intelligence");
 }

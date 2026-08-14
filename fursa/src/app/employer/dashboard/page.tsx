@@ -3,194 +3,46 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentEmployer } from "@/lib/session";
 import { computeJobMatch } from "@/lib/ai";
+import EmployerHeader from "@/components/EmployerHeader";
 
-function BriefcaseIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7V5.8c0-1 .8-1.8 1.8-1.8h2.4c1 0 1.8.8 1.8 1.8V7M4 10.5h16M5.5 7h13A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5v-9A1.5 1.5 0 0 1 5.5 7Z" /></svg>;
-}
+type IconName="briefcase"|"users"|"sparkle"|"calendar"|"mail"|"trend"|"medal"|"warning"|"chart"|"check"|"send";
+function Icon({name}:{name:IconName}){const paths:Record<IconName,React.ReactNode>={
+  briefcase:<><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5h8v2M3 12h18M10 12v2h4v-2"/></>,
+  users:<><circle cx="9" cy="8" r="3"/><path d="M3 19v-1c0-3 2.5-5 6-5s6 2 6 5v1M16 5.5a3 3 0 0 1 0 5.5M17 13c2.5.4 4 2 4 4.5V19"/></>,
+  sparkle:<path d="m12 3 1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5L12 3Zm6 11 .8 2.2L21 17l-2.2.8L18 20l-.8-2.2L15 17l2.2-.8L18 14Z"/>,
+  calendar:<><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18m-13 5 3 3 5-6"/></>,
+  mail:<><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></>,trend:<path d="m4 16 5-5 4 4 7-8m-5 0h5v5"/>,
+  medal:<><circle cx="12" cy="14" r="5"/><path d="m8 3 4 6 4-6M9 18l-1 3 4-2 4 2-1-3"/></>,
+  warning:<><circle cx="12" cy="12" r="9"/><path d="M12 7v6m0 4h.01"/></>,chart:<path d="M4 19V5m0 14h16M7 15l4-4 3 2 5-6"/>,
+  check:<><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></>,send:<path d="m3 11 18-8-8 18-2-8-8-2Zm8 2 4-4"/>
+};return <svg className="erd-svg" viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>}
 
-function PeopleIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 19v-1.4c0-2-1.8-3.6-4-3.6H7c-2.2 0-4 1.6-4 3.6V19m6.5-8a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm7-1a3 3 0 1 0 0-6m1 15h3v-1.4c0-1.8-1.4-3.3-3.3-3.6" /></svg>;
-}
-
-function ReviewIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Zm3 4h8M8 12h5M8 16h3" /></svg>;
-}
-
-function MatchIcon() {
-  return <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-4a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0-4.8V12l3.5-3.5" /></svg>;
-}
-
-export default async function EmployerDashboard() {
-  const ctx = await getCurrentEmployer();
-  if (!ctx) redirect("/login");
-
-  const verified = ctx.employer.verificationStatus === "APPROVED";
-  const jobs = await prisma.job.findMany({
-    where: { employerId: ctx.employer.id },
-    include: {
-      applications: {
-        include: {
-          student: {
-            include: {
-              skills: { include: { skill: true } },
-              certifications: { include: { certification: true } },
-              experiences: true,
-              projects: true,
-              user: true,
-            },
-          },
-        },
-      },
-      requiredSkills: { include: { skill: true } },
-      requiredCerts: { include: { certification: true } },
-    },
-    orderBy: { createdAt: "desc" },
-  });
-
-  const applications = jobs
-    .flatMap((job) => job.applications.map((application) => ({
-      ...application,
-      job,
-      match: computeJobMatch(application.student, job),
-    })))
-    .sort((a, b) => b.match.score - a.match.score);
-
-  const openRoles = jobs.filter((job) => job.status === "open").length;
-  const needsReview = applications.filter((application) => application.status === "applied").length;
-  const averageMatch = applications.length
-    ? Math.round(applications.reduce((total, application) => total + application.match.score, 0) / applications.length)
-    : null;
-
-  const metrics = [
-    { label: "Open roles", value: openRoles, detail: openRoles === 1 ? "Role accepting applications" : "Roles accepting applications", icon: <BriefcaseIcon /> },
-    { label: "Active candidates", value: applications.length, detail: "Across all open roles", icon: <PeopleIcon /> },
-    { label: "Needs review", value: needsReview, detail: needsReview ? "New applications to assess" : "No pending applications", icon: <ReviewIcon />, attention: needsReview > 0 },
-    { label: "Average match", value: averageMatch === null ? "—" : `${averageMatch}%`, detail: averageMatch === null ? "Available after candidates apply" : "Across calculated matches", icon: <MatchIcon /> },
-  ];
-
-  return (
-    <main className="employer-dashboard">
-      <div className="employer-dashboard__inner">
-        <header className="employer-page-header">
-          <div>
-            <span className="employer-kicker">Employer overview</span>
-            <h1>{ctx.employer.company}</h1>
-            <p>Manage roles, review candidate evidence, and make informed hiring decisions.</p>
-          </div>
-          {verified ? (
-            <Link className="employer-primary-action" href="/employer/jobs/new">
-              <span aria-hidden="true">＋</span> Post a job
-            </Link>
-          ) : (
-            <span className="employer-status employer-status--pending">Verification required</span>
-          )}
-        </header>
-
-        <div className="employer-human-note">
-          <span className="employer-human-note__icon" aria-hidden="true">i</span>
-          <span>AI supports candidate discovery and explanation. Your hiring team makes every final decision.</span>
-        </div>
-
-        {!verified && (
-          <div className={ctx.employer.verificationStatus === "REJECTED" ? "employer-alert employer-alert--error" : "employer-alert"}>
-            {ctx.employer.verificationStatus === "REJECTED"
-              ? `Your employer account was not approved${ctx.employer.reviewNote ? `: ${ctx.employer.reviewNote}` : "."} Contact support to appeal.`
-              : "Your employer account is pending administrator verification. You can review the workspace, but posting is disabled until approval."}
-          </div>
-        )}
-
-        <section className="employer-metrics" aria-label="Hiring overview">
-          {metrics.map((metric) => (
-            <article className="employer-metric" key={metric.label}>
-              <div className={`employer-metric__icon${metric.attention ? " employer-metric__icon--attention" : ""}`}>{metric.icon}</div>
-              <span className="employer-metric__label">{metric.label}</span>
-              <strong>{metric.value}</strong>
-              <span className="employer-metric__detail">{metric.detail}</span>
-            </article>
-          ))}
-        </section>
-
-        <div className="employer-workspace">
-          <section className="employer-panel employer-roles-panel">
-            <div className="employer-panel__header">
-              <div>
-                <h2>Open roles</h2>
-                <p>{jobs.length} {jobs.length === 1 ? "role" : "roles"} in your workspace</p>
-              </div>
-              {verified && <Link href="/employer/jobs/new" className="employer-text-link">Post a job <span aria-hidden="true">→</span></Link>}
-            </div>
-
-            {jobs.length ? (
-              <div className="employer-role-list">
-                <div className="employer-role-list__head" aria-hidden="true">
-                  <span>Role</span><span>Status</span><span>Candidates</span><span>Published</span><span></span>
-                </div>
-                {jobs.map((job) => {
-                  const skills = job.requiredSkills.map((required) => required.skill.name);
-                  return (
-                    <div className="employer-role-row" key={job.id}>
-                      <div className="employer-role-row__title">
-                        <Link href={`/employer/jobs/${job.id}`}>{job.title}</Link>
-                        <span>{skills.slice(0, 3).join(" · ") || "Skills not specified"}{skills.length > 3 ? ` · +${skills.length - 3}` : ""}</span>
-                      </div>
-                      <span className={`employer-status ${job.status === "open" ? "employer-status--open" : "employer-status--closed"}`}>{job.status}</span>
-                      <span className="employer-role-row__count"><strong>{job.applications.length}</strong><small> candidates</small></span>
-                      <time dateTime={job.createdAt.toISOString()}>{job.createdAt.toLocaleDateString("en-SA", { month: "short", day: "numeric" })}</time>
-                      <Link className="employer-row-action" href={`/employer/jobs/${job.id}`} aria-label={`View ${job.title}`}>View <span aria-hidden="true">→</span></Link>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="employer-empty">
-                <div className="employer-empty__icon"><BriefcaseIcon /></div>
-                <h3>Post your first role</h3>
-                <p>Create a structured role profile to begin receiving skills-based applications and explainable matches.</p>
-                {verified && <Link className="employer-primary-action" href="/employer/jobs/new">Post a job</Link>}
-              </div>
-            )}
-          </section>
-
-          <aside className="employer-panel employer-candidates-panel">
-            <div className="employer-panel__header employer-panel__header--stacked">
-              <div>
-                <span className="employer-ai-label"><span aria-hidden="true">✦</span> AI-assisted matching</span>
-                <h2>Candidates to review</h2>
-                <p>Potential matches based on role requirements and available evidence.</p>
-              </div>
-            </div>
-
-            {applications.length ? (
-              <div className="employer-candidate-list">
-                {applications.slice(0, 4).map((application) => (
-                  <Link className="employer-candidate" href={`/employer/jobs/${application.job.id}/candidates/${application.id}`} key={application.id}>
-                    <div className="employer-candidate__top">
-                      <span className="employer-avatar" aria-hidden="true">{application.student.user.name.split(" ").map((part) => part[0]).join("").slice(0, 2)}</span>
-                      <div><strong>{application.student.user.name}</strong><span>{application.job.title}</span></div>
-                      <b>{application.match.score}%</b>
-                    </div>
-                    <div className="employer-match-bar" aria-label={`${application.match.score}% skills alignment`}><i style={{ width: `${application.match.score}%` }} /></div>
-                    <span className="employer-explain-link">Review evidence and match explanation <span aria-hidden="true">→</span></span>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="employer-empty employer-empty--compact">
-                <div className="employer-empty__icon employer-empty__icon--ai"><PeopleIcon /></div>
-                <h3>No candidates yet</h3>
-                <p>Candidates and transparent match explanations will appear here after they apply to an open role.</p>
-                {jobs.length > 0 && <Link className="employer-text-link" href={`/employer/jobs/${jobs[0].id}`}>Review your open roles <span aria-hidden="true">→</span></Link>}
-              </div>
-            )}
-
-            <div className="employer-ai-guardrail">
-              <strong>Human decisions stay in control</strong>
-              <p>Match scores summarize stated requirements and available evidence. They do not make hiring decisions.</p>
-              <Link href="/policies/responsible-ai">How matching works <span aria-hidden="true">→</span></Link>
-            </div>
-          </aside>
-        </div>
-      </div>
-    </main>
-  );
+export default async function EmployerDashboard({searchParams}:{searchParams:Promise<{q?:string}>}){
+  const ctx=await getCurrentEmployer(); if(!ctx) redirect("/login");
+  const query=String((await searchParams).q||"").trim().toLowerCase();
+  const jobs=await prisma.job.findMany({where:{employerId:ctx.employer.id},include:{applications:{include:{student:{include:{skills:{include:{skill:true}},certifications:{include:{certification:true}},experiences:true,projects:true,user:true}}}},requiredSkills:{include:{skill:true}},requiredCerts:{include:{certification:true}}},orderBy:{createdAt:"desc"}});
+  const applications=jobs.flatMap(job=>job.applications.map(a=>({...a,job,match:computeJobMatch(a.student,job)}))).sort((a,b)=>b.match.score-a.match.score);
+  const visibleJobs=query?jobs.filter(job=>[job.title,job.careerTrack,...job.requiredSkills.map(item=>item.skill.name)].some(value=>value.toLowerCase().includes(query))):jobs;
+  const roles=visibleJobs.slice(0,3).map(job=>({id:job.id,title:job.title,dept:job.careerTrack.replaceAll("-"," "),skills:job.requiredSkills.map(s=>s.skill.name).slice(0,3),applicants:job.applications.length,match:job.applications.length?Math.round(job.applications.reduce((n,a)=>n+computeJobMatch(a.student,job).score,0)/job.applications.length):null,status:job.status==="open"?"Published":"Closed"}));
+  const open=jobs.filter(j=>j.status==="open").length;
+  const activeApplications=applications.filter(a=>!["rejected","hired"].includes(a.status));
+  const avg=applications.length?Math.round(applications.reduce((n,a)=>n+a.match.score,0)/applications.length):0;
+  const shortlisted=applications.filter(a=>a.status==="shortlisted").length;
+  const weekAgo=new Date(Date.now()-7*24*60*60*1000);
+  const newThisWeek=applications.filter(a=>a.createdAt>=weekAgo).length;
+  const pendingReview=applications.filter(a=>a.status==="applied").length;
+  const priorityJob=[...jobs].sort((a,b)=>b.applications.length-a.applications.length)[0];
+  const skillCounts=new Map<string,number>(); jobs.forEach(job=>job.requiredSkills.forEach(item=>skillCounts.set(item.skill.name,(skillCounts.get(item.skill.name)||0)+1)));
+  const topSkills=[...skillCounts.entries()].sort((a,b)=>b[1]-a[1]).slice(0,4).map(([name])=>name);
+  const activity=[...applications.map(a=>({id:`app-${a.id}`,date:a.createdAt,text:`${a.student.user.name} applied for ${a.job.title}`,kind:"application" as const})),...jobs.map(job=>({id:`job-${job.id}`,date:job.createdAt,text:`Role created: ${job.title}`,kind:"job" as const}))].sort((a,b)=>b.date.getTime()-a.date.getTime()).slice(0,5);
+  return <main className="erd-page">
+    <EmployerHeader company={ctx.employer.company} userName={ctx.user.name} active="dashboard"/>
+    <div className="erd-inner">
+      <section className="erd-metrics">{[["briefcase",open,"OPEN ROLES","Active recruitment pipelines"],["users",activeApplications.length,"ACTIVE CANDIDATES","In active hiring stages"],["sparkle",applications.length?`${avg}%`:"—","AVG MATCH SCORE",applications.length?"Across current applicants":"Available after applications"],["calendar",shortlisted,"SHORTLISTED","Candidates selected for review"],["mail",newThisWeek,"NEW THIS WEEK","Applications received recently"]].map((m,i)=><article className={i===4?"accent":""} key={String(m[2])}><span className={`icon i${i}`}><Icon name={m[0] as IconName}/></span><strong>{m[1]}</strong><h3>{m[2]}</h3><p>{m[3]}</p></article>)}</section>
+      <div className="erd-layout"><div>
+        <section className="erd-positions"><header><h2>{query?`Search results for “${query}”`:"Current Positions"}</h2><div><Link href="/employer/jobs/new">Post a Job</Link><a href="/api/employer/jobs/export">Export</a></div></header>{roles.length?<><div className="erd-table-head"><b>JOB TITLE &amp; TRACK</b><b>CORE SKILLS</b><b>APPLICANTS</b><b>AI MATCH</b><b>STATUS</b></div>{roles.map(role=><article key={role.id}><div><h3><Link href={`/employer/jobs/${role.id}`}>{role.title}</Link></h3><p>{role.dept}</p></div><div>{role.skills.map(s=><span key={s}>{s}</span>)}</div><strong>{role.applicants}</strong><b className="match">{role.match===null?"—":`${role.match}%`}</b><label className={role.status==="Closed"?"paused":""}>● {role.status}</label><Link className="erd-row-link" href={`/employer/jobs/${role.id}`}>→</Link></article>)}</>:<div className="erd-empty"><h3>{query?"No matching roles":"No roles posted yet"}</h3><p>{query?"Try another job title, career track, or skill.":"Create your first opportunity to begin receiving applications."}</p>{query?<Link href="/employer/dashboard">Clear search</Link>:<Link href="/employer/jobs/new">Create an opportunity</Link>}</div>}<footer>Showing {roles.length} of {visibleJobs.length} roles</footer></section>
+        <section className="erd-ranking"><header><h2><Icon name="medal"/>Top Match Ranking</h2>{applications.length>0&&<span>Sorted by AI readiness score</span>}</header>{applications.length?applications.slice(0,3).map(a=><article key={a.id}><i>{a.student.user.name.split(" ").map(n=>n[0]).join("").slice(0,2)}</i><div><h3>{a.student.user.name} <label className={`candidate-status candidate-status--${a.status}`}>{a.status.toUpperCase()}</label></h3><p>Applied for {a.job.title}</p><b>AI MATCH:　<strong>{a.match.score}%</strong></b></div><blockquote>{a.match.explanation}</blockquote><span><Link href={`/employer/jobs/${a.job.id}/candidates/${a.id}`}>Profile</Link><Link href={`/employer/jobs/${a.job.id}/candidates/${a.id}`}>Review</Link></span></article>):<div className="erd-empty"><h3>No candidates yet</h3><p>Candidate rankings will appear after students apply to your published roles.</p></div>}</section>
+      </div><aside><section className="erd-intel"><header><h2>✦　HIRING INTELLIGENCE</h2><p>Analysis of your current hiring data</p></header><div>{priorityJob?<><small>HIGHEST ACTIVITY ROLE</small><article><h3>{priorityJob.title}</h3><p>{priorityJob.applications.length} application{priorityJob.applications.length===1?"":"s"} received for this opportunity.</p></article><small>CURRENT BOTTLENECKS</small><p>ⓘ　 {pendingReview} application{pendingReview===1?"":"s"} awaiting initial review.</p><p>ⓘ　 {jobs.filter(job=>job.requiredSkills.length===0).length} role{jobs.filter(job=>job.requiredSkills.length===0).length===1?"":"s"} without mapped skill requirements.</p><small>MOST REQUESTED SKILLS</small><div className="erd-tags">{topSkills.length?topSkills.map(skill=><span key={skill}>{skill}</span>):<span>No skills mapped</span>}</div></>:<div className="erd-empty"><h3>Not enough data yet</h3><p>Post a role and map its required skills to receive hiring intelligence.</p></div>}</div></section><section className="erd-activity"><h2>Recent Activity</h2>{activity.length?activity.map((item,i)=><article key={item.id}><i className={`a${i}`}>{item.kind==="application"?"＋":"▣"}</i><div><p>{item.text}</p><small>{item.date.toLocaleDateString("en-SA",{month:"short",day:"numeric",year:"numeric"})}</small></div></article>):<div className="erd-empty"><h3>No activity yet</h3><p>New roles and applications will appear here.</p></div>}</section></aside></div>
+    </div>
+  </main>;
 }

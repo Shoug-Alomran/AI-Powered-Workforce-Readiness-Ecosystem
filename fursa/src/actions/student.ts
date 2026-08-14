@@ -1,14 +1,14 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentStudent } from "@/lib/session";
 import { getFirebaseAdminDb } from "@/lib/firebase-admin";
-import { uploadPrivateCertificate } from "@/lib/r2";
-import { randomUUID } from "node:crypto";
 import { redirect } from "next/navigation";
 import { getCareerTrackAsync } from "@/lib/careerTracks.server";
 import { computeReadinessScore } from "@/lib/ai";
+import { storeEvidenceDocuments } from "@/lib/documents";
 
 async function requireStudent() {
   const ctx = await getCurrentStudent();
@@ -77,9 +77,6 @@ export async function addCertification(formData: FormData) {
   const evidence = formData.get("evidence");
   if (!name) throw new Error("Certification name is required");
   if (!(evidence instanceof File) || evidence.size === 0) throw new Error("A certificate image is required");
-  const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp"]);
-  if (!allowedTypes.has(evidence.type)) throw new Error("Upload a JPG, PNG, or WebP image");
-  if (evidence.size > 5 * 1024 * 1024) throw new Error("Certificate image must be 5 MB or smaller");
 
   const cert = await prisma.certification.upsert({
     where: { name },
@@ -87,10 +84,10 @@ export async function addCertification(formData: FormData) {
     create: { name },
   });
 
-  const extension = evidence.type === "image/png" ? "png" : evidence.type === "image/webp" ? "webp" : "jpg";
-  const evidencePath = `certificate-evidence/${ctx.user.id}/${randomUUID()}.${extension}`;
+  let evidencePath = "";
   try {
-    await uploadPrivateCertificate(evidencePath, new Uint8Array(await evidence.arrayBuffer()), evidence.type);
+    const [document] = await storeEvidenceDocuments({ files:[evidence], ownerUserId:ctx.user.id, contextType:"CERTIFICATION", contextId:cert.id, purpose:"Certification verification" });
+    evidencePath = document.storageKey;
   } catch (error) {
     console.error("Certificate evidence upload failed", error);
     redirect("/student/profile?upload=storage-unavailable");
@@ -122,7 +119,8 @@ export async function removeCertification(formData: FormData) {
 }
 
 export async function addExperience(formData: FormData) {
-  const student = await requireStudent();
+  const ctx = await getCurrentStudent(); if (!ctx) throw new Error("Not signed in as a student");
+  const student = ctx.student;
   const type = String(formData.get("type") ?? "internship");
   const title = String(formData.get("title") ?? "").trim();
   const org = String(formData.get("org") ?? "").trim();
@@ -130,9 +128,14 @@ export async function addExperience(formData: FormData) {
   const evidenceUrl = String(formData.get("evidenceUrl") ?? "").trim();
   if (!title) return;
 
-  await prisma.experience.create({
+  const experience = await prisma.experience.create({
     data: { studentId: student.id, type, title, org: org || null, months, evidenceUrl: evidenceUrl || null, verificationStatus: evidenceUrl ? "PENDING" : "SELF_REPORTED" },
   });
+  const files=formData.getAll("documents");
+  if(files.some(file=>file instanceof File&&file.size>0)){
+    await storeEvidenceDocuments({files,ownerUserId:ctx.user.id,contextType:"EXPERIENCE",contextId:experience.id,purpose:"Experience verification"});
+    await prisma.experience.update({where:{id:experience.id},data:{verificationStatus:"PENDING"}});
+  }
 
   revalidatePath("/student/dashboard");
   revalidatePath("/student/profile");
@@ -148,15 +151,21 @@ export async function removeExperience(formData: FormData) {
 }
 
 export async function addProject(formData: FormData) {
-  const student = await requireStudent();
+  const ctx = await getCurrentStudent(); if (!ctx) throw new Error("Not signed in as a student");
+  const student = ctx.student;
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const evidenceUrl = String(formData.get("evidenceUrl") ?? "").trim();
   if (!title) return;
 
-  await prisma.project.create({
+  const project = await prisma.project.create({
     data: { studentId: student.id, title, description: description || null, evidenceUrl: evidenceUrl || null, verificationStatus: evidenceUrl ? "PENDING" : "SELF_REPORTED" },
   });
+  const files=formData.getAll("documents");
+  if(files.some(file=>file instanceof File&&file.size>0)){
+    await storeEvidenceDocuments({files,ownerUserId:ctx.user.id,contextType:"PROJECT",contextId:project.id,purpose:"Project verification"});
+    await prisma.project.update({where:{id:project.id},data:{verificationStatus:"PENDING"}});
+  }
 
   revalidatePath("/student/dashboard");
   revalidatePath("/student/profile");
@@ -195,11 +204,13 @@ export async function applyToJob(formData: FormData) {
 
   const match = computeJobMatch(studentFull, job);
 
-  await prisma.application.upsert({
+  const application = await prisma.application.upsert({
     where: { studentId_jobId: { studentId: student.id, jobId } },
     update: { matchScore: match.score },
     create: { studentId: student.id, jobId, matchScore: match.score },
   });
+  const files=formData.getAll("documents");
+  if(files.some(file=>file instanceof File&&file.size>0)) await storeEvidenceDocuments({files,ownerUserId:student.userId,contextType:"APPLICATION",contextId:application.id,purpose:"Job application supporting document"});
 
   revalidatePath("/student/jobs");
   revalidatePath(`/student/jobs/${jobId}`);

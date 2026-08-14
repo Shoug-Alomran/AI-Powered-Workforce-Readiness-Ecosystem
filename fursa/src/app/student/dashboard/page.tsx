@@ -42,7 +42,7 @@ export default async function StudentDashboard() {
     .slice(0, 3);
 
   return (
-    <main className="page-shell">
+    <main className="page-shell student-dashboard-design">
       <span className="eyebrow">Student workspace</span>
       <h1 className="page-title">Welcome back, {ctx.user.name.split(" ")[0]}.</h1>
       <p className="muted">
@@ -126,6 +126,7 @@ export default async function StudentDashboard() {
         <p className="muted" style={{ marginTop: -8, marginBottom: 4 }}>
           Structured feedback from employers after a hire — this is what feeds back into the AI&apos;s learning recommendations.
         </p>
+        <div className="rating-scale-note" role="note"><strong>How ratings are interpreted</strong><span><b>1</b> Poor</span><span><b>3</b> Meets expectations</span><span><b>5</b> Excellent</span></div>
         {feedbacks.length ? (
           feedbacks.map((f) => {
             const avg = Math.round((f.technical + f.communication + f.teamwork + f.problemSolving + f.adaptability + f.overall) / 6 * 20);

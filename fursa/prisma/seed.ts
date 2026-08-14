@@ -220,6 +220,14 @@ async function main() {
     ["JavaScript", "Git", "Problem Solving"]
   );
 
+  // Curriculum completion is screened by AI and then verified by a human administrator.
+  for (const university of [ksu, psu]) {
+    await prisma.curriculumAction.createMany({ data: [
+      { universityId: university.id, title: "Cloud Systems Architecture Revision", skill: "Cloud Architecture", owner: "Alice Miller", status: "IN_PROGRESS", dueDate: new Date("2026-10-12") },
+      { universityId: university.id, title: "Industry Internship Program: Fintech Hub", skill: "Industry Experience", owner: "Robert Black", status: "IN_PROGRESS", dueDate: new Date("2026-12-01") },
+    ] });
+  }
+
   // --- Jobs ---
   async function createJob(
     employerId: string,
@@ -461,6 +469,24 @@ async function main() {
       projects: [{ title: "Campus Wi-Fi Security Audit", description: "Pen-tested the PSU guest network for a capstone project." }],
     },
     {
+      name: "Khalid Al-Harbi",
+      email: "khalid.alharbi@example.com",
+      targetCareer: "cybersecurity-specialist",
+      university: "King Saud University",
+      degree: "B.Sc. Information Systems",
+      bio: "Information systems student building practical skills in security operations and incident response.",
+      skills: [
+        { name: "Network Security", level: 3 },
+        { name: "Linux", level: 2 },
+        { name: "Threat Analysis", level: 2 },
+        { name: "Critical Thinking", level: 3 },
+        { name: "Attention to Detail", level: 3 },
+      ],
+      certs: [],
+      experiences: [{ type: "project", title: "Security Operations Trainee", org: "KSU Cyber Lab", months: 2 }],
+      projects: [{ title: "Phishing Detection Study", description: "Analyzed common phishing indicators and documented a response playbook." }],
+    },
+    {
       name: "Maha Al-Otaibi",
       email: "maha.alotaibi@example.com",
       targetCareer: "ux-designer",
@@ -573,6 +599,7 @@ async function main() {
   const lina = await prisma.student.findFirstOrThrow({ where: { user: { email: "lina.alzahrani@example.com" } }, include: studentInclude });
   const reem = await prisma.student.findFirstOrThrow({ where: { user: { email: "reem.alanazi@example.com" } }, include: studentInclude });
   const faris = await prisma.student.findFirstOrThrow({ where: { user: { email: "faris.alqahtani@example.com" } }, include: studentInclude });
+  const khalid = await prisma.student.findFirstOrThrow({ where: { user: { email: "khalid.alharbi@example.com" } }, include: studentInclude });
   const dana = await prisma.student.findFirstOrThrow({ where: { user: { email: "dana.alharbi@example.com" } }, include: studentInclude });
 
   const seJobFull = await prisma.job.findUniqueOrThrow({ where: { id: seJob.id }, include: jobInclude });
@@ -593,6 +620,9 @@ async function main() {
   });
   await prisma.application.create({
     data: { studentId: faris.id, jobId: csJob.id, status: "shortlisted", matchScore: computeJobMatch(faris, csJobFull).score },
+  });
+  await prisma.application.create({
+    data: { studentId: khalid.id, jobId: csJob.id, status: "applied", matchScore: computeJobMatch(khalid, csJobFull).score },
   });
   await prisma.application.create({
     data: { studentId: dana.id, jobId: dsJob.id, status: "shortlisted", matchScore: computeJobMatch(dana, dsJobFull).score },

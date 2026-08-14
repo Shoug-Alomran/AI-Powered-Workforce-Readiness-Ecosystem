@@ -8,27 +8,33 @@ if (!authToken) throw new Error("TURSO_AUTH_TOKEN is required");
 
 const client = createClient({ url, authToken });
 const experienceColumns = await client.execute("PRAGMA table_info('Experience')");
-if (experienceColumns.rows.some((row) => row.name === "evidenceUrl")) {
-  console.log("Production schema is already current.");
-  client.close();
-  process.exit(0);
+if (!experienceColumns.rows.some((row) => row.name === "evidenceUrl")) {
+  const migration = await readFile(
+    new URL("../prisma/migrations/20260804194821_trust_support_and_sharing/migration.sql", import.meta.url),
+    "utf8",
+  );
+  await client.executeMultiple(migration);
 }
 
-const migration = await readFile(
-  new URL("../prisma/migrations/20260804194821_trust_support_and_sharing/migration.sql", import.meta.url),
-  "utf8",
-);
+const documentColumns = await client.execute("PRAGMA table_info('EvidenceDocument')");
+if (!documentColumns.rows.some((row) => row.name === "storageKey")) {
+  const documentMigration = await readFile(
+    new URL("../prisma/migrations/20260814190000_private_evidence_documents/migration.sql", import.meta.url),
+    "utf8",
+  );
+  await client.executeMultiple(documentMigration);
+}
 
-await client.executeMultiple(migration);
-
-const [experienceCheck, projectCheck, feedbackCheck] = await Promise.all([
+const [experienceCheck, projectCheck, feedbackCheck, documentCheck] = await Promise.all([
   client.execute("PRAGMA table_info('Experience')"),
   client.execute("PRAGMA table_info('Project')"),
   client.execute("PRAGMA table_info('Feedback')"),
+  client.execute("PRAGMA table_info('EvidenceDocument')"),
 ]);
 if (!experienceCheck.rows.some((row) => row.name === "evidenceUrl")) throw new Error("Experience migration verification failed");
 if (!projectCheck.rows.some((row) => row.name === "evidenceUrl")) throw new Error("Project migration verification failed");
 if (!feedbackCheck.rows.some((row) => row.name === "checkpointDays")) throw new Error("Feedback migration verification failed");
+if (!documentCheck.rows.some((row) => row.name === "storageKey")) throw new Error("Private document migration verification failed");
 
 console.log("Production migration applied and verified.");
 client.close();

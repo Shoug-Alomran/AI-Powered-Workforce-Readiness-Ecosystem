@@ -4,5 +4,18 @@ import { loginAsUser } from "@/actions/auth";
 
 export default async function DemoUsersPage() {
   const users = await prisma.user.findMany({ orderBy: [{ role: "asc" }, { name: "asc" }], take: 20 });
-  return <main className="page-shell" style={{maxWidth:760}}><Link href="/login" className="link">← Back to sign in</Link><span className="eyebrow" data-i18n="demo.eyebrow" style={{display:"block",marginTop:28}}>Prepared prototype users</span><h1 className="page-title" data-i18n="demo.title">Choose a demo account</h1><p className="muted">Explore the student, employer, university, and certificate-review administrator experiences without entering a password.</p><div className="notice" style={{marginTop:18}}>Prototype only: the administrator shortcut must be disabled before production launch.</div><section className="card" style={{marginTop:24}}>{users.map(user => <form action={loginAsUser.bind(null, user.id)} className="data-row" key={user.id}><div><strong>{user.name}</strong><div className="muted" style={{fontSize:12}}>{user.email} · {user.role === "ADMIN" ? "Certificate review administrator" : `${user.role.toLowerCase()} demo`}</div></div><button className={`button ${user.role === "ADMIN" ? "primary" : "secondary"}`}>Continue as {user.role === "STUDENT" ? "student" : user.role === "EMPLOYER" ? "employer" : user.role === "ADMIN" ? "admin" : "university"}</button></form>)}</section></main>;
+  const roleLabel={STUDENT:"Student",EMPLOYER:"Employer",UNIVERSITY:"University",ADMIN:"Administrator"} as const;
+  const roleDescription={STUDENT:"Explore career readiness and opportunities",EMPLOYER:"Review candidates and manage roles",UNIVERSITY:"Manage curriculum and workforce alignment",ADMIN:"Review credentials and platform governance"} as const;
+  return <main className="demo-page"><div className="demo-shell">
+    <Link href="/login" className="demo-back">← Back to sign in</Link>
+    <header className="demo-heading"><span className="eyebrow" data-i18n="demo.eyebrow">Prepared prototype users</span><h1 data-i18n="demo.title">Choose a demo account</h1><p>Explore each Fursa workspace without entering a password.</p></header>
+    <div className="demo-notice"><span>✦</span><div><strong>Prototype access</strong><p>These accounts contain prepared demonstration data. Admin shortcuts must be disabled before production launch.</p></div></div>
+    <section className="demo-accounts" aria-label="Prepared demo accounts">{users.map(user => {
+      const role=roleLabel[user.role]; const initials=user.name.split(" ").map(part=>part[0]).join("").slice(0,2).toUpperCase();
+      return <form action={loginAsUser.bind(null,user.id)} className={`demo-account role-${user.role.toLowerCase()}`} key={user.id}>
+        <i>{initials}</i><div><span>{role}</span><strong>{user.name}</strong><small>{user.email}</small><p>{roleDescription[user.role]}</p></div><button type="submit">Continue <b aria-hidden>→</b></button>
+      </form>;
+    })}</section>
+    <p className="demo-privacy">Demo activity stays within the prepared prototype environment.</p>
+  </div></main>;
 }

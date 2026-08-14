@@ -11,6 +11,7 @@ import {
 import { getFirebaseClientAuth } from "@/lib/firebase-client";
 import type { FirebaseRole } from "@/lib/firebase-types";
 import { CAREER_TRACKS } from "@/lib/careerTracks";
+import Link from "next/link";
 
 export default function FirebaseAuthPanel({ configured, serverReady }: { configured: boolean; serverReady: boolean }) {
   const [mode, setMode] = useState<"signup" | "signin" | "forgot">("signin");
@@ -73,7 +74,7 @@ export default function FirebaseAuthPanel({ configured, serverReady }: { configu
     {mode === "signup" && role === "STUDENT" && <><label>Target career<select className="input" name="targetCareer">{CAREER_TRACKS.map(track => <option value={track.id} key={track.id}>{track.label}</option>)}</select></label><label>University<input className="input" name="university" /></label></>}
     {mode === "signup" && role === "EMPLOYER" && <><label>Company<input className="input" name="company" required /></label><label>Industry<input className="input" name="industry" /></label></>}
     {mode === "signup" && role === "UNIVERSITY" && <><label>Institution<input className="input" name="institution" required /></label><label>Region<input className="input" name="region" /></label></>}
-    {mode !== "forgot" && !serverReady && <div className="notice">Account activation is waiting for the Firebase Admin credential. The form is ready to preview.</div>}{error && <div className="auth-error">{error}</div>}{success && <div className="auth-success" role="status">{success}</div>}<button className="button primary" disabled={loading || (mode !== "forgot" && !serverReady)}>{loading ? "Please wait…" : mode === "signup" ? "Create account" : mode === "forgot" ? "Send reset link" : "Sign in"}</button>
+    {mode !== "forgot" && !serverReady && <div className="notice">Secure account sign-in is waiting for the Firebase Admin credential. You can still use a prepared account below.</div>}{error && <div className="auth-error">{error}</div>}{success && <div className="auth-success" role="status">{success}</div>}<button className="button primary" disabled={loading || (mode !== "forgot" && !serverReady)}>{loading ? "Please wait…" : mode === "signup" ? "Create account" : mode === "forgot" ? "Send reset link" : "Sign in"}</button>{mode !== "forgot"&&!serverReady&&<Link className="button secondary" href="/login/demo">Choose a prepared account</Link>}
     {mode === "forgot" && <button type="button" className="auth-back" onClick={() => changeMode("signin")}><span data-i18n="auth.back">← Back to sign in</span></button>}
   </form></section>;
 }

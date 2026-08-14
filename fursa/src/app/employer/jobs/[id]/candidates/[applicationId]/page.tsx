@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentEmployer } from "@/lib/session";
 import { computeJobMatch } from "@/lib/ai";
 import { updateApplicationStatus, submitFeedback } from "@/actions/employer";
+import EmployerHeader from "@/components/EmployerHeader";
 
 const STATUS_LABEL: Record<string, string> = {
   applied: "Applied",
@@ -48,11 +49,19 @@ export default async function CandidateProfile({
   const job = application.job;
   const s = application.student;
   const match = computeJobMatch(s, job);
-  const feedbacks = await prisma.feedback.findMany({ where: { jobId: job.id, studentId: s.id } });
+  const [feedbacks, applicationDocuments] = await Promise.all([
+    prisma.feedback.findMany({ where: { jobId: job.id, studentId: s.id } }),
+    prisma.evidenceDocument.findMany({
+      where: { contextType: "APPLICATION", contextId: application.id },
+      orderBy: { createdAt: "asc" },
+    }),
+  ]);
   const blind = job.blindReview && application.status === "applied";
 
   return (
-    <main className="page-shell" style={{ maxWidth: 900 }}>
+    <main className="employer-detail-page employer-candidate-page">
+      <EmployerHeader company={ctx.employer.company} userName={ctx.user.name} active="dashboard" pageLabel="Candidate Profile"/>
+      <div className="employer-detail-content employer-candidate-content">
       <Link className="link" href={`/employer/jobs/${job.id}#candidates`}>← Back to all candidates</Link>
 
       <div className="data-row" style={{ marginTop: 14 }}>
@@ -91,6 +100,24 @@ export default async function CandidateProfile({
       </section>
 
       <section className="card" style={{ marginTop: 18 }}>
+        <span className="eyebrow">Private application documents</span>
+        <h2>Supporting evidence</h2>
+        <p className="muted">Files are private to this applicant, your organization, and authorized reviewers.</p>
+        {applicationDocuments.length ? applicationDocuments.map((document) => (
+          <div className="data-row" key={document.id}>
+            <div>
+              <strong>{document.originalName}</strong>
+              <div className="muted">{document.purpose} · {(document.sizeBytes / 1024).toFixed(0)} KB</div>
+            </div>
+            <div className="actions">
+              <span className={`pill status-${document.reviewStatus.toLowerCase()}`}>{document.reviewStatus === "PENDING" ? "Human review pending" : document.reviewStatus}</span>
+              <a className="button secondary" href={`/api/documents/${document.id}`}>Download</a>
+            </div>
+          </div>
+        )) : <div className="notice">The applicant did not attach supporting documents.</div>}
+      </section>
+
+      <section className="card" style={{ marginTop: 18 }}>
         <span className="eyebrow">AI Skills Passport</span>
         <h2>Full profile</h2>
         <div className="grid-2">
@@ -117,7 +144,7 @@ export default async function CandidateProfile({
         </div>
       </section>
 
-      <section className="card" style={{ marginTop: 18 }}>
+      {application.status !== "hired" && <section className="card" style={{ marginTop: 18 }}>
         <span className="eyebrow">Decision</span>
         <h2>Update status</h2>
         <form action={updateApplicationStatus} className="form-grid">
@@ -129,42 +156,41 @@ export default async function CandidateProfile({
           </label>
           <label>Structured decision reason<select className="input" name="decisionReason" defaultValue={application.decisionReason ?? ""} required><option value="" disabled>Select the primary reason</option><option value="MEETS_ESSENTIAL_REQUIREMENTS">Meets essential requirements</option><option value="STRONGER_WORK_SAMPLE_NEEDED">Stronger work sample needed</option><option value="MISSING_ESSENTIAL_SKILL">Missing an essential skill</option><option value="EXPERIENCE_GAP">Relevant experience gap</option><option value="ROLE_FILLED">Role filled or closed</option></select></label>
           <div className="actions">
-            <button className="button secondary" name="status" value="shortlisted">Shortlist</button>
+            {application.status === "applied" && <button className="button secondary" name="status" value="shortlisted">Shortlist</button>}
             <button className="button primary" name="status" value="hired">Hire</button>
             <button className="button danger" name="status" value="rejected">Reject</button>
           </div>
         </form>
-      </section>
+      </section>}
 
       {application.status === "hired" && (
-        <section className="card" style={{ marginTop: 18 }}>
+        <section className="card employer-feedback" style={{ marginTop: 18 }}>
           <span className="eyebrow">Workforce feedback loop</span>
-          <h2>30, 90 and 180-day feedback</h2>
-          <p className="muted">Repeated checkpoints distinguish onboarding issues from sustained job performance.</p>
-          {[30, 90, 180].map((checkpoint) => {
-            const feedback = feedbacks.find((item) => item.checkpointDays === checkpoint);
-            return feedback ? <div className="data-row" key={checkpoint}><div><strong>{checkpoint}-day checkpoint</strong><div className="muted">{feedback.notes ?? "Feedback recorded"}</div></div><span className="pill">{feedback.overall}/5</span></div> : (
-            <form action={submitFeedback} className="form-grid" key={checkpoint} style={{ borderTop: "1px solid #e2e8f0", paddingTop: 18, marginTop: 18 }}>
+          <h2>Performance feedback</h2>
+          <p className="muted">Choose the appropriate checkpoint and submit one focused review.</p>
+          {feedbacks.length>0&&<div className="employer-feedback-history"><h3>Submitted checkpoints</h3>{feedbacks.sort((a,b)=>a.checkpointDays-b.checkpointDays).map(feedback=><div className="data-row" key={feedback.id}><div><strong>{feedback.checkpointDays}-day checkpoint</strong><div className="muted">{feedback.notes??"Feedback recorded"}</div></div><span className="pill">{feedback.overall}/5</span></div>)}</div>}
+          {feedbacks.length<3&&<form action={submitFeedback} className="form-grid employer-feedback-form">
               <input type="hidden" name="jobId" value={job.id} />
               <input type="hidden" name="studentId" value={s.id} />
-              <input type="hidden" name="checkpointDays" value={checkpoint} />
-              <strong>{checkpoint}-day checkpoint</strong>
-              <div className="grid-3">
+              <label className="employer-feedback-checkpoint">Feedback checkpoint<select className="input" name="checkpointDays" required defaultValue=""><option value="" disabled>Select a checkpoint</option>{[30,90,180].filter(day=>!feedbacks.some(item=>item.checkpointDays===day)).map(day=><option key={day} value={day}>{day}-day checkpoint</option>)}</select></label>
+              <div className="rating-scale-note" role="note"><strong>Rating scale</strong><span><b>1</b> Poor</span><span><b>3</b> Meets expectations</span><span><b>5</b> Excellent</span></div>
+              <div className="employer-feedback-scores">
                 {(["technical", "communication", "teamwork", "problemSolving", "adaptability", "overall"] as const).map((field) => (
                   <label key={field} style={{ textTransform: "capitalize" }}>
                     {field.replace(/([A-Z])/g, " $1")}
-                    <select className="input" name={field} defaultValue="4">
+                    <select className="input" name={field} defaultValue="" required>
+                      <option value="" disabled>Select rating</option>
                       {[1, 2, 3, 4, 5].map((n) => <option key={n} value={n}>{n}</option>)}
                     </select>
                   </label>
                 ))}
               </div>
               <label>Notes<textarea className="input" name="notes" placeholder="What stood out?" /></label>
-              <button className="button secondary">Submit {checkpoint}-day feedback</button>
-            </form>
-          );})}
+              <button className="button primary">Submit feedback</button>
+            </form>}
         </section>
       )}
+      </div>
     </main>
   );
 }

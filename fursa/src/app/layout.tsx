@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import PreferencesControls from "@/components/PreferencesControls";
+import AccessibleViewControls from "@/components/AccessibleViewControls";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://fursah.org"),
@@ -30,7 +31,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       className="h-full antialiased"
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col"><Navbar />{children}<PreferencesControls /><Analytics /><SpeedInsights /></body>
+      <body className="min-h-full flex flex-col"><Navbar />{children}<AccessibleViewControls /><PreferencesControls /><Analytics /><SpeedInsights /></body>
     </html>
   );
 }

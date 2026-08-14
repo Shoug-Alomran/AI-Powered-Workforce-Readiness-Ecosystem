@@ -1,14 +1,20 @@
 import Link from "next/link";
-import Image from "next/image";
 import FirebaseAuthPanel from "@/components/auth/FirebaseAuthPanel";
 import { firebaseClientConfigured } from "@/lib/firebase-client";
 import { firebaseAdminConfigured } from "@/lib/firebase-admin";
 
 export default function LoginPage() {
-  return <main className="auth-page"><div className="auth-container">
-    <Link href="/" className="auth-brand"><Image src="/logo.svg" alt="" width={34} height={34} /> Fursah</Link>
-    <div className="auth-heading"><span className="eyebrow" data-i18n="auth.eyebrow">Secure account access</span><h1 data-i18n="auth.title">Build your path to career readiness.</h1><p data-i18n="auth.lead">Sign in or create an account as a student, employer, or university representative.</p></div>
-    <FirebaseAuthPanel configured={firebaseClientConfigured} serverReady={firebaseAdminConfigured} />
-    <Link href="/login/demo" className="demo-link"><span data-i18n="auth.demo">Want to explore first? Click here to view prepared users.</span></Link>
-  </div></main>;
+  return <main className="auth-page"><section className="auth-layout">
+    <aside className="auth-intro">
+      <div><span className="eyebrow" data-i18n="auth.eyebrow">SECURE ACCOUNT ACCESS</span><h1 data-i18n="auth.title">One platform for workforce readiness.</h1><p data-i18n="auth.lead">Connect education, verified skills, and employment outcomes through a trusted Saudi workforce ecosystem.</p></div>
+      <div className="auth-audiences"><article><b>Students</b><span>Build a verified skills passport and discover career opportunities.</span></article><article><b>Employers</b><span>Find evidence-backed talent and manage responsible hiring.</span></article><article><b>Universities</b><span>Align curricula with workforce demand and measurable outcomes.</span></article></div>
+      <div className="auth-ai-note"><span>✦</span><p><b>Explainable AI by design</b>Recommendations support human decisions—they never replace them.</p></div>
+    </aside>
+    <div className="auth-form-panel">
+      <div className="auth-form-heading"><span>WELCOME TO FURSA</span><h2>Access your workspace</h2><p>Use your verified account or create one for your role.</p></div>
+      <FirebaseAuthPanel configured={firebaseClientConfigured} serverReady={firebaseAdminConfigured} />
+      <Link href="/login/demo" className="demo-link"><span data-i18n="auth.demo">Explore with a prepared demo account</span><b>→</b></Link>
+      <p className="auth-terms">By continuing, you agree to FURSA&apos;s <Link href="/policies/terms">Terms of Service</Link> and <Link href="/policies/privacy">Privacy Policy</Link>.</p>
+    </div>
+  </section></main>;
 }
