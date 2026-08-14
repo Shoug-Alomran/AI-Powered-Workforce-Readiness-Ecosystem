@@ -1,97 +1,345 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { usePathname } from "next/navigation";
+import { chromeSteps, isPortalPath, tourForPath, type PortalRole, type Step } from "@/components/walkthroughSteps";
 
-type PortalRole = "STUDENT" | "EMPLOYER" | "UNIVERSITY" | "ADMIN";
-type Step = { title: string; body: string; selector: string };
+type Box = { top: number; left: number; width: number; height: number };
+type SeenMap = Record<string, string>;
 
-const roleSteps: Record<PortalRole, Step[]> = {
-  STUDENT: [
-    { title: "Your student workspace", body: "Use this navigation to move between readiness, careers, jobs, applications, your roadmap, and your verified Skills Passport.", selector: ".student-nav" },
-    { title: "Your account", body: "Open your account to update your photo, email, password, and personal details.", selector: ".student-profile-link" },
-  ],
-  EMPLOYER: [
-    { title: "Your hiring workspace", body: "Dashboard keeps hiring activity together. Post a Job opens the complete opportunity form.", selector: ".erd-nav" },
-    { title: "Search your roles", body: "Search by role name, career track, or required skill without leaving the employer portal.", selector: ".erd-search" },
-    { title: "Your account", body: "Open your profile to update your organization-verified email, password, and profile image.", selector: ".erd-user-profile" },
-  ],
-  UNIVERSITY: [
-    { title: "Your university workspace", body: "Move between institutional outcomes, curriculum, workforce demand, and the human-reviewed action plan.", selector: ".uni-only-main nav" },
-    { title: "Page-specific actions", body: "The actions shown here change with the page, so exports and creation tools stay relevant.", selector: ".uni-only-actions" },
-    { title: "Your institution account", body: "Open the profile to manage the verified university identity and sign-in details.", selector: ".uni-only-user" },
-  ],
-  ADMIN: [
-    { title: "Governance workspace", body: "These primary destinations cover trust review, evidence audits, platform health, and security.", selector: ".admin-primary-nav" },
-    { title: "On this page", body: "This contextual menu changes by page and jumps directly to the review section you need.", selector: ".admin-page-menu" },
-    { title: "Administrator account", body: "Your account and sign-out controls remain available from every admin page.", selector: ".admin-header-account" },
-  ],
-};
+const STORE_KEY = "fursah_tour_v2";
+const AUTO_KEY = "fursah_tour_auto";
+const EVENT_NAME = "fursah-walkthrough-change";
+const POP_WIDTH = 380;
+const PAD = 8;
+const NO_STEPS: Step[] = [];
 
-function pageSteps(role: PortalRole, pathname: string): Step[] {
-  if (role === "STUDENT") {
-    if (pathname.includes("/interests")) return [{ title: "Choose a direction", body: "Start with a broad major, then choose from only the careers related to it. You can change this later.", selector: ".student-career-setup, .student-career-selector-form" }];
-    if (pathname.includes("/jobs")) return [{ title: "Act on a job", body: "Review the explainable match, attach application documents, then keep Save and Apply together in the action area.", selector: ".student-job-card-footer" }];
-    if (pathname.includes("/roadmap")) return [{ title: "Your adaptive roadmap", body: "Update milestones as you progress. Dates and projected readiness adjust the plan over time.", selector: ".student-milestones, .student-roadmap-analytics" }];
-    if (pathname.includes("/profile")) return [{ title: "Your Skills Passport", body: "Add evidence-backed skills, certifications, experience, and projects here. Verification status stays visible.", selector: ".student-passport-layout, .student-passport-hero" }];
-    return [{ title: "Readiness at a glance", body: "Start with the readiness summary, then use the recommendations to choose a useful next action.", selector: ".student-readiness-panel, .student-dashboard-hero" }];
-  }
-  if (role === "EMPLOYER") {
-    if (pathname.includes("/jobs/new")) return [{ title: "Create a real opportunity", body: "Complete each section, attach supporting documents where needed, preview, and publish when the required information is ready.", selector: ".pjob-form, .cap-create-form" }];
-    if (pathname.includes("/candidates/")) return [{ title: "Human hiring decision", body: "Review the explainable evidence first. Available decisions change with the candidate's current status so actions cannot be repeated incorrectly.", selector: ".candidate-decision, .decision-card" }];
-    if (/\/employer\/jobs\//.test(pathname)) return [{ title: "Manage this role", body: "Review requirements and candidates here. Closing or reopening the role immediately changes whether students can apply.", selector: ".employer-role-actions, .role-actions" }];
-    return [{ title: "Live hiring activity", body: "Open roles, candidates, rankings, and bottlenecks are calculated from your actual account data.", selector: ".erd-metrics" }];
-  }
-  if (role === "UNIVERSITY") {
-    if (pathname.includes("/curriculum")) return [{ title: "Curriculum workspace", body: "Search, filter, review AI analysis, and move into the appropriate course or certification action.", selector: ".cc-toolbar, .cc-tabs" }];
-    if (pathname.includes("/job-demand")) return [{ title: "Turn demand into action", body: "Each update, review, or add link opens the relevant workflow rather than acting as a decorative demo control.", selector: ".wdi-skills, .skill-intelligence" }];
-    if (pathname.includes("/actions")) return [{ title: "Human-reviewed initiatives", body: "Submitting completion evidence starts an AI completeness check, then routes the initiative to an administrator for final human verification.", selector: ".initiative-tracker, .cap-tracker" }];
-    return [{ title: "Institution overview", body: "Use the page contents bar to jump to demand, alignment, outcomes, or career pathways without being overwhelmed.", selector: ".page-toc, .university-page-toc" }];
-  }
-  return [{ title: "Human oversight first", body: "Queues on this page contain decisions that require accountable human review; AI may assist but does not approve evidence or users.", selector: "main h1, .page-title" }];
+function subscribe(listener: () => void) {
+  window.addEventListener("storage", listener);
+  window.addEventListener(EVENT_NAME, listener);
+  return () => {
+    window.removeEventListener("storage", listener);
+    window.removeEventListener(EVENT_NAME, listener);
+  };
 }
 
-const EVENT_NAME = "fursah-walkthrough-change";
+function writeStorage(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    /* storage unavailable — the tour still works for this session */
+  }
+  window.dispatchEvent(new Event(EVENT_NAME));
+}
+
+/** Resolve a step to a live element: CSS selector first, heading text as the fallback anchor. */
+function resolveTarget(step: Step): HTMLElement | null {
+  if (step.selector) {
+    const bySelector = document.querySelector<HTMLElement>(step.selector);
+    if (bySelector) return bySelector;
+  }
+  if (step.heading) {
+    const wanted = step.heading.toLowerCase();
+    const heading = Array.from(document.querySelectorAll<HTMLElement>("h1,h2,h3")).find((node) =>
+      (node.textContent || "").trim().toLowerCase().startsWith(wanted),
+    );
+    if (heading) return heading.closest<HTMLElement>("section,article,form,.card") ?? heading;
+  }
+  return null;
+}
+
+function sameBox(a: Box | null, b: Box) {
+  if (!a) return false;
+  return (
+    Math.abs(a.top - b.top) < 0.5 &&
+    Math.abs(a.left - b.left) < 0.5 &&
+    Math.abs(a.width - b.width) < 0.5 &&
+    Math.abs(a.height - b.height) < 0.5
+  );
+}
 
 export default function ContextualWalkthrough({ role }: { role: PortalRole }) {
   const pathname = usePathname() || "/";
-  const storageKey = `fursa_walkthrough_${role.toLowerCase()}`;
-  const subscribe = useCallback((listener: () => void) => {
-    window.addEventListener("storage", listener);
-    window.addEventListener(EVENT_NAME, listener);
-    return () => { window.removeEventListener("storage", listener); window.removeEventListener(EVENT_NAME, listener); };
-  }, []);
-  const getSnapshot = useCallback(() => window.localStorage.getItem(storageKey) || "pending", [storageKey]);
-  const status = useSyncExternalStore(subscribe, getSnapshot, () => "done");
-  const [stepIndex, setStepIndex] = useState(0);
-  const steps = [...roleSteps[role], ...pageSteps(role, pathname)];
-  const index = Math.min(stepIndex, steps.length - 1);
-  const current = steps[index];
-  const portalPath = pathname.startsWith(`/${role.toLowerCase()}/`);
-  const open = portalPath && status === "pending";
+
+  /* Preferences live in localStorage, so they are read as an external store rather than mirrored into state. */
+  const seenRaw = useSyncExternalStore(
+    subscribe,
+    () => window.localStorage.getItem(STORE_KEY) ?? "{}",
+    () => "{}",
+  );
+  const autoRaw = useSyncExternalStore(
+    subscribe,
+    () => window.localStorage.getItem(AUTO_KEY) ?? "on",
+    () => "on",
+  );
+  const seen = useMemo<SeenMap>(() => {
+    try {
+      return JSON.parse(seenRaw) as SeenMap;
+    } catch {
+      return {};
+    }
+  }, [seenRaw]);
+  const autoOpen = autoRaw !== "off";
+
+  /* Everything below is keyed by pathname so a navigation resets the tour without an effect. */
+  const [resolved, setResolved] = useState<{ path: string; steps: Step[] } | null>(null);
+  const [progress, setProgress] = useState<{ path: string; index: number } | null>(null);
+  const [opened, setOpened] = useState<string | null>(null);
+  const [tracked, setTracked] = useState<{ key: string; box: Box } | null>(null);
+  const [popHeight, setPopHeight] = useState(240);
+  const popRef = useRef<HTMLElement | null>(null);
+  const openRef = useRef(false);
+
+  const tour = useMemo(() => tourForPath(pathname), [pathname]);
+  const chromeKey = `chrome:${role.toLowerCase()}`;
+  const showChrome = isPortalPath(role, pathname) && !seen[chromeKey];
+
+  const candidateSteps = useMemo<Step[]>(() => {
+    if (!tour) return NO_STEPS;
+    return showChrome ? [...chromeSteps[role], ...tour.steps] : tour.steps;
+  }, [tour, showChrome, role]);
+
+  /* Drop steps whose target is not on this page, so a tour never stalls on a dead anchor. */
+  useEffect(() => {
+    if (!candidateSteps.length) return;
+    let cancelled = false;
+    const resolve = () => {
+      // Never re-cut the list mid-tour: that would shift the step the user is on.
+      if (cancelled || openRef.current) return;
+      setResolved({
+        path: pathname,
+        steps: candidateSteps.filter((step) => (!step.selector && !step.heading) || resolveTarget(step)),
+      });
+    };
+    // Client components below the server shell need a frame or two to paint.
+    const first = window.setTimeout(resolve, 120);
+    const second = window.setTimeout(resolve, 600);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(first);
+      window.clearTimeout(second);
+    };
+  }, [candidateSteps, pathname]);
+
+  const steps = resolved?.path === pathname ? resolved.steps : NO_STEPS;
+  const tourKey = tour?.key ?? "";
+  const unseen = Boolean(tourKey) && !seen[tourKey];
+  const open = steps.length > 0 && (opened === pathname || (autoOpen && unseen));
 
   useEffect(() => {
+    openRef.current = open;
+  });
+
+  const stepIndex = progress?.path === pathname ? progress.index : 0;
+  const index = Math.min(stepIndex, Math.max(steps.length - 1, 0));
+  const current = steps[index];
+  const boxKey = `${pathname}|${index}`;
+  const box = tracked?.key === boxKey ? tracked.box : null;
+
+  const finish = useCallback(
+    (mark: "completed" | "skipped") => {
+      setOpened(null);
+      setProgress(null);
+      let stored: SeenMap = {};
+      try {
+        stored = JSON.parse(window.localStorage.getItem(STORE_KEY) ?? "{}") as SeenMap;
+      } catch {
+        stored = {};
+      }
+      const next: SeenMap = { ...stored, [tourKey]: mark };
+      if (showChrome) next[chromeKey] = mark;
+      writeStorage(STORE_KEY, JSON.stringify(next));
+    },
+    [tourKey, chromeKey, showChrome],
+  );
+
+  const next = useCallback(() => {
+    if (index >= steps.length - 1) {
+      finish("completed");
+      return;
+    }
+    setProgress({ path: pathname, index: index + 1 });
+  }, [index, steps.length, finish, pathname]);
+
+  const back = useCallback(
+    () => setProgress({ path: pathname, index: Math.max(0, index - 1) }),
+    [index, pathname],
+  );
+
+  /* Track the target's position every frame so the spotlight follows scrolling and layout shifts. */
+  useEffect(() => {
     if (!open || !current) return;
-    const target = document.querySelector<HTMLElement>(current.selector);
+    const target = resolveTarget(current);
     if (!target) return;
     target.classList.add("walkthrough-target");
     target.scrollIntoView({ behavior: "smooth", block: "center" });
-    return () => target.classList.remove("walkthrough-target");
-  }, [current, open]);
+    let frame = 0;
+    const track = () => {
+      const rect = target.getBoundingClientRect();
+      const measured = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
+      setTracked((previous) =>
+        previous?.key === boxKey && sameBox(previous.box, measured) ? previous : { key: boxKey, box: measured },
+      );
+      frame = window.requestAnimationFrame(track);
+    };
+    frame = window.requestAnimationFrame(track);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      target.classList.remove("walkthrough-target");
+    };
+  }, [open, current, boxKey]);
 
-  function store(next: "completed" | "skipped" | "pending") {
-    if (next === "pending") window.localStorage.removeItem(storageKey);
-    else window.localStorage.setItem(storageKey, next);
-    window.dispatchEvent(new Event(EVENT_NAME));
+  /* Interactive steps: doing the real thing on the page advances the tour. */
+  useEffect(() => {
+    const interact = current?.interact;
+    if (!open || !current || !interact) return;
+    const target = resolveTarget(current);
+    if (!target) return;
+    const handler = () => window.setTimeout(next, 260);
+    target.addEventListener(interact.event, handler, true);
+    return () => target.removeEventListener(interact.event, handler, true);
+  }, [open, current, next]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      const node = event.target as HTMLElement | null;
+      const typing = !!node && (/^(INPUT|TEXTAREA|SELECT)$/.test(node.tagName) || node.isContentEditable);
+      if (event.key === "Escape") {
+        finish("skipped");
+        return;
+      }
+      if (typing) return;
+      if (event.key === "ArrowRight") next();
+      if (event.key === "ArrowLeft") back();
+    };
+    window.addEventListener("keydown", onKey);
+    document.body.dataset.walkthrough = "open";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      delete document.body.dataset.walkthrough;
+    };
+  }, [open, next, back, finish]);
+
+  /* ResizeObserver fires on observe, so the first measurement arrives through the callback. */
+  useEffect(() => {
+    const element = popRef.current;
+    if (!open || !element) return;
+    const observer = new ResizeObserver(() => setPopHeight(element.offsetHeight || 240));
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [open]);
+
+  if (!tour || !steps.length) return null;
+
+  if (!open) {
+    return (
+      <button
+        type="button"
+        className={`walkthrough-launcher${unseen ? " has-new" : ""}`}
+        onClick={() => {
+          setProgress({ path: pathname, index: 0 });
+          setOpened(pathname);
+        }}
+        aria-label={`Start the guided walkthrough for ${tour.label}`}
+      >
+        <span aria-hidden="true">?</span>
+        {unseen ? "Tour this page" : "Guided tour"}
+      </button>
+    );
   }
 
-  if (!portalPath) return null;
-  if (!open) return <button type="button" className="walkthrough-launcher" onClick={() => { setStepIndex(0); store("pending"); }} aria-label="Open guided walkthrough"><span>?</span> Guided tour</button>;
+  const viewportWidth = window.innerWidth;
+  const viewportHeight = window.innerHeight;
+  const width = Math.min(POP_WIDTH, viewportWidth - 24);
+  let popLeft = viewportWidth / 2 - width / 2;
+  let popTop = viewportHeight / 2 - popHeight / 2;
+  let arrow: "up" | "down" | null = null;
 
-  return <aside className="walkthrough-panel" role="dialog" aria-modal="false" aria-label="Guided walkthrough">
-    <div className="walkthrough-progress"><span>GUIDED TOUR</span><b>{index + 1} / {steps.length}</b></div>
-    <h2>{current.title}</h2><p>{current.body}</p>
-    <div className="walkthrough-dots" aria-hidden="true">{steps.map((_, dot) => <i className={dot === index ? "active" : dot < index ? "done" : ""} key={dot} />)}</div>
-    <footer><button type="button" className="walkthrough-skip" onClick={() => store("skipped")}>Skip tour</button><span>{index > 0 && <button type="button" onClick={() => setStepIndex(value => Math.max(0, value - 1))}>Back</button>}<button type="button" className="walkthrough-next" onClick={() => index === steps.length - 1 ? store("completed") : setStepIndex(value => value + 1)}>{index === steps.length - 1 ? "Finish" : "Next"}</button></span></footer>
-  </aside>;
+  if (box) {
+    popLeft = Math.min(Math.max(12, box.left + box.width / 2 - width / 2), viewportWidth - width - 12);
+    if (box.top + box.height + popHeight + 20 < viewportHeight) {
+      popTop = box.top + box.height + 14;
+      arrow = "up";
+    } else if (box.top - popHeight - 20 > 0) {
+      popTop = box.top - popHeight - 14;
+      arrow = "down";
+    } else {
+      popTop = Math.max(12, viewportHeight - popHeight - 16);
+    }
+  }
+
+  const last = index === steps.length - 1;
+
+  return (
+    <>
+      {box && (
+        <div
+          className="walkthrough-spot"
+          aria-hidden="true"
+          style={{
+            top: box.top - PAD,
+            left: box.left - PAD,
+            width: box.width + PAD * 2,
+            height: box.height + PAD * 2,
+          }}
+        />
+      )}
+      <aside
+        ref={popRef}
+        className={`walkthrough-panel${arrow ? ` arrow-${arrow}` : ""}`}
+        role="dialog"
+        aria-modal="false"
+        aria-live="polite"
+        aria-label={`Guided walkthrough: ${tour.label}`}
+        style={{ top: popTop, left: popLeft, width }}
+      >
+        <div className="walkthrough-progress">
+          <span>{tour.label.toUpperCase()}</span>
+          <b>
+            {index + 1} / {steps.length}
+          </b>
+        </div>
+        <h2>{current.title}</h2>
+        <p>{current.body}</p>
+        {current.interact && (
+          <p className="walkthrough-hint">
+            <i aria-hidden="true">➜</i>
+            {current.interact.hint}
+          </p>
+        )}
+        <div className="walkthrough-dots" aria-hidden="true">
+          {steps.map((_, dot) => (
+            <i className={dot === index ? "active" : dot < index ? "done" : ""} key={dot} />
+          ))}
+        </div>
+        <footer>
+          <button type="button" className="walkthrough-skip" onClick={() => finish("skipped")}>
+            Skip tour
+          </button>
+          <span>
+            {index > 0 && (
+              <button type="button" onClick={back}>
+                Back
+              </button>
+            )}
+            <button type="button" className="walkthrough-next" onClick={next}>
+              {last ? "Finish" : "Next"}
+            </button>
+          </span>
+        </footer>
+        <button
+          type="button"
+          className="walkthrough-auto"
+          onClick={() => {
+            // Keep this tour on screen; the preference only governs future pages.
+            setOpened(pathname);
+            writeStorage(AUTO_KEY, autoOpen ? "off" : "on");
+          }}
+        >
+          {autoOpen ? "Stop opening tours automatically" : "Open page tours automatically"}
+        </button>
+      </aside>
+    </>
+  );
 }
