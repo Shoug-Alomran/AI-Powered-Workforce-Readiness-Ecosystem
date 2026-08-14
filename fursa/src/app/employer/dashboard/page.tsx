@@ -17,6 +17,10 @@ function Icon({name}:{name:IconName}){const paths:Record<IconName,React.ReactNod
   check:<><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></>,send:<path d="m3 11 18-8-8 18-2-8-8-2Zm8 2 4-4"/>
 };return <svg className="erd-svg" viewBox="0 0 24 24" aria-hidden="true">{paths[name]}</svg>}
 
+function getWeekAgo() {
+  return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+}
+
 export default async function EmployerDashboard({searchParams}:{searchParams:Promise<{q?:string}>}){
   const ctx=await getCurrentEmployer(); if(!ctx) redirect("/login");
   const query=String((await searchParams).q||"").trim().toLowerCase();
@@ -28,7 +32,7 @@ export default async function EmployerDashboard({searchParams}:{searchParams:Pro
   const activeApplications=applications.filter(a=>!["rejected","hired"].includes(a.status));
   const avg=applications.length?Math.round(applications.reduce((n,a)=>n+a.match.score,0)/applications.length):0;
   const shortlisted=applications.filter(a=>a.status==="shortlisted").length;
-  const weekAgo=new Date(Date.now()-7*24*60*60*1000);
+  const weekAgo=getWeekAgo();
   const newThisWeek=applications.filter(a=>a.createdAt>=weekAgo).length;
   const pendingReview=applications.filter(a=>a.status==="applied").length;
   const priorityJob=[...jobs].sort((a,b)=>b.applications.length-a.applications.length)[0];

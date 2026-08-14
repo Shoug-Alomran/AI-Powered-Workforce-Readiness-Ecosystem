@@ -15,6 +15,7 @@ export function JobSaveStatus() {
   useEffect(() => {
     const form = getForm();
     if (!form) return;
+    let restoredStatusTimer: number | undefined;
     const stored = localStorage.getItem(DRAFT_KEY);
     if (stored) {
       try {
@@ -26,7 +27,7 @@ export function JobSaveStatus() {
             else field.value = value;
           });
         });
-        setStatus("saved");
+        restoredStatusTimer = window.setTimeout(() => setStatus("saved"), 0);
       } catch {
         localStorage.removeItem(DRAFT_KEY);
       }
@@ -37,6 +38,7 @@ export function JobSaveStatus() {
     form.addEventListener("change", markDirty);
     window.addEventListener("fursa:draft-saved", markSaved);
     return () => {
+      if (restoredStatusTimer !== undefined) window.clearTimeout(restoredStatusTimer);
       form.removeEventListener("input", markDirty);
       form.removeEventListener("change", markDirty);
       window.removeEventListener("fursa:draft-saved", markSaved);
