@@ -21,7 +21,7 @@ export default async function Navbar() {
     ];
     return <header className="student-topbar">
       <div className="student-topbar-inner">
-        <Link href="/student/dashboard" className="student-brand"><Image src="/logo.svg" alt="" width={36} height={36}/><strong>FURSA</strong></Link>
+        <Link href="/student/dashboard" className="student-brand"><Image src="/logo.svg" alt="" width={36} height={36}/><strong>FURSAH</strong></Link>
         <PortalNavLinks links={links} className="student-nav" />
         <div className="student-account">
           <Link href="/student/account" className="student-profile-link" aria-label={`Open ${user.name}'s account profile`}><AccountAvatar initials={user.name.split(" ").map(part => part[0]).slice(0,2).join("")}/><b>{user.name}<small>View profile</small></b></Link>

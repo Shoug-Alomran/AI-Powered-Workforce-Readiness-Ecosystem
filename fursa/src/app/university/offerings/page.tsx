@@ -41,7 +41,7 @@ export default async function UniversityOfferings({searchParams}:{searchParams:P
       </form>
 
       <aside className="uo-aside">
-        <section className="uo-ai"><header><span>✦</span><div><h2>AI Curriculum Guidance</h2><p>Recommendations update as offering data improves.</p></div></header><ul><li>Use a specific title that describes the subject level.</li><li>Map only skills directly taught and assessed.</li><li>Add a recognized credential only when it is awarded.</li><li>Include an official URL so students can verify details.</li></ul><div><small>EXPECTED IMPACT</small><strong>Better skill-gap matching</strong><p>Complete course data helps Fursa recommend the right learning pathway.</p></div></section>
+        <section className="uo-ai"><header><span>✦</span><div><h2>AI Curriculum Guidance</h2><p>Recommendations update as offering data improves.</p></div></header><ul><li>Use a specific title that describes the subject level.</li><li>Map only skills directly taught and assessed.</li><li>Add a recognized credential only when it is awarded.</li><li>Include an official URL so students can verify details.</li></ul><div><small>EXPECTED IMPACT</small><strong>Better skill-gap matching</strong><p>Complete course data helps Fursah recommend the right learning pathway.</p></div></section>
         <section className="uo-help"><h2>Before publishing</h2><p>Confirm that curriculum information is approved by the responsible academic department.</p><Link href="/support">Contact support</Link></section>
       </aside>
     </div>

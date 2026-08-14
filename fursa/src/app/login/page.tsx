@@ -11,10 +11,10 @@ export default function LoginPage() {
       <div className="auth-ai-note"><span>✦</span><p><b>Explainable AI by design</b>Recommendations support human decisions—they never replace them.</p></div>
     </aside>
     <div className="auth-form-panel">
-      <div className="auth-form-heading"><span>WELCOME TO FURSA</span><h2>Access your workspace</h2><p>Use your verified account or create one for your role.</p></div>
+      <div className="auth-form-heading"><span>WELCOME TO FURSAH</span><h2>Access your workspace</h2><p>Use your verified account or create one for your role.</p></div>
       <FirebaseAuthPanel configured={firebaseClientConfigured} serverReady={firebaseAdminConfigured} />
       <Link href="/login/demo" className="demo-link"><span data-i18n="auth.demo">Explore with a prepared demo account</span><b>→</b></Link>
-      <p className="auth-terms">By continuing, you agree to FURSA&apos;s <Link href="/policies/terms">Terms of Service</Link> and <Link href="/policies/privacy">Privacy Policy</Link>.</p>
+      <p className="auth-terms">By continuing, you agree to FURSAH&apos;s <Link href="/policies/terms">Terms of Service</Link> and <Link href="/policies/privacy">Privacy Policy</Link>.</p>
     </div>
   </section></main>;
 }

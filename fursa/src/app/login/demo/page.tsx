@@ -8,7 +8,7 @@ export default async function DemoUsersPage() {
   const roleDescription={STUDENT:"Explore career readiness and opportunities",EMPLOYER:"Review candidates and manage roles",UNIVERSITY:"Manage curriculum and workforce alignment",ADMIN:"Review credentials and platform governance"} as const;
   return <main className="demo-page"><div className="demo-shell">
     <Link href="/login" className="demo-back">← Back to sign in</Link>
-    <header className="demo-heading"><span className="eyebrow" data-i18n="demo.eyebrow">Prepared prototype users</span><h1 data-i18n="demo.title">Choose a demo account</h1><p>Explore each Fursa workspace without entering a password.</p></header>
+    <header className="demo-heading"><span className="eyebrow" data-i18n="demo.eyebrow">Prepared prototype users</span><h1 data-i18n="demo.title">Choose a demo account</h1><p>Explore each Fursah workspace without entering a password.</p></header>
     <div className="demo-notice"><span>✦</span><div><strong>Prototype access</strong><p>These accounts contain prepared demonstration data. Admin shortcuts must be disabled before production launch.</p></div></div>
     <section className="demo-accounts" aria-label="Prepared demo accounts">{users.map(user => {
       const role=roleLabel[user.role]; const initials=user.name.split(" ").map(part=>part[0]).join("").slice(0,2).toUpperCase();

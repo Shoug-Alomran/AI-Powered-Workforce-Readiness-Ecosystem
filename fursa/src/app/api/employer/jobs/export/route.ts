@@ -19,5 +19,5 @@ export async function GET() {
     ...jobs.map(job=>[job.title,job.careerTrack,job.status,job.applications.length,job.requiredSkills.map(item=>item.skill.name).join("; "),job.createdAt.toISOString()]),
   ];
   const body=rows.map(row=>row.map(csv).join(",")).join("\n");
-  return new NextResponse(body,{headers:{"Content-Type":"text/csv; charset=utf-8","Content-Disposition":'attachment; filename="fursa-opportunities.csv"'}});
+  return new NextResponse(body,{headers:{"Content-Type":"text/csv; charset=utf-8","Content-Disposition":'attachment; filename="fursah-opportunities.csv"'}});
 }

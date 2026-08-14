@@ -54,7 +54,7 @@ export default async function NewCurriculumActionPage() {
 
       <aside className="cap-create-aside">
         <section className="cap-create-ai"><span>✦</span><div><h2>AI planning guidance</h2><p>Use a specific action, a named owner, a target date, and an outcome that can be measured.</p></div></section>
-        <section><h2>Human verification</h2><p>Creating this plan does not mark it complete. When implementation finishes, the owner submits evidence for an initial AI completeness check.</p><p>A FURSA administrator then reviews the evidence and makes the final approval or requests changes.</p><strong>AI assists. A human verifies.</strong></section>
+        <section><h2>Human verification</h2><p>Creating this plan does not mark it complete. When implementation finishes, the owner submits evidence for an initial AI completeness check.</p><p>A FURSAH administrator then reviews the evidence and makes the final approval or requests changes.</p><strong>AI assists. A human verifies.</strong></section>
         <section><h2>Required fields</h2><ul><li>Title and objective</li><li>Skill and affected curriculum</li><li>Accountable owner</li><li>Target completion date</li><li>Expected measurable outcome</li></ul></section>
       </aside>
     </form>

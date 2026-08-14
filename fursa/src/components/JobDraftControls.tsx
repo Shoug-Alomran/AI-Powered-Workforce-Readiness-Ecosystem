@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 
 const FORM_ID = "create-job-form";
-const DRAFT_KEY = "fursa:create-job-draft";
+const DRAFT_KEY = "fursah:create-job-draft";
 
 function getForm() {
   return document.getElementById(FORM_ID) as HTMLFormElement | null;
@@ -36,12 +36,12 @@ export function JobSaveStatus() {
     const markSaved = () => setStatus("saved");
     form.addEventListener("input", markDirty);
     form.addEventListener("change", markDirty);
-    window.addEventListener("fursa:draft-saved", markSaved);
+    window.addEventListener("fursah:draft-saved", markSaved);
     return () => {
       if (restoredStatusTimer !== undefined) window.clearTimeout(restoredStatusTimer);
       form.removeEventListener("input", markDirty);
       form.removeEventListener("change", markDirty);
-      window.removeEventListener("fursa:draft-saved", markSaved);
+      window.removeEventListener("fursah:draft-saved", markSaved);
     };
   }, []);
 
@@ -61,7 +61,7 @@ export function JobDraftActions() {
       if (typeof value === "string") values[key] = value;
     });
     localStorage.setItem(DRAFT_KEY, JSON.stringify(values));
-    window.dispatchEvent(new Event("fursa:draft-saved"));
+    window.dispatchEvent(new Event("fursah:draft-saved"));
   }
 
   function showPreview() {

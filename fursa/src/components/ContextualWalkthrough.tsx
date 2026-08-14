@@ -51,7 +51,7 @@ function pageSteps(role: PortalRole, pathname: string): Step[] {
   return [{ title: "Human oversight first", body: "Queues on this page contain decisions that require accountable human review; AI may assist but does not approve evidence or users.", selector: "main h1, .page-title" }];
 }
 
-const EVENT_NAME = "fursa-walkthrough-change";
+const EVENT_NAME = "fursah-walkthrough-change";
 
 export default function ContextualWalkthrough({ role }: { role: PortalRole }) {
   const pathname = usePathname() || "/";

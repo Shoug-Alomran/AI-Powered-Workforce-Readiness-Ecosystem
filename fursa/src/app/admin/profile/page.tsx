@@ -11,7 +11,7 @@ export default async function AdminProfilePage() {
   return <main className="page-shell account-profile-content">
     <span className="eyebrow">Administrator account</span>
     <h1 className="page-title">Your profile</h1>
-    <p className="muted">Manage the identity and credentials used in the Fursa governance workspace.</p>
+    <p className="muted">Manage the identity and credentials used in the Fursah governance workspace.</p>
     <section className="card account-identity" style={{ marginTop: 24 }}>
       <AccountAvatar initials={initials} className="account-avatar--large"/>
       <div><h2>{user.name}</h2><p>{user.email}</p><span>Platform administrator</span></div>

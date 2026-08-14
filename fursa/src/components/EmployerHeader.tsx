@@ -12,7 +12,7 @@ export default function EmployerHeader({company,userName,active,pageLabel}:{comp
   const initials=userName.split(" ").map(part=>part[0]).join("").slice(0,2);
   const currentPage=pageLabel??(active==="post"?"Create Job Opportunity":"Employer Dashboard");
   return <header className="erd-top employer-shared-header">
-    <Link href="/employer/dashboard" className="erd-brand"><span><HeaderIcon name="brand"/></span><b>Fursa</b></Link>
+    <Link href="/employer/dashboard" className="erd-brand"><span><HeaderIcon name="brand"/></span><b>Fursah</b></Link>
     <Link href="/employer/dashboard" className="erd-org"><small>ORGANIZATION　/　{currentPage.toUpperCase()}</small><strong>{company||"Global Talent Acquisition"}　<em>ENTERPRISE</em></strong></Link>
     <nav className="erd-nav" aria-label="Employer navigation">
       <Link className={active==="dashboard"?"active":""} href="/employer/dashboard">Dashboard</Link>
