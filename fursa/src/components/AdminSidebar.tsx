@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { logout } from "@/actions/auth";
@@ -62,7 +63,7 @@ export default function AdminSidebar({ personName }: { personName: string }) {
   const initials = personName.split(" ").map(part => part[0]).slice(0,2).join("").toUpperCase() || "AD";
   return <header className="admin-header">
     <div className="admin-header-main">
-      <Link className="admin-header-brand" href="/admin/dashboard"><span>✦</span><b>FURSAH</b><small>Admin Console</small></Link>
+      <Link className="admin-header-brand" href="/admin/dashboard"><span className="brand-mark"><Image src="/logo.png" alt="" width={353} height={512}/></span><b>FURSAH</b><small>Admin Console</small></Link>
       <nav className="admin-primary-nav" aria-label="Administration pages">{primary.map(item => <Link key={item.href} className={pathname === item.href ? "is-active" : ""} href={item.href} aria-current={pathname === item.href ? "page" : undefined}>{item.label}</Link>)}</nav>
       <div className="admin-header-account"><Link href="/admin/profile" aria-label="Open your account profile"><AccountAvatar initials={initials}/><span><b>{personName}</b><small>Platform administrator</small></span></Link><form action={logout}><button type="submit">Log out</button></form></div>
     </div>

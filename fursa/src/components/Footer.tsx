@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getCurrentUser } from "@/lib/session";
 
 const roleLinks = {
@@ -12,7 +13,7 @@ export default async function Footer(){
   const user=await getCurrentUser();
   const accountLinks=user?roleLinks[user.role]:null;
   return <footer className="site-footer"><div className="site-footer-grid">
-    <section><Link href="/" className="site-footer-brand"><span>ϟ</span><b>FURSAH</b></Link><p>An intelligent AI platform purpose-built for the Saudi workforce ecosystem.</p>{user&&<small>Signed in as {user.name}</small>}</section>
+    <section><Link href="/" className="site-footer-brand"><span className="brand-mark"><Image src="/logo.png" alt="" width={353} height={512}/></span><b>FURSAH</b></Link><p>An intelligent AI platform purpose-built for the Saudi workforce ecosystem.</p>{user&&<small>Signed in as {user.name}</small>}</section>
     <section><h2>{user?"Your Workspace":"Platform"}</h2>{accountLinks?accountLinks.map(([label,href])=><Link href={href} key={href}>{label}</Link>):<><Link href="/#how-it-works">How it Works</Link><Link href="/#ai-ethics">Explainable AI</Link><Link href="/#solutions">Skill Mapping</Link><Link href="/workforce-intelligence">Workforce Intelligence</Link></>}</section>
     <section><h2>{user?"Account & Help":"Solutions"}</h2>{user?<><Link href="/support">Customer Support</Link>{user.role==="STUDENT"&&<><Link href="/student/privacy">Privacy Controls</Link><Link href="/student/data-rights">Data Requests</Link><Link href="/student/passport-sharing">Passport Sharing</Link></>}</>:<><Link href="/#solutions">For Students</Link><Link href="/#solutions">For Employers</Link><Link href="/#solutions">For Universities</Link><Link href="/login">Sign In</Link></>}</section>
     <section><h2>Company</h2><Link href="/policies/privacy">Privacy Policy</Link><Link href="/policies/terms">Terms of Service</Link><Link href="/policies/responsible-ai">Responsible AI</Link><Link href="/policies/accessibility">Accessibility</Link></section>

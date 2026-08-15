@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { logout } from "@/actions/auth";
 import AccountAvatar from "@/components/AccountAvatar";
@@ -23,7 +24,7 @@ export default function UniversityTopbar({institution,personName}:{institution:s
   const pathname=usePathname()||"/university/dashboard"; const [title,subtitle]=titles[pathname]||[institution,"Fursah Intelligence Portal"];
   const initials=personName.split(" ").map(x=>x[0]).join("").slice(0,2).toUpperCase();
   return <header className="uni-only-header"><div className="uni-only-main">
-    <Link className="uni-only-brand" href="/university/dashboard"><span>🎓</span><b>FURSAH</b></Link>
+    <Link className="uni-only-brand" href="/university/dashboard"><span className="brand-mark"><Image src="/logo.png" alt="" width={353} height={512}/></span><b>FURSAH</b></Link>
     <nav>{links.map(([href,label])=><Link className={pathname===href||(href==="/university/actions"&&pathname.startsWith("/university/actions/"))?"active":""} href={href} key={href}>{label}</Link>)}</nav>
     <div className="uni-only-user"><Link href="/university/profile"><AccountAvatar initials={initials||"U"}/><span><b>{personName}</b><small>{institution}</small></span></Link><Link href="/university/settings" aria-label="Settings">⚙</Link><form action={logout}><button type="submit">Log out</button></form></div>
   </div><div className="uni-only-context"><div><small>{subtitle}</small><h1>{title}</h1></div><div className="uni-only-actions">

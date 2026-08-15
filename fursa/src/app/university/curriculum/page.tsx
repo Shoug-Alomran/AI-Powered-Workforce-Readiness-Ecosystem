@@ -3,31 +3,340 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getCurrentUniversity } from "@/lib/session";
 import CurriculumControls from "@/components/CurriculumControls";
+import { computeCurriculumIntelligence, type OfferingInsight } from "@/lib/curriculum";
 
-const sampleCourses = [
-  { title:"Advanced Distributed Systems Architecture", tag:"UNDERGRAD CORE", dept:"Computer Science Dept.", date:"Oct 12, 2023", skills:["Kafka","Microservices","Kubernetes","Go","+4 more"], careers:[["Cloud Engineer Track","100% Ready"],["Backend Architect","85% Ready"]], enrolled:"1,240", match:"82%", alignment:"98% Alignment", analysis:"This course is a primary driver for Big Tech placements. Recommendation: Incorporate ‘Rust for Systems’ module as employer demand has spiked 40% this quarter in local fintech hubs.", action:"Apply Update" },
-  { title:"Ethics in AI and Machine Learning", tag:"ELECTIVE", dept:"Interdisciplinary Studies", date:"Aug 05, 2023", skills:["Bias Mitigation","Policy Design","Explainable AI"], careers:[["Product Management","65% Ready"],["Data Science","90% Ready"]], enrolled:"450", match:"54%", alignment:"72% Alignment", analysis:"Employer demand for ‘Responsible AI’ credentials has doubled. Opportunity: Link this course to the Google AI Ethics Professional Certificate to boost student employability by 22%.", action:"Map Certificate" },
-];
+function OfferingCard({ insight }: { insight: OfferingInsight }) {
+  const { offering } = insight;
+  const skillNames = offering.skills.map((entry) => entry.skill.name);
+  const categories = [...new Set(offering.skills.map((entry) => entry.skill.category))];
+  const search = [offering.title, offering.type, ...skillNames, ...categories].join(" ");
 
-function CourseCard({ course, index }: { course: typeof sampleCourses[number]; index:number }) {
-  return <article id={index===0?"course-cloud-infrastructure":"course-data-science-ai"} className="cc-course cc-anchor" data-search={`${course.title} ${course.tag} ${course.dept} ${course.skills.join(" ")}`}>
-    <header><div><h3>{course.title} <span>{course.tag}</span></h3><p>♙ {course.dept}　 ◷ Last Updated: {course.date}</p></div><div><small>INDUSTRY ALIGNMENT</small><b>{course.alignment}</b></div></header>
-    <div className="cc-course-grid"><div><small>SKILLS COVERED</small><div className="cc-skills">{course.skills.map(s=><span key={s}>{s}</span>)}</div></div><div><small>CAREER READINESS IMPACT</small>{course.careers.map(c=><p key={c[0]}>{c[0]} <b>{c[1]}</b></p>)}</div><div><small>STUDENT IMPACT</small><strong>{course.enrolled}</strong><em>ENROLLED</em><strong className="match">{course.match}</strong><em>HIRING MATCH</em></div></div>
-    <div className="cc-analysis"><span>✦</span><div><b>AI Curriculum Analysis</b><p>{course.analysis}</p></div><Link href={index===0?"/university/actions#initiative-tracker":"#certification-mapping"}>{course.action}</Link></div>
-    <footer><span>Related Certifications: {index?<i>No professional certifications mapped yet</i>:<><b>AWS Solutions Architect</b><b>Google Cloud Engineer</b><b>CompTIA Security+</b></>}</span><Link href="#certification-mapping">Manage mappings</Link></footer>
-  </article>;
+  return (
+    <article className="cc-course cc-anchor" id={`offering-${offering.id}`} data-search={search.toLowerCase()}>
+      <header>
+        <div>
+          <h3>
+            {offering.title} <span>{offering.type === "certification" ? "CERTIFICATION" : "COURSE"}</span>
+          </h3>
+          <p>
+            ♙ {offering.certification ? `Grants ${offering.certification.name}` : "No certification mapped"}　 ◷ Added:{" "}
+            {offering.createdAt.toLocaleDateString()}
+          </p>
+        </div>
+        <div>
+          <small>INDUSTRY ALIGNMENT</small>
+          <b>{insight.alignmentPct === null ? "No skills mapped" : `${insight.alignmentPct}% Alignment`}</b>
+        </div>
+      </header>
+
+      <div className="cc-course-grid">
+        <div>
+          <small>SKILLS COVERED</small>
+          <div className="cc-skills">
+            {skillNames.length ? (
+              skillNames.map((name) => (
+                <span key={name} className={insight.inDemandSkills.includes(name) ? "in-demand" : undefined}>
+                  {name}
+                </span>
+              ))
+            ) : (
+              <em>No skills mapped yet</em>
+            )}
+          </div>
+        </div>
+        <div>
+          <small>CAREER READINESS IMPACT</small>
+          {insight.trackImpact.length ? (
+            insight.trackImpact.map((track) => (
+              <p key={track.id}>
+                {track.label} <b>{track.coveragePct}% covered</b>
+              </p>
+            ))
+          ) : (
+            <p>
+              <em>No career track requires these skills yet</em>
+            </p>
+          )}
+        </div>
+        <div>
+          <small>STUDENT IMPACT</small>
+          <strong>{insight.studentsTargeting}</strong>
+          <em>STUDENTS TARGETING</em>
+          <strong className="match">{insight.demandSharePct}%</strong>
+          <em>OF OPEN DEMAND</em>
+        </div>
+      </div>
+
+      <div className="cc-analysis">
+        <span>✦</span>
+        <div>
+          <b>AI Curriculum Analysis</b>
+          <p>{insight.analysis}</p>
+        </div>
+        <Link href="/university/actions/new">Create initiative</Link>
+      </div>
+
+      <footer>
+        <span>
+          Related Certifications:{" "}
+          {insight.relatedCertifications.length ? (
+            insight.relatedCertifications.map((name) => <b key={name}>{name}</b>)
+          ) : (
+            <i>No professional certifications mapped yet</i>
+          )}
+        </span>
+        <Link href="#certification-mapping">Manage mappings</Link>
+      </footer>
+    </article>
+  );
 }
 
 export default async function UniversityCurriculum() {
-  const ctx=await getCurrentUniversity(); if(!ctx) redirect("/login");
-  const [offerings, certs]=await Promise.all([prisma.offering.findMany({where:{universityId:ctx.university.id}}),prisma.certification.count()]);
-  const courseCount=offerings.length || 156; const certCount=certs || 42;
-  return <main className="cc-page">
-    <section className="cc-overview"><div className="cc-executive"><b><span>AI INSIGHT</span> Executive Curriculum Overview</b><p>“Your curriculum currently covers <strong>84%</strong> of the highest-demand industry skills. Expanding cloud computing and DevOps offerings could significantly improve graduate readiness by an estimated <em>12%.</em>”</p><div><span><small>SKILLS COVERAGE</small><strong>84% <i>↗ 2.4%</i></strong></span><span><small>READY FOR MARKET</small><strong>6,420 <i>Students</i></strong></span></div></div><div className="cc-pulse"><h3>CURRICULUM PULSE</h3><label>Total Courses <b>{courseCount}</b><i><span style={{width:"75%"}}/></i></label><label>Certifications <b>{certCount}</b><i><span style={{width:"40%"}}/></i></label><small>Industry Alignment Score <b>9.2 / 10</b></small></div></section>
-    <section className="cc-metrics">{[["COURSES",courseCount,"+12%","Active academic year"],["CERTIFICATIONS",certCount,"0%","Partner verified"],["SKILLS MAPPED","850+","+45","Across all domains"],["CAREER TRACKS","18","New","Mapped to outcomes"],["AVG. ENROLLMENT","342","-2%","Per core course"],["ALIGNMENT","92.4","EXCELLENT","Industry relevancy"]].map((m,i)=><div className={i===5?"accent":""} key={String(m[0])}><small>{m[0]}</small><strong>{m[1]}</strong><b>{m[2]}</b><p>{m[3]}</p></div>)}</section>
-    <CurriculumControls/><span id="course-list" className="cc-anchor" aria-hidden="true"/>
-    <div className="cc-workspace"><div><CourseCard course={sampleCourses[0]} index={0}/><CourseCard course={sampleCourses[1]} index={1}/></div><aside><section className="cc-recommend"><h2><span>✦</span> AI Strategic Recommendations</h2><article><label>HIGH PRIORITY</label><small>EMPLOYER REQUEST</small><h3>Update: Cybersecurity Capstone</h3><p>Local employers (Microsoft, IBM) are reporting a 60% shortage in “Zero Trust Architecture” skills. Current course content only covers perimeter defense.</p><button>Update Curriculum Content</button></article><article><label className="new">RECOMMENDED NEW</label><h3>GenAI & LLM Ops for Enterprise</h3><p>Emerging technology trend detected. 120 students have requested content on prompt engineering and model fine-tuning.</p><b>+18% Impact Score <a>VIEW PROPOSAL</a></b></article><article><label className="credential">MISSING CREDENTIAL</label><h3>CompTIA Security+ Integration</h3><p>Students completing your “Intro to Cyber” have a 95% syllabus overlap with this certification but only 10% adoption.</p><button className="outline">Enable Auto-Verification</button></article></section><section className="cc-required"><h3>Top Skills Required　ⓘ</h3>{[["Cloud Computing",88],["Data Engineering",74],["Product Design",62],["Machine Learning",55]].map(x=><label key={String(x[0])}>{x[0]} <b>{x[1]}%</b><i><span style={{width:`${x[1]}%`}}/></i></label>)}<a>View Full Analytics　→</a></section></aside></div>
-    <section className="cc-cert-section" id="certification-mapping"><header><h2>Certification Mapping</h2><a>View All Certifications　›</a></header><div>{[["AWS","AWS Solutions Architect","Professional Level Certificate","92% Match","Very High"],["G","Google Professional Data Engineer","Cloud Professional Credential","64% Match","High"],["C+","CompTIA Security+","Foundational Security Certificate","95% Match","Critical"]].map((c,i)=><article key={c[1]}><header><span className={`logo l${i}`}>{c[0]}</span><div><h3>{c[1]}</h3><p>{c[2]}</p></div></header><div className="cc-cert-stats"><span><small>SYLLABUS MATCH</small><b>{c[3]}</b></span><span><small>MARKET DEMAND</small><b>{c[4]}</b></span></div><p><b>Related Courses:</b> CS304: Distributed Systems, CS412: Cloud Architecture.</p><footer><span>●　{i===1?"Update Recommended":"Verification Active"}</span><a>{i===1?"Bridge Gap":"Manage Prep Path"}</a></footer></article>)}</div></section>
-    <section className="cc-mapping"><h2>Skills Mapping Analysis</h2><p>Interactive overview of how your curriculum translates to the workforce.</p><div>{[["▣","Programming",["Python　100%","TypeScript　85%","Go (Golang)　42%","Rust　12%"]],["♧","Cloud & DevOps",["AWS　95%","Kubernetes　80%","CI/CD　90%"]],["♧","Artificial Intelligence",["ML Foundations　98%","LLM Fine-tuning　5%","PyTorch　60%"]],["♡","Cybersecurity",["Network Sec　100%","Zero Trust　20%","Pentesting　55%"]]].map(x=><article key={String(x[1])}><h3>{x[0]}　{x[1]}</h3><div>{(x[2] as string[]).map(s=><span key={s}>{s}</span>)}</div></article>)}</div></section>
-  </main>;
+  const ctx = await getCurrentUniversity();
+  if (!ctx) redirect("/login");
+
+  const [offerings, jobs, tracks, students, certifications] = await Promise.all([
+    prisma.offering.findMany({
+      where: { universityId: ctx.university.id },
+      include: { skills: { include: { skill: true } }, certification: true },
+      orderBy: { createdAt: "desc" },
+    }),
+    prisma.job.findMany({
+      where: { status: "open", employer: { verificationStatus: "APPROVED" } },
+      include: { requiredSkills: { include: { skill: true } }, requiredCerts: { include: { certification: true } } },
+    }),
+    prisma.careerTrack.findMany({ include: { trackSkills: { include: { skill: true } } } }),
+    prisma.student.findMany({ select: { targetCareer: true, university: true } }),
+    prisma.certification.findMany(),
+  ]);
+
+  const intel = computeCurriculumIntelligence({
+    offerings,
+    jobs,
+    tracks,
+    students,
+    certifications,
+    institution: ctx.university.institution,
+  });
+
+  const { counts, coveragePct } = intel;
+  const topDemand = intel.demandSkills.slice(0, 6);
+  const peakDemand = topDemand[0]?.weight ?? 1;
+
+  return (
+    <main className="cc-page">
+      <section className="cc-overview">
+        <div className="cc-executive">
+          <b>
+            <span>AI INSIGHT</span> Executive Curriculum Overview
+          </b>
+          <p>{intel.summary}</p>
+          <div>
+            <span>
+              <small>DEMAND COVERAGE</small>
+              <strong>{coveragePct === null ? "—" : `${coveragePct}%`}</strong>
+            </span>
+            <span>
+              <small>STUDENTS AT {ctx.university.institution.toUpperCase()}</small>
+              <strong>
+                {intel.studentsAtInstitution} <i>Students</i>
+              </strong>
+            </span>
+          </div>
+        </div>
+        <div className="cc-pulse">
+          <h3>CURRICULUM PULSE</h3>
+          <label>
+            Courses <b>{counts.courses}</b>
+            <i>
+              <span style={{ width: `${counts.courses + counts.certifications ? Math.round((counts.courses / (counts.courses + counts.certifications)) * 100) : 0}%` }} />
+            </i>
+          </label>
+          <label>
+            Certifications <b>{counts.certifications}</b>
+            <i>
+              <span style={{ width: `${counts.courses + counts.certifications ? Math.round((counts.certifications / (counts.courses + counts.certifications)) * 100) : 0}%` }} />
+            </i>
+          </label>
+          <small>
+            Demand coverage <b>{coveragePct === null ? "Not measurable yet" : `${coveragePct}%`}</b>
+          </small>
+        </div>
+      </section>
+
+      <section className="cc-metrics">
+        {[
+          ["COURSES", counts.courses, "Mapped offerings"],
+          ["CERTIFICATIONS", counts.certifications, "Granted by your catalogue"],
+          ["SKILLS TAUGHT", counts.skillsTaught, "Distinct across offerings"],
+          ["CAREER TRACKS", counts.tracks, "In the platform catalogue"],
+          ["OPEN ROLES", counts.openRoles, "Live employer demand"],
+          ["COVERAGE", coveragePct === null ? "—" : `${coveragePct}%`, "Weighted demand met"],
+        ].map(([label, value, note], index) => (
+          <div className={index === 5 ? "accent" : ""} key={String(label)}>
+            <small>{label}</small>
+            <strong>{value}</strong>
+            <p>{note}</p>
+          </div>
+        ))}
+      </section>
+
+      <CurriculumControls
+        typeOptions={[...new Set(offerings.map((offering) => offering.type))]}
+        domainOptions={[...new Set(offerings.flatMap((offering) => offering.skills.map((entry) => entry.skill.category)))]}
+      />
+      <span id="course-list" className="cc-anchor" aria-hidden="true" />
+
+      <div className="cc-workspace">
+        <div>
+          {intel.offerings.length ? (
+            intel.offerings.map((insight) => <OfferingCard insight={insight} key={insight.offering.id} />)
+          ) : (
+            <div className="notice">
+              No courses or certifications have been added yet.{" "}
+              <Link className="link" href="/university/offerings">
+                Add your first offering →
+              </Link>{" "}
+              Alignment is measured against live employer demand as soon as one exists.
+            </div>
+          )}
+        </div>
+
+        <aside>
+          <section className="cc-recommend">
+            <h2>
+              <span>✦</span> AI Strategic Recommendations
+            </h2>
+            {intel.gaps.length ? (
+              intel.gaps.slice(0, 3).map((gap, index) => (
+                <article key={gap.name}>
+                  <label className={index === 0 ? undefined : index === 1 ? "new" : "credential"}>
+                    {index === 0 ? "HIGH PRIORITY" : index === 1 ? "RECOMMENDED NEW" : "UNCOVERED DEMAND"}
+                  </label>
+                  <small>{gap.jobCount} OPEN ROLE(S)</small>
+                  <h3>Add coverage: {gap.name}</h3>
+                  <p>
+                    {gap.jobCount} open role(s) request {gap.name} ({gap.category}), carrying {Math.round(gap.weight)} weighted
+                    demand point(s). No current offering teaches it.
+                  </p>
+                  <Link className="button primary" href="/university/offerings">
+                    Add an offering
+                  </Link>
+                </article>
+              ))
+            ) : (
+              <article>
+                <label>NO GAPS</label>
+                <h3>Every requested skill is covered</h3>
+                <p>
+                  {counts.openRoles
+                    ? "Each skill requested by an open role is taught by at least one offering in your catalogue."
+                    : "No open roles are published yet, so there is no demand to measure against."}
+                </p>
+              </article>
+            )}
+          </section>
+
+          <section className="cc-required">
+            <h3>Top Skills Required　ⓘ</h3>
+            {topDemand.length ? (
+              topDemand.map((skill) => (
+                <label key={skill.name}>
+                  {skill.name} <b>{skill.covered ? "Covered" : "Gap"}</b>
+                  <i>
+                    <span style={{ width: `${Math.round((skill.weight / peakDemand) * 100)}%` }} />
+                  </i>
+                </label>
+              ))
+            ) : (
+              <p className="muted">No open roles have listed required skills yet.</p>
+            )}
+            <Link href="/university/job-demand">View Full Analytics　→</Link>
+          </section>
+        </aside>
+      </div>
+
+      <section className="cc-cert-section" id="certification-mapping">
+        <header>
+          <h2>Certification Mapping</h2>
+          <Link href="/university/offerings">Add a certification　›</Link>
+        </header>
+        <div>
+          {intel.certifications.length ? (
+            intel.certifications.map((cert, index) => (
+              <article key={cert.name}>
+                <header>
+                  <span className={`logo l${index % 3}`}>{cert.name.slice(0, 2).toUpperCase()}</span>
+                  <div>
+                    <h3>{cert.name}</h3>
+                    <p>{cert.org ?? "Independent credential"}</p>
+                  </div>
+                </header>
+                <div className="cc-cert-stats">
+                  <span>
+                    <small>REQUIRED BY</small>
+                    <b>
+                      {cert.demandCount} role{cert.demandCount === 1 ? "" : "s"}
+                    </b>
+                  </span>
+                  <span>
+                    <small>IN YOUR CATALOGUE</small>
+                    <b>{cert.offered ? "Offered" : "Not offered"}</b>
+                  </span>
+                </div>
+                <p>
+                  {cert.offered ? (
+                    <>
+                      <b>Granted by:</b> {cert.offeringTitle}
+                    </>
+                  ) : (
+                    <>
+                      <b>Gap:</b> no offering in your catalogue grants this credential.
+                    </>
+                  )}
+                </p>
+                <footer>
+                  <span>●　{cert.offered ? "Mapped" : "Update recommended"}</span>
+                  <Link href="/university/offerings">{cert.offered ? "Manage offering" : "Add offering"}</Link>
+                </footer>
+              </article>
+            ))
+          ) : (
+            <div className="notice">No certification is currently required by an open role or granted by your catalogue.</div>
+          )}
+        </div>
+      </section>
+
+      <section className="cc-mapping" id="skills-mapping">
+        <h2>Skills Mapping Analysis</h2>
+        <p>How the skills employers request map onto what your catalogue teaches.</p>
+        <div>
+          {intel.byCategory.length ? (
+            intel.byCategory.map((group) => (
+              <article key={group.category}>
+                <h3>
+                  ▣　{group.category === "technical" ? "Technical" : group.category === "soft" ? "Professional" : group.category} skills
+                  　<b>
+                    {group.covered}/{group.total} covered
+                  </b>
+                </h3>
+                <div>
+                  {intel.demandSkills
+                    .filter((skill) => skill.category === group.category)
+                    .slice(0, 8)
+                    .map((skill) => (
+                      <span key={skill.name} className={skill.covered ? "covered" : "gap"}>
+                        {skill.name}　{skill.covered ? "✓" : `${skill.jobCount} role(s)`}
+                      </span>
+                    ))}
+                </div>
+              </article>
+            ))
+          ) : (
+            <div className="notice">No open role has listed a required skill yet, so there is nothing to map.</div>
+          )}
+        </div>
+      </section>
+    </main>
+  );
 }

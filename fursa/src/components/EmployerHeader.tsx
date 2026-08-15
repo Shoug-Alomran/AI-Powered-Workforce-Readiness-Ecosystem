@@ -1,10 +1,11 @@
 import Link from "next/link";
+import Image from "next/image";
 import { logout } from "@/actions/auth";
 import AccountAvatar from "@/components/AccountAvatar";
 
-function HeaderIcon({name}:{name:"brand"|"search"}) {
+function HeaderIcon({name}:{name:"search"}) {
   return <svg className="erd-svg" viewBox="0 0 24 24" aria-hidden="true">
-    {name==="brand"?<><circle cx="8" cy="8" r="5"/><circle cx="16" cy="16" r="5"/><path d="M11.5 11.5l1 1"/></>:<><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></>}
+    {name==="search"&&<><circle cx="11" cy="11" r="7"/><path d="m16.5 16.5 4 4"/></>}
   </svg>;
 }
 
@@ -12,7 +13,7 @@ export default function EmployerHeader({company,userName,active,pageLabel}:{comp
   const initials=userName.split(" ").map(part=>part[0]).join("").slice(0,2);
   const currentPage=pageLabel??(active==="post"?"Create Job Opportunity":"Employer Dashboard");
   return <header className="erd-top employer-shared-header">
-    <Link href="/employer/dashboard" className="erd-brand"><span><HeaderIcon name="brand"/></span><b>Fursah</b></Link>
+    <Link href="/employer/dashboard" className="erd-brand"><span className="brand-mark"><Image src="/logo.png" alt="" width={353} height={512}/></span><b>Fursah</b></Link>
     <Link href="/employer/dashboard" className="erd-org"><small>ORGANIZATION　/　{currentPage.toUpperCase()}</small><strong>{company||"Global Talent Acquisition"}　<em>ENTERPRISE</em></strong></Link>
     <nav className="erd-nav" aria-label="Employer navigation">
       <Link className={active==="dashboard"?"active":""} href="/employer/dashboard">Dashboard</Link>

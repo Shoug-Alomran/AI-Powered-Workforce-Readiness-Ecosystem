@@ -21,7 +21,7 @@ export default async function Navbar() {
     ];
     return <header className="student-topbar">
       <div className="student-topbar-inner">
-        <Link href="/student/dashboard" className="student-brand"><Image src="/logo.svg" alt="" width={36} height={36}/><strong>FURSAH</strong></Link>
+        <Link href="/student/dashboard" className="student-brand"><Image src="/logo.png" alt="" width={353} height={512}/><strong>FURSAH</strong></Link>
         <PortalNavLinks links={links} className="student-nav" />
         <div className="student-account">
           <Link href="/student/account" className="student-profile-link" aria-label={`Open ${user.name}'s account profile`}><AccountAvatar initials={user.name.split(" ").map(part => part[0]).slice(0,2).join("")}/><b>{user.name}<small>View profile</small></b></Link>
@@ -35,7 +35,7 @@ export default async function Navbar() {
     <header className="border-b border-slate-200 bg-white/80 backdrop-blur sticky top-0 z-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2 font-semibold text-slate-900">
-          <Image src="/logo.svg" alt="" width={36} height={36} className="rounded-xl" />
+          <Image src="/logo.png" alt="" width={353} height={512} className="h-10 w-auto object-contain" />
           <span>Fursah</span>
           <span data-i18n="brand.tagline" className="hidden sm:inline text-slate-400 font-normal text-sm">
             AI Workforce Readiness
