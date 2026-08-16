@@ -35,11 +35,26 @@ export default function FirebaseAuthPanel({ configured, serverReady }: { configu
       const credential = mode === "signup" ? await createUserWithEmailAndPassword(auth, email, password) : await signInWithEmailAndPassword(auth, email, password);
       if (mode === "signup") await updateProfile(credential.user, { displayName: name });
       const idToken = await credential.user.getIdToken(true);
-      const response = await fetch("/api/auth/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idToken, role, name, university: formData.get("university"), company: formData.get("company"), industry: formData.get("industry"), institution: formData.get("institution"), region: formData.get("region") }) });
+      // Send only the profile fields that belong to the selected role, and never
+      // forward a value equal to the password. Password managers and browser
+      // autofill will happily drop a credential into an adjacent text input, and
+      // these fields are rendered publicly on the Skills Passport.
+      const profileField = (key: string) => {
+        const value = String(formData.get(key) ?? "").trim();
+        return value && value !== password ? value : "";
+      };
+      const roleFields =
+        role === "STUDENT"
+          ? { university: profileField("university") }
+          : role === "EMPLOYER"
+            ? { company: profileField("company"), industry: profileField("industry") }
+            : { institution: profileField("institution"), region: profileField("region") };
+      const response = await fetch("/api/auth/session", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ idToken, role, name, ...roleFields }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "Unable to create session");
       await signOut(auth);
-      window.location.assign(result.role === "STUDENT" ? (mode === "signup" ? "/student/interests?setup=career" : "/student/dashboard") : result.role === "EMPLOYER" ? "/employer/dashboard" : result.role === "ADMIN" ? "/admin/dashboard" : "/university/dashboard");
+      // The server decides where to land: new students go to the Skills Passport.
+      window.location.assign(result.redirectTo ?? (result.role === "STUDENT" ? "/student/profile?setup=passport" : result.role === "EMPLOYER" ? "/employer/dashboard" : result.role === "ADMIN" ? "/admin/dashboard" : "/university/dashboard"));
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "Authentication failed";
       setError(message.replace("Firebase: ", "").replace(/\(auth\/.+\)\.?/, "")); setLoading(false);
@@ -66,13 +81,13 @@ export default function FirebaseAuthPanel({ configured, serverReady }: { configu
   }
 
   if (!configured) return <div className="notice">Firebase configuration is missing.</div>;
-  return <section className="card auth-card"><div className="auth-switch"><button type="button" className={mode === "signin" ? "active" : ""} onClick={() => changeMode("signin")}><span data-i18n="auth.signin">Sign in</span></button><button type="button" className={mode === "signup" ? "active" : ""} onClick={() => changeMode("signup")}><span data-i18n="auth.signup">Create account</span></button></div><h2 data-i18n={mode === "signup" ? "auth.create" : mode === "forgot" ? "auth.reset" : "auth.welcome"}>{mode === "signup" ? "Create your Fursah account" : mode === "forgot" ? "Reset your password" : "Welcome back"}</h2><p className="muted" {...(mode !== "forgot" ? {"data-i18n":"auth.secure"} : {})}>{mode === "forgot" ? "Enter the email address used for your Firebase account." : "Secure email and password authentication powered by Firebase."}</p><form action={mode === "forgot" ? resetPassword : submit} className="form-grid">
-    {mode === "signup" && <><label>Account type<select className="input" value={role} onChange={event => setRole(event.target.value as FirebaseRole)}><option value="STUDENT">Student</option><option value="EMPLOYER">Employer</option><option value="UNIVERSITY">University</option></select></label><label>Full name<input className="input" name="name" required /></label></>}
+  return <section className="card auth-card"><div className="auth-switch"><button type="button" className={mode === "signin" ? "active" : ""} onClick={() => changeMode("signin")}><span data-i18n="auth.signin">Sign in</span></button><button type="button" className={mode === "signup" ? "active" : ""} onClick={() => changeMode("signup")}><span data-i18n="auth.signup">Create account</span></button></div><h2 data-i18n={mode === "signup" ? "auth.create" : mode === "forgot" ? "auth.reset" : "auth.welcome"}>{mode === "signup" ? "Create your Fursah account" : mode === "forgot" ? "Reset your password" : "Welcome back"}</h2><p className="muted" {...(mode !== "forgot" ? {"data-i18n":"auth.secure"} : {})}>{mode === "forgot" ? "Enter the email address used for your Firebase account." : "Secure email and password authentication powered by Firebase."}</p><form key={`${mode}-${role}`} action={mode === "forgot" ? resetPassword : submit} className="form-grid">
+    {mode === "signup" && <><label>Account type<select className="input" value={role} onChange={event => setRole(event.target.value as FirebaseRole)}><option value="STUDENT">Student</option><option value="EMPLOYER">Employer</option><option value="UNIVERSITY">University</option></select></label><label>Full name<input className="input" name="name" autoComplete="name" required /></label></>}
     <label>Email<input className="input" type="email" name="email" autoComplete="email" required /></label>{mode !== "forgot" && <label>Password<input className="input" type="password" name="password" autoComplete={mode === "signin" ? "current-password" : "new-password"} minLength={6} required /><small className="muted">At least 6 characters.</small></label>}
     {mode === "signin" && <button type="button" className="forgot-link" onClick={() => changeMode("forgot")}><span data-i18n="auth.forgot">Forgot password?</span></button>}
-    {mode === "signup" && role === "STUDENT" && <label>University <span className="muted">(optional)</span><input className="input" name="university" /><small className="muted">You will choose your major and career direction after creating your account.</small></label>}
-    {mode === "signup" && role === "EMPLOYER" && <><label>Company<input className="input" name="company" required /></label><label>Industry<input className="input" name="industry" /></label></>}
-    {mode === "signup" && role === "UNIVERSITY" && <><label>Institution<input className="input" name="institution" required /></label><label>Region<input className="input" name="region" /></label></>}
+    {mode === "signup" && role === "STUDENT" && <label>University <span className="muted">(optional)</span><input className="input" name="university" type="text" autoComplete="organization" /><small className="muted">You will build your Skills Passport, then choose your major and career direction, after creating your account.</small></label>}
+    {mode === "signup" && role === "EMPLOYER" && <><label>Company<input className="input" name="company" type="text" autoComplete="organization" required /></label><label>Industry<input className="input" name="industry" type="text" autoComplete="off" /></label></>}
+    {mode === "signup" && role === "UNIVERSITY" && <><label>Institution<input className="input" name="institution" type="text" autoComplete="organization" required /></label><label>Region<input className="input" name="region" type="text" autoComplete="address-level1" /></label></>}
     {mode !== "forgot" && !serverReady && <div className="notice">Secure account sign-in is waiting for the Firebase Admin credential. You can still use a prepared account below.</div>}{error && <div className="auth-error">{error}</div>}{success && <div className="auth-success" role="status">{success}</div>}<button className="button primary" disabled={loading || (mode !== "forgot" && !serverReady)}>{loading ? "Please wait…" : mode === "signup" ? "Create account" : mode === "forgot" ? "Send reset link" : "Sign in"}</button>{mode !== "forgot"&&!serverReady&&<Link className="button secondary" href="/login/demo">Choose a prepared account</Link>}
     {mode === "forgot" && <button type="button" className="auth-back" onClick={() => changeMode("signin")}><span data-i18n="auth.back">← Back to sign in</span></button>}
   </form></section>;

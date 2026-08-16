@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getFirebaseAdminAuth, getFirebaseAdminDb } from "@/lib/firebase-admin";
 import type { FirebaseRole, FirebaseUserProfile } from "@/lib/firebase-types";
 import { prisma } from "@/lib/db";
+import { studentLandingPath } from "@/lib/studentOnboarding";
 
 const SESSION_COOKIE = "fursa_session";
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 5;
@@ -57,8 +58,21 @@ export async function POST(request: Request) {
       } });
     }
 
+    // Students land on the Skills Passport until they have evidence to score.
+    const localStudent = await prisma.student.findFirst({ where: { user: { email: profile.email } }, select: { id: true } });
+    const redirectTo =
+      role === "STUDENT" && localStudent
+        ? await studentLandingPath(localStudent.id)
+        : role === "STUDENT"
+          ? "/student/profile?setup=passport"
+          : role === "EMPLOYER"
+            ? "/employer/dashboard"
+            : role === "ADMIN"
+              ? "/admin/dashboard"
+              : "/university/dashboard";
+
     const sessionCookie = await auth.createSessionCookie(idToken, { expiresIn: MAX_AGE_SECONDS * 1000 });
-    const response = NextResponse.json({ role });
+    const response = NextResponse.json({ role, redirectTo });
     response.cookies.set(SESSION_COOKIE, sessionCookie, {
       maxAge: MAX_AGE_SECONDS, httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/",
     });

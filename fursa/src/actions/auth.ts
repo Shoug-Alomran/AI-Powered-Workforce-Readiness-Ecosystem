@@ -3,12 +3,23 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { setSessionUserId, clearSession } from "@/lib/session";
+import { studentLandingPath } from "@/lib/studentOnboarding";
 
 export async function loginAsUser(userId: string) {
-  const user = await prisma.user.findUnique({ where: { id: userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId }, include: { student: true } });
   if (!user) throw new Error("User not found");
   await setSessionUserId(user.id);
-  redirect(user.role === "STUDENT" ? "/student/dashboard" : user.role === "EMPLOYER" ? "/employer/dashboard" : user.role === "ADMIN" ? "/admin/dashboard" : "/university/dashboard");
+  const destination =
+    user.role === "STUDENT"
+      ? user.student
+        ? await studentLandingPath(user.student.id)
+        : "/student/dashboard"
+      : user.role === "EMPLOYER"
+        ? "/employer/dashboard"
+        : user.role === "ADMIN"
+          ? "/admin/dashboard"
+          : "/university/dashboard";
+  redirect(destination);
 }
 
 export async function createUniversityAccount(formData: FormData) {
@@ -38,10 +49,10 @@ export async function createStudentAccount(formData: FormData) {
 
   if (!name || !email) throw new Error("Name and email are required");
 
-  const existing = await prisma.user.findUnique({ where: { email } });
+  const existing = await prisma.user.findUnique({ where: { email }, include: { student: true } });
   if (existing) {
     await setSessionUserId(existing.id);
-    redirect("/student/dashboard");
+    redirect(existing.student ? await studentLandingPath(existing.student.id) : "/student/dashboard");
   }
 
   const user = await prisma.user.create({
@@ -60,7 +71,8 @@ export async function createStudentAccount(formData: FormData) {
   });
 
   await setSessionUserId(user.id);
-  redirect("/student/dashboard");
+  // A newly created student has no evidence yet, so this lands on the passport.
+  redirect("/student/profile?setup=passport");
 }
 
 export async function createEmployerAccount(formData: FormData) {

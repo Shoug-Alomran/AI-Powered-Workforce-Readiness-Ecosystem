@@ -4,14 +4,19 @@ import { useMemo, useState } from "react";
 
 type Track = { id: string; label: string };
 
+// Maps a career label onto the broad field of study shown in the first select.
+// Order matters: the first pattern that matches wins, so the more specific
+// computing/business terms are tested before the generic "engineer" and
+// "design" catch-alls (otherwise "Cloud Engineer" would land under Engineering
+// and "Instructional Designer" under Design & Creative).
 function majorFor(label: string) {
-  if (/software|developer|comput|data|cyber|network|cloud|artificial|machine|information|systems|devops/i.test(label)) return "Computing & Information Technology";
-  if (/financial|finance|account|business|market|economic|management|human resource|supply/i.test(label)) return "Business & Finance";
-  if (/design|ux|ui|creative|media|graphic|architecture/i.test(label)) return "Design & Creative";
-  if (/health|medical|nurs|pharma|clinical|public health/i.test(label)) return "Health & Life Sciences";
-  if (/engineer|mechanical|electrical|civil|industrial|chemical/i.test(label)) return "Engineering";
-  if (/law|legal|policy|government|public administration/i.test(label)) return "Law & Public Policy";
-  if (/education|teach|academic/i.test(label)) return "Education";
+  if (/software|developer|comput|data|cyber|network|cloud|artificial|machine|information|systems|devops|programm|web|mobile|quality assurance/i.test(label)) return "Computing & Information Technology";
+  if (/financial|finance|account|business|market|economic|management|manager|human resource|supply|bank|invest|audit|sales|entrepreneur/i.test(label)) return "Business & Finance";
+  if (/design|ux|ui|creative|media|graphic|architecture|content|brand|animation|photograph/i.test(label)) return "Design & Creative";
+  if (/health|medical|nurs|pharma|clinical|public health|biomed|laborator|nutrition|therap/i.test(label)) return "Health & Life Sciences";
+  if (/engineer|mechanical|electrical|civil|industrial|chemical|robotic|energy|manufactur/i.test(label)) return "Engineering";
+  if (/law|legal|policy|government|public administration|complian|regulat|governance|diplomat/i.test(label)) return "Law & Public Policy";
+  if (/education|teach|academic|curriculum|instructional|train|learning/i.test(label)) return "Education";
   return "Other fields";
 }
 

@@ -119,6 +119,7 @@ const routeTours: Array<{ prefix: string; match?: RegExp; tour: Tour }> = [
       key: "student-passport",
       label: "Skills Passport",
       steps: [
+        { title: "Start here", body: "You land on your Skills Passport first because everything else — readiness, roadmap, job matches — is computed from what you enter here.", selector: ".student-passport-setup" },
         { title: "Your Skills Passport", body: "This is the evidence-backed record employers see — identity, target track, and verification state.", selector: ".student-passport-hero, .student-passport-identity" },
         { title: "Verification status", body: "Nothing is presented as verified until a human administrator has approved the evidence behind it.", selector: ".student-passport-status" },
         { title: "Passport metrics", body: "Counts of skills, certifications, experience, and projects that currently carry evidence.", selector: ".student-passport-metrics" },

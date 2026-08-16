@@ -11,7 +11,7 @@ import DocumentUpload from "@/components/DocumentUpload";
 import CareerMajorSelector from "@/components/CareerMajorSelector";
 import AccountAvatar from "@/components/AccountAvatar";
 
-export default async function Profile({ searchParams }: { searchParams: Promise<{ upload?: string }> }) {
+export default async function Profile({ searchParams }: { searchParams: Promise<{ upload?: string; setup?: string }> }) {
   const ctx = await getCurrentStudent(); if (!ctx) redirect("/login");
   const query = await searchParams;
   const [s, tracks] = await Promise.all([
@@ -30,6 +30,16 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
       <div className="student-passport-actions"><a href="#career-profile">Complete Profile</a><Link href="/student/passport-sharing">Share Passport</Link></div>
       <div className="student-ai-callout"><b>✦</b><p><strong>AI Profile Insight</strong>Your profile has {evidenceCount} evidence item(s). Add verified certifications and applied projects to improve readiness for {track?.label ?? "your target career"}.</p></div>
     </section>
+
+    {(query.setup === "passport" || evidenceCount === 0) && <section className="notice student-passport-setup">
+      <strong>Start with your Skills Passport</strong>
+      <p>This is the record employers see. Add your skills, certifications, experience, and projects below — each entry is checked automatically, then verified by a person before it counts as evidence.</p>
+      <p className="muted">Once you have added your first entries, {s.targetCareer === "undecided" ? <>choose the career you are aiming at so your readiness can be scored against it.</> : <>your readiness is scored against {track?.label ?? "your target career"}.</>}</p>
+      <div className="student-passport-setup-actions">
+        <a className="button primary" href="#skills">Add your first skill</a>
+        {s.targetCareer === "undecided" && <Link className="button secondary" href="/student/interests?setup=career">Choose your career direction</Link>}
+      </div>
+    </section>}
 
     {query.upload === "storage-unavailable" && <div className="auth-error student-upload-error">Document storage is not ready yet. Configure the private evidence bucket, then try again.</div>}
     <PageToc items={[{id:"career-profile",label:"Career profile"},{id:"skills",label:`Skills (${s.skills.length})`},{id:"certificates",label:`Certificates (${s.certifications.length})`},{id:"experience",label:`Experience (${s.experiences.length})`},{id:"projects",label:`Projects (${s.projects.length})`}]}/>
