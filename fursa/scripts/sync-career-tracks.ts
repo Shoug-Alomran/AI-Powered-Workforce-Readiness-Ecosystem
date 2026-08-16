@@ -62,7 +62,8 @@ async function main() {
         recommendedExperienceMonths: track.recommendedExperienceMonths,
       },
     });
-    existing ? updated++ : created++;
+    if (existing) updated++;
+    else created++;
 
     const pairs = [
       ...track.technicalSkills.map((s) => ({ ...s, category: "technical" as const })),

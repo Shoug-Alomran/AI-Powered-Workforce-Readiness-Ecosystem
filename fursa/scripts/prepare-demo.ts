@@ -16,8 +16,51 @@
 
 import { prisma } from "../src/lib/db";
 import { computeJobMatch } from "../src/lib/ai";
+import { MIN_COHORT } from "../src/lib/cohort";
 
 const APPLY = process.argv.includes("--approve");
+const SEED_COHORTS = process.argv.includes("--seed-cohorts");
+
+/**
+ * Cohort readiness is withheld below MIN_COHORT students so aggregates cannot
+ * re-identify individuals. Demo data spread thinly across many institutions
+ * leaves every registered university under that floor, so the page only ever
+ * shows the suppression notice. This assigns enough students to each
+ * registered university to exercise the real view.
+ */
+async function seedCohorts() {
+  const universities = await prisma.university.findMany();
+  if (!universities.length) {
+    console.log("\nNo registered universities; nothing to balance.");
+    return;
+  }
+  const students = await prisma.student.findMany({ select: { id: true, university: true } });
+  console.log(`\nBalancing ${students.length} student(s) across ${universities.length} registered institution(s)`);
+
+  for (const university of universities) {
+    const already = students.filter((s) => (s.university ?? "").trim().toLowerCase() === university.institution.toLowerCase());
+    const need = MIN_COHORT - already.length;
+    if (need <= 0) {
+      console.log(`  ${university.institution}: ${already.length} students, already at or above ${MIN_COHORT}`);
+      continue;
+    }
+    // Recomputed each pass, so students reassigned above are already excluded.
+    const reassignable = students.filter(
+      (s) => !universities.some((u) => u.institution.toLowerCase() === (s.university ?? "").trim().toLowerCase()),
+    );
+    const taking = reassignable.slice(0, need).map((s) => s.id);
+    const short = need - taking.length;
+    if (taking.length) {
+      await prisma.student.updateMany({ where: { id: { in: taking } }, data: { university: university.institution } });
+      // keep the local snapshot in sync for the next institution's calculation
+      for (const s of students) if (taking.includes(s.id)) s.university = university.institution;
+    }
+    console.log(
+      `  ${university.institution}: ${already.length} -> ${already.length + taking.length} students` +
+        (short > 0 ? ` (still ${short} short — not enough unassigned students)` : ""),
+    );
+  }
+}
 
 async function main() {
   const target = process.env.DATABASE_URL ?? "file:./prisma/dev.db";
@@ -87,6 +130,8 @@ async function main() {
     const flag = best >= 60 ? "strong" : best >= 30 ? "partial" : "weak";
     console.log(`  ${student.user.name.padEnd(24)} best ${String(best).padStart(3)}%  (${flag})  all: ${scores.join(", ") || "—"}`);
   }
+
+  if (SEED_COHORTS) await seedCohorts();
 
   const offerings = await prisma.offering.count();
   const openRoles = await prisma.job.count({ where: { status: "open" } });
