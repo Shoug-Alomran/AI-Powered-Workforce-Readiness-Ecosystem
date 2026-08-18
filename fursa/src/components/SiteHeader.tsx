@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getCurrentUser } from "@/lib/session";
 
-const anchors = [["Solutions", "solutions", "nav.solutions"], ["How it Works", "how-it-works", "nav.howItWorks"], ["Responsible AI", "ai-ethics", "nav.responsibleAi"]] as const;
+const anchors = [["Solutions", "solutions"], ["How it Works", "how-it-works"], ["Responsible AI", "ai-ethics"]] as const;
 
 /**
  * The landing-page navigation bar, shared by every public marketing page so the
@@ -16,14 +16,14 @@ export default async function SiteHeader({ onHome = false }: { onHome?: boolean 
   return <header className="home-nav">
     <Link href="/" className="home-logo"><span className="brand-mark"><Image src="/logo.png" alt="" width={353} height={512} priority /></span><b>FURSAH</b></Link>
     <nav>
-      {anchors.map(([label, id, key]) => <a key={id} href={anchor(id)} data-i18n={key}>{label}</a>)}
-      <Link href="/impact" data-i18n="nav.impact">National Impact</Link>
-      <Link href="/team" data-i18n="nav.team">Team</Link>
-      <a href={anchor("metrics")} data-i18n="nav.prototype">Prototype</a>
+      {anchors.map(([label, id]) => <a key={id} href={anchor(id)}>{label}</a>)}
+      <Link href="/impact">National Impact</Link>
+      <Link href="/team">Team</Link>
+      <a href={anchor("metrics")}>Prototype</a>
     </nav>
     <div>
-      {user ? <Link href={dashboard} data-i18n="nav.dashboard">Open Dashboard</Link> : <Link href="/login" data-i18n="nav.signin">Sign In</Link>}
-      <Link className="primary" href={user ? dashboard : "/login/demo"} data-i18n={user ? "nav.continue" : "cta.explore"}>{user ? "Continue" : "Explore Prototype"}</Link>
+      {user ? <Link href={dashboard}>Open Dashboard</Link> : <Link href="/login">Sign In</Link>}
+      <Link className="primary" href={user ? dashboard : "/login/demo"}>{user ? "Continue" : "Explore Prototype"}</Link>
     </div>
   </header>;
 }

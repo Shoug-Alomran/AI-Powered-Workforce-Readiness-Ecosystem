@@ -37,7 +37,7 @@ export default async function Navbar() {
         <Link href="/" className="flex items-center gap-2 font-semibold text-slate-900">
           <Image src="/logo.png" alt="" width={353} height={512} className="h-10 w-auto object-contain" />
           <span>Fursah</span>
-          <span data-i18n="brand.tagline" className="hidden sm:inline text-slate-400 font-normal text-sm">
+          <span className="hidden sm:inline text-slate-400 font-normal text-sm">
             AI Workforce Readiness
           </span>
         </Link>
@@ -48,7 +48,7 @@ export default async function Navbar() {
               href="/workforce-intelligence"
               className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
             >
-              <span data-i18n="nav.intelligence">Workforce Intelligence</span>
+              <span>Workforce Intelligence</span>
             </Link>
           )}
 
@@ -57,7 +57,7 @@ export default async function Navbar() {
               href="/login"
               className="ml-2 px-4 py-2 rounded-full bg-slate-950 text-white hover:bg-teal-700 font-medium"
             >
-              <span data-i18n="nav.signin">Sign in</span>
+              <span>Sign in</span>
             </Link>
           )}
 
@@ -67,21 +67,21 @@ export default async function Navbar() {
                 href="/employer/dashboard"
                 className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
               >
-                <span data-i18n="nav.dashboard">Dashboard</span>
+                <span>Dashboard</span>
               </Link>
               <Link
                 href="/employer/jobs/new"
                 className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
               >
-                <span data-i18n="nav.postJob">Post a Job</span>
+                <span>Post a Job</span>
               </Link>
             </>
           )}
 
           {user?.role === "UNIVERSITY" && (
             <>
-              <Link href="/university/dashboard" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.university">University Dashboard</span></Link>
-              <Link href="/university/curriculum" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span data-i18n="nav.offerings">Courses & Certifications</span></Link>
+              <Link href="/university/dashboard" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span>University Dashboard</span></Link>
+              <Link href="/university/curriculum" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"><span>Courses & Certifications</span></Link>
               <Link href="/university/job-demand" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100">Job Demand</Link>
               <Link href="/university/actions" className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100">Action Plan</Link>
             </>
@@ -96,7 +96,7 @@ export default async function Navbar() {
                 type="submit"
                 className="px-3 py-2 rounded-md text-slate-600 hover:text-slate-900 hover:bg-slate-100"
               >
-                <span data-i18n="nav.signout">Sign out</span>
+                <span>Sign out</span>
               </button>
             </form>
           )}

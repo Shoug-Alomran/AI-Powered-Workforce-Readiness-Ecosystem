@@ -1,20 +1,45 @@
+import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { POLICIES, POLICY_SLUGS } from "@/lib/policies";
 
-const POLICIES = {
-  privacy: { title: "Privacy Policy", updated: "4 August 2026", intro: "Fursah collects only the information needed to provide career-readiness, opportunity-matching, verification, and institutional-insight services.", sections: [["Information we use", "Account details, student-provided profile data, verified evidence, opportunity requirements, application activity, and consented outcome feedback."], ["How information is used", "To calculate explainable readiness and match results, recommend development actions, verify evidence, support applications, and produce de-identified institutional insights."], ["Your controls", "Students can manage purpose-specific consent and request access, correction, review, or deletion. Identifiable information is not included in university aggregate reports."], ["Retention and security", "Information should be retained only for a documented purpose, protected through role-based access, and removed or de-identified when it is no longer required."]] },
-  terms: { title: "Terms of Use", updated: "4 August 2026", intro: "Fursah is a decision-support platform. Its scores and recommendations do not guarantee admission, certification, employment, or job performance.", sections: [["Responsible use", "Users must provide accurate information, respect others' privacy, and avoid manipulating evidence, rankings, or feedback."], ["Human decisions", "Employers, universities, reviewers, and students remain responsible for consequential decisions. Automated results must not be used as the sole basis for rejection."], ["Availability", "Prototype services may change, contain incomplete data, or be temporarily unavailable while the system is evaluated."], ["Account action", "Access may be restricted when an account is used fraudulently, unlawfully, or in a way that harms other users."]] },
-  "responsible-ai": { title: "Responsible AI Policy", updated: "4 August 2026", intro: "Fursah uses transparent, reviewable automation designed to support—not replace—human judgment.", sections: [["Explainability", "Readiness and job-match results show the inputs, gaps, weights, and model or ruleset version used."], ["Fairness", "Protected characteristics are excluded from ranking inputs. Outcomes should be monitored for uneven impact, data imbalance, and inappropriate proxies."], ["Human oversight", "High-impact employment and education decisions require a named human decision-maker, recorded justification, and an appeal route."], ["Monitoring", "Models and rules should be tested in a sandbox, monitored for drift and quality, and rolled back when safeguards fail."]] },
-  accessibility: { title: "Accessibility Statement", updated: "4 August 2026", intro: "Fursah aims to provide an inclusive experience for users with different abilities, devices, languages, and connection speeds.", sections: [["Our approach", "We aim for keyboard access, clear focus states, readable contrast, descriptive labels, responsive layouts, and understandable language."], ["Compatibility", "The service is designed for current standards-based browsers and responsive use on mobile and desktop devices."], ["Feedback", "If a feature or document is difficult to access, contact support and include the page, device, and assistance needed."], ["Continuous improvement", "Accessibility issues are treated as product defects and prioritized according to their effect on task completion."]] },
-} as const;
+export function generateStaticParams() {
+  return POLICY_SLUGS.map(policy => ({ policy }));
+}
 
-const POLICY_DOCUMENTS: Record<string, { label: string; body: string; href: string }> = {
-  "responsible-ai": { label: "AI Readiness Report (PDF)", body: "The full technical and governance report behind this policy. It maps every stage of the Fursah pipeline—sources, connectivity, pre-processing, models, human oversight, analytics, and interfaces—to SDAIA's Principles and Controls of AI Ethics, the PDPL, national data-governance standards, and the Human Capability Development Programme, and works through the scenarios where the system could be contested.", href: "/fursah-ai-readiness-hackathon-submission.pdf" },
-};
+export async function generateMetadata({ params }: { params: Promise<{ policy: string }> }): Promise<Metadata> {
+  const { policy } = await params;
+  const content = POLICIES[policy];
+  if (!content) return {};
+  return { title: `${content.title} — Fursah`, description: content.summary };
+}
 
 export default async function PolicyPage({ params }: { params: Promise<{ policy: string }> }) {
   const { policy } = await params;
-  const content = POLICIES[policy as keyof typeof POLICIES];
+  const content = POLICIES[policy];
   if (!content) notFound();
-  const supportingDocument = POLICY_DOCUMENTS[policy];
-  return <main className="page-shell" style={{ maxWidth: 820 }}><span className="eyebrow">Fursah policies</span><h1 className="page-title">{content.title}</h1><p className="muted">Last updated: {content.updated}</p><div className="notice" style={{ marginTop: 24 }}>{content.intro}</div>{content.sections.map(([title, body]) => <section className="card" style={{ marginTop: 18 }} key={title}><h2>{title}</h2><p className="muted">{body}</p></section>)}{supportingDocument && <section className="card" style={{ marginTop: 18 }}><h2>Supporting documentation</h2><p className="muted">{supportingDocument.body}</p><a className="link" href={supportingDocument.href} target="_blank" rel="noopener noreferrer">{supportingDocument.label} ↗</a></section>}<p className="muted" style={{ marginTop: 24 }}>This prototype policy will be expanded and reviewed alongside the project&apos;s policy knowledge base before production use.</p></main>;
+
+  return <main className="page-shell policy-page" style={{ maxWidth: 820 }}>
+    <span className="eyebrow">Fursah policies</span>
+    <h1 className="page-title">{content.title}</h1>
+    <p className="muted">Version {content.version} · Effective {content.effective} · Last updated {content.updated}</p>
+    <div className="notice" style={{ marginTop: 24 }}>{content.summary}</div>
+
+    {content.clauses.map(clause => <section className="card policy-clause" style={{ marginTop: 18 }} key={clause.heading}>
+      <h2>{clause.heading}</h2>
+      {clause.paragraphs?.map(text => <p className="muted" key={text}>{text}</p>)}
+      {clause.bullets && <ul className="policy-list">{clause.bullets.map(item => <li className="muted" key={item}>{item}</li>)}</ul>}
+    </section>)}
+
+    {content.attachment && <section className="card policy-clause" style={{ marginTop: 18 }}>
+      <h2>Supporting documentation</h2>
+      <p className="muted">{content.attachment.body}</p>
+      <a className="link" href={content.attachment.href} target="_blank" rel="noopener noreferrer">{content.attachment.label} ↗</a>
+    </section>}
+
+    <nav className="policy-nav" aria-label="Other policies">
+      <h2>Related policies</h2>
+      {POLICY_SLUGS.filter(slug => slug !== policy).map(slug => <Link href={`/policies/${slug}`} key={slug}>{POLICIES[slug].title}</Link>)}
+    </nav>
+  </main>;
 }

@@ -1788,3 +1788,25 @@ body:has(.imp)>header{display:none}
 [dir="rtl"] .home-ethics section.violet p span{float:left}
 [dir="rtl"] .home-opportunity em{text-align:left}
 [dir="rtl"] .home-workflow article:not(:last-child):after{left:auto;right:62%}
+
+/* Button sizing, site-wide.
+   A flex/grid parent aligns its items with `stretch` by default, so a bare
+   <a>/<button> action grew to the full height of its row while a sibling wrapped
+   in a <form> kept its natural size — the roadmap hero's oversized "View Next
+   Milestone" next to a normal "Refresh Roadmap". These rules are wrapped in
+   :where() so they carry zero specificity: any component that deliberately
+   stretches a control (e.g. .student-track-actions on mobile) still wins. */
+:where(button,input[type="submit"],input[type="button"],.button){align-self:center}
+:where([class*="actions"],[class*="ctas"]){align-items:center}
+:where([class*="actions"],[class*="ctas"])>:where(a,button,form,.button){align-self:center}
+.student-hero-actions{align-self:start}
+
+.policy-clause h2{font-size:19px;letter-spacing:-.02em;margin:0 0 12px}
+.policy-clause p{line-height:1.75;margin:0 0 12px}
+.policy-clause p:last-child{margin-bottom:0}
+.policy-list{margin:0;padding-left:20px;display:grid;gap:10px}
+.policy-list li{line-height:1.7}
+.policy-nav{margin-top:34px;padding-top:22px;border-top:1px solid var(--line,#e0e7e3);display:flex;flex-wrap:wrap;align-items:center;gap:16px}
+.policy-nav h2{width:100%;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin:0}
+.policy-nav a{color:#087967;font-weight:700;text-decoration:none}
+.policy-nav a:hover{text-decoration:underline}
