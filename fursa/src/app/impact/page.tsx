@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import PageToc from "@/components/PageToc";
+import SiteHeader from "@/components/SiteHeader";
 import { CHECKED, enrolment, fieldMix, fieldMixSource, graduateGrowthPercent, graduateMidpoint, graduateTrend, indicatorPairs, referenceSources, sdgAlignment, visionAlignment } from "@/lib/nationalImpact";
 
 export const metadata: Metadata = {
@@ -16,11 +16,7 @@ export default function ImpactPage() {
   const peak = Math.max(graduateTrend.earlier.value, graduateTrend.latest.value);
   const bars = [graduateTrend.earlier, graduateMidpoint, graduateTrend.latest];
   return <main className="imp">
-    <header className="imp-header">
-      <Link href="/" className="imp-back"><span aria-hidden>←</span> Home</Link>
-      <Link href="/" className="imp-brand"><span className="brand-mark"><Image src="/logo.png" alt="" width={353} height={512} /></span><b>FURSAH</b></Link>
-      <Link href="/login/demo" className="imp-cta">Explore prototype</Link>
-    </header>
+    <SiteHeader />
 
     <div className="imp-shell">
       <section className="imp-hero">
