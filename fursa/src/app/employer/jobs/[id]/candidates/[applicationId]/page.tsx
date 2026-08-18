@@ -68,7 +68,7 @@ export default async function CandidateProfile({
         <div>
           <span className="eyebrow">{job.title} · {job.employer.company}</span>
           <h1 className="page-title">{blind ? `Candidate ${application.id.slice(-6).toUpperCase()}` : s.user.name}</h1>
-          <span className="muted">{blind ? "Identity and institution hidden during initial review" : `${s.user.email} · ${s.degree ?? "—"}${s.university ? ` · ${s.university}` : ""}`}</span>
+          <span className="muted">{blind ? "Identity and institution hidden during initial review" : `${s.user.email} · ${s.degree ?? "-"}${s.university ? ` · ${s.university}` : ""}`}</span>
         </div>
         <span className="pill">{match.score}% match</span>
       </div>
@@ -152,7 +152,7 @@ export default async function CandidateProfile({
           <input type="hidden" name="jobId" value={job.id} />
           <label>
             Note back to candidate (shown to the student)
-            <textarea className="input" name="note" defaultValue={application.note ?? ""} placeholder="e.g. Strong React fundamentals — we'd like to move forward." />
+            <textarea className="input" name="note" defaultValue={application.note ?? ""} placeholder="e.g. Strong React fundamentals, we'd like to move forward." />
           </label>
           <label>Structured decision reason<select className="input" name="decisionReason" defaultValue={application.decisionReason ?? ""} required><option value="" disabled>Select the primary reason</option><option value="MEETS_ESSENTIAL_REQUIREMENTS">Meets essential requirements</option><option value="STRONGER_WORK_SAMPLE_NEEDED">Stronger work sample needed</option><option value="MISSING_ESSENTIAL_SKILL">Missing an essential skill</option><option value="EXPERIENCE_GAP">Relevant experience gap</option><option value="ROLE_FILLED">Role filled or closed</option></select></label>
           <div className="actions">

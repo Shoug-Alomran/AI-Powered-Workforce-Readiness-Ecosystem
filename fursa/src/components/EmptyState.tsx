@@ -4,7 +4,7 @@ import Link from "next/link";
  * A designed empty state.
  *
  * An empty queue is information, not an absence: it should say what will appear
- * here, what causes it to appear, and — where the reader can act — offer the
+ * here, what causes it to appear, and, where the reader can act, offer the
  * action. `tone="clear"` is for queues where empty is the good outcome (nothing
  * awaiting human review), so it reads as reassurance rather than a dead end.
  */

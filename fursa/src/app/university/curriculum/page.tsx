@@ -134,7 +134,7 @@ export default async function UniversityCurriculum() {
           <div>
             <span>
               <small>DEMAND COVERAGE</small>
-              <strong>{coveragePct === null ? "—" : `${coveragePct}%`}</strong>
+              <strong>{coveragePct === null ? "-" : `${coveragePct}%`}</strong>
             </span>
             <span>
               <small>STUDENTS AT {ctx.university.institution.toUpperCase()}</small>
@@ -171,7 +171,7 @@ export default async function UniversityCurriculum() {
           ["SKILLS TAUGHT", counts.skillsTaught, "Distinct across offerings"],
           ["CAREER TRACKS", counts.tracks, "In the platform catalogue"],
           ["OPEN ROLES", counts.openRoles, "Live employer demand"],
-          ["COVERAGE", coveragePct === null ? "—" : `${coveragePct}%`, "Weighted demand met"],
+          ["COVERAGE", coveragePct === null ? "-" : `${coveragePct}%`, "Weighted demand met"],
         ].map(([label, value, note], index) => (
           <div className={index === 5 ? "accent" : ""} key={String(label)}>
             <small>{label}</small>

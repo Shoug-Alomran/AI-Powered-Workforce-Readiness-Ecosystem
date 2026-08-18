@@ -2,8 +2,8 @@
 //
 // Every figure below was checked against the cited source in August 2026.
 // `confidence` records how directly it is sourced:
-//   "primary"   — published by the issuing authority (GASTAT, UNESCO, Vision 2030)
-//   "reported"  — an authority's figure carried by a news outlet, cited to both
+//   "primary"  , published by the issuing authority (GASTAT, UNESCO, Vision 2030)
+//   "reported" , an authority's figure carried by a news outlet, cited to both
 // Update `checked` when a figure is re-verified.
 
 export type Confidence = "primary" | "reported";
@@ -70,7 +70,7 @@ export const fieldMix: { field: string; from: number; to: number }[] = [
 
 export const fieldMixSource: Pick<Stat, "period" | "source" | "sourceUrl" | "confidence"> = {
   period: "2009 and 2020",
-  source: "UNESCO Global Education Monitoring Report — Saudi Arabia case study",
+  source: "UNESCO Global Education Monitoring Report: Saudi Arabia case study",
   sourceUrl: "https://www.unesco.org/gem-report/en/2026-gem-report-country-case-studies/saudi-arabia",
   confidence: "primary",
 };
@@ -164,7 +164,7 @@ export const visionAlignment: { program: string; commitment: string; fursah: str
       "The curriculum-alignment engine compares what universities teach against live employer skill demand, turning the alignment gap into a measurable figure an institution can act on.",
   },
   {
-    program: "Thriving Economy — Rewarding Opportunities",
+    program: "Thriving Economy: Rewarding Opportunities",
     commitment:
       "Reduce unemployment among Saudi nationals and raise the share of citizens in productive private-sector work.",
     fursah:
@@ -235,7 +235,7 @@ export const sdgAlignment: {
 
 export const referenceSources: { name: string; url: string; use: string }[] = [
   {
-    name: "GASTAT — General Authority for Statistics",
+    name: "GASTAT: General Authority for Statistics",
     url: "https://www.stats.gov.sa/en/w/news/6",
     use: "Labour force participation and unemployment, Q3 2024.",
   },
@@ -250,7 +250,7 @@ export const referenceSources: { name: string; url: string; use: string }[] = [
     use: "Graduate totals for 2023 with degree-level breakdown.",
   },
   {
-    name: "UNESCO Global Education Monitoring Report — Saudi Arabia",
+    name: "UNESCO Global Education Monitoring Report: Saudi Arabia",
     url: "https://www.unesco.org/gem-report/en/2026-gem-report-country-case-studies/saudi-arabia",
     use: "Tertiary enrolment growth and the shift in graduate field mix.",
   },
@@ -260,7 +260,7 @@ export const referenceSources: { name: string; url: string; use: string }[] = [
     use: "Programme commitments, KPI baselines and targets.",
   },
   {
-    name: "United Nations — Sustainable Development Goals",
+    name: "United Nations: Sustainable Development Goals",
     url: "https://sdgs.un.org/goals",
     use: "Official wording of targets 4.4, 5.5, 8.5, 8.6 and 10.3.",
   },

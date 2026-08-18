@@ -1,5 +1,5 @@
 /**
- * Sentence patterns for text the app *composes at runtime* — reasoning cards,
+ * Sentence patterns for text the app *composes at runtime*, reasoning cards,
  * curriculum alignment notes, roadmap milestones. These strings never appear
  * verbatim in the source, so a plain English→Arabic dictionary cannot reach
  * them; each rule rebuilds the sentence in Arabic around the live values.
@@ -43,6 +43,12 @@ const RULES: Rule[] = [
   // Readiness trajectory labels
   [/^(.+): (\d+)% readiness$/, (m, t) => `${t(m[1])}: ${m[2]}% جاهزية`],
   [/^(.+): (\d+)% readiness projected$/, (m, t) => `${t(m[1])}: ${m[2]}% جاهزية متوقعة`],
+
+  // Dates rendered as "19 August 2026"
+  [/^(\d{1,2}) ([A-Z][a-z]+) (\d{4})$/, (m, t) => {
+    const month = t(m[2]);
+    return month === m[2] ? m[0] : `${m[1]} ${month} ${m[3]}`;
+  }],
 
   // Counted section headings, e.g. "Skills (6)", "Active (18)"
   [/^(.+) \((\d+)\)$/, (m, t) => {

@@ -95,7 +95,7 @@ export async function toggleUserActive(formData: FormData) {
 }
 
 // ---------------------------------------------------------------------------
-// Career-track taxonomy management — lets an admin add tracks or adjust
+// Career-track taxonomy management, lets an admin add tracks or adjust
 // skill/certification weights without a code deploy.
 // ---------------------------------------------------------------------------
 

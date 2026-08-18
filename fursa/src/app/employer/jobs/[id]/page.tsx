@@ -112,7 +112,7 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
       <section className="card" id="candidates" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">AI candidate ranking</span>
         <h2>Candidates, ranked with full explainability</h2>
-        <p className="muted">Click a candidate to view their full profile and take action — this list stays put so you can compare everyone at once.</p>
+        <p className="muted">Click a candidate to view their full profile and take action. This list stays put so you can compare everyone at once.</p>
         {candidates.length === 0 && <div className="notice">No applications yet. Students will appear here as soon as they apply.</div>}
         <div className="stack" style={{ marginTop: 12 }}>
           {candidates.map(({ application, match }) => {
@@ -127,7 +127,7 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
               >
                 <div>
                   <strong>{s.user.name}</strong>
-                  <div className="muted">{s.degree ?? "—"}{s.university ? ` · ${s.university}` : ""}</div>
+                  <div className="muted">{s.degree ?? "-"}{s.university ? ` · ${s.university}` : ""}</div>
                   <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>
                     {match.matchedSkills.length ? `Matches: ${match.matchedSkills.slice(0, 4).join(", ")}` : "No skill matches yet"}
                   </p>

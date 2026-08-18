@@ -22,11 +22,11 @@ export default function ImpactPage() {
       <section className="imp-hero">
         <span className="imp-eyebrow">National context</span>
         <h1 className="imp-title">Saudi Arabia is not short of graduates.</h1>
-        <p className="imp-lead">It is short of ways to prove what those graduates can do. Over the last decade the Kingdom roughly doubled its annual graduate output while unemployment fell and participation widened — national reform working exactly as intended. What remains is a matching problem at the level of the individual student and the individual job. That is the layer Fursah is built for.</p>
+        <p className="imp-lead">It is short of ways to prove what those graduates can do. Over the last decade the Kingdom roughly doubled its annual graduate output while unemployment fell and participation widened: national reform working exactly as intended. What remains is a matching problem at the level of the individual student and the individual job. That is the layer Fursah is built for.</p>
         <div className="imp-strip">
           <article><b>{growth > 0 ? "+" : ""}{growth}%</b><small>Growth in annual graduates, mid-2010s to 2023</small></article>
-          <article><b>6.8%</b><small>Saudi unemployment, Q2 2025 — the Vision 2030 target of 7% was met early</small></article>
-          <article><b>36.2%</b><small>Female labour force participation, Q3 2024 — target was 30%</small></article>
+          <article><b>6.8%</b><small>Saudi unemployment, Q2 2025: the Vision 2030 target of 7% was met early</small></article>
+          <article><b>36.2%</b><small>Female labour force participation, Q3 2024: target was 30%</small></article>
         </div>
       </section>
 
@@ -49,7 +49,7 @@ export default function ImpactPage() {
         <div className="imp-aside">
           <div className="imp-quote">
             <b>{enrolment[1]?.display}</b>
-            <span>students enrolled in tertiary education in {enrolment[1]?.period}, up from {enrolment[0]?.display} in {enrolment[0]?.period} — the intake behind the graduate numbers above.</span>
+            <span>students enrolled in tertiary education in {enrolment[1]?.period}, up from {enrolment[0]?.display} in {enrolment[0]?.period}, the intake behind the graduate numbers above.</span>
           </div>
         </div>
       </section>
@@ -58,7 +58,7 @@ export default function ImpactPage() {
         <header>
           <span className="imp-kicker">Where they graduate</span>
           <h2>The mix shifted faster than the total</h2>
-          <p>Volume is the less interesting half of the story. Between {fieldMixSource.period} the share of graduates by field moved sharply — business administration alone went from a small minority to a third of all graduates. A national system can expand and still leave specific employer demand unmet.</p>
+          <p>Volume is the less interesting half of the story. Between {fieldMixSource.period} the share of graduates by field moved sharply. Business administration alone went from a small minority to a third of all graduates. A national system can expand and still leave specific employer demand unmet.</p>
         </header>
         <div className="imp-panel">
           {fieldMix.map((f) => <div className="imp-field" key={f.field}>

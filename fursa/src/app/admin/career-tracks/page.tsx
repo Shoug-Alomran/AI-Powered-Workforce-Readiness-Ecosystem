@@ -28,12 +28,12 @@ export default async function CareerTracksAdmin() {
       </div>
       <p className="muted">
         This is the reference table every readiness score, roadmap, and job-matching calculation reads from. Changes here
-        take effect immediately — no code deploy needed.
+        take effect immediately, with no code deploy needed.
       </p>
 
       {tracks.length === 0 && (
         <div className="notice" style={{ marginTop: 18 }}>
-          No career tracks in the database yet — the app is currently falling back to the built-in defaults in{" "}
+          No career tracks in the database yet. The app is currently falling back to the built-in defaults in{" "}
           <code>careerTracks.ts</code>. Create one below to start managing the taxonomy here.
         </div>
       )}

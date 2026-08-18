@@ -5,7 +5,7 @@ import { memberInitials, team, teamIntro, teamValues } from "@/lib/team";
 
 export const metadata: Metadata = {
   title: "Team | Fursah",
-  description: "The people who built Fursah — the AI-powered workforce readiness ecosystem connecting Saudi students, employers and universities.",
+  description: "The people who built Fursah, the AI-powered workforce readiness ecosystem connecting Saudi students, employers and universities.",
 };
 
 export default function TeamPage() {

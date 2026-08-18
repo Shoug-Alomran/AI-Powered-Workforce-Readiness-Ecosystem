@@ -152,7 +152,7 @@ export const student: Record<string, string> = {
   "% readiness": "% جاهزية",
   "% overall": "% إجمالي",
   "Your score is based on verified skills, certifications, applied experience, and portfolio evidence.": "تستند درجتك إلى المهارات الموثقة والشهادات والخبرة التطبيقية وأدلة معرض الأعمال.",
-  "Scores show both strengths and gaps—never a black-box rejection.": "تُظهر الدرجات نقاط القوة والفجوات معاً — لا رفضاً من صندوق أسود.",
+  "Scores show both strengths and gaps, never a black-box rejection.": "تُظهر الدرجات نقاط القوة والفجوات معاً، لا رفضاً من صندوق أسود.",
   "Your profile has": "يحتوي ملفك على",
   "evidence item(s). Add verified certifications and applied projects to improve readiness for": "عنصر أدلة. أضف شهادات موثقة ومشاريع تطبيقية لرفع جاهزيتك لوظيفة",
   "No major gaps detected": "لم تُرصد فجوات كبيرة",
@@ -230,7 +230,7 @@ export const student: Record<string, string> = {
   "Employer feedback": "ملاحظات صاحب العمل",
   "Employer feedback on your work": "ملاحظات صاحب العمل على عملك",
   "How ratings are interpreted": "كيف تُفسَّر التقييمات",
-  "Structured feedback from employers after a hire — this is what feeds back into the AI's learning recommendations.": "ملاحظات منظّمة من أصحاب العمل بعد التوظيف — وهي ما يغذّي توصيات التعلّم في النظام.",
+  "Structured feedback from employers after a hire. This is what feeds back into the AI's learning recommendations.": "ملاحظات منظّمة من أصحاب العمل بعد التوظيف، وهي ما يغذّي توصيات التعلّم في النظام.",
   "Graduate program application": "طلب التحاق ببرنامج دراسات عليا",
 
   // Passport sharing

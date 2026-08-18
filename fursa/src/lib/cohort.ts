@@ -35,7 +35,7 @@ export type CohortReadiness = {
   medianScore: number | null;
   bands: BandSummary[];
   tracks: TrackSummary[];
-  /** Skills the most students are short of — the curriculum signal. */
+  /** Skills the most students are short of, the curriculum signal. */
   gaps: GapSummary[];
   /** Certifications the most students are short of. */
   certificationGaps: GapSummary[];

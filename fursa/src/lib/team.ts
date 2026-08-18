@@ -1,7 +1,7 @@
 // The people behind Fursah, rendered by /team.
 //
 // This is the single place to edit the team page. Add, remove or reorder
-// entries here — the page lays out whatever this array contains.
+// entries here, the page lays out whatever this array contains.
 //
 // Every field except `name`, `role` and `bio` is optional: omit `links`,
 // `focus`, `email` or `initials` and the card simply drops that part.
@@ -17,7 +17,7 @@ export type TeamMember = {
   name: string;
   /** Role on this project, not a job title. */
   role: string;
-  /** One or two sentences, first person plural avoided — write it as a bio. */
+  /** One or two sentences, first person plural avoided, write it as a bio. */
   bio: string;
   /** Short tags for what this person owned. */
   focus?: string[];
@@ -29,7 +29,7 @@ export type TeamMember = {
 export const teamIntro = {
   eyebrow: "The team",
   title: "The people behind Fursah.",
-  lead: "Fursah began as a question about why a country producing more graduates than ever still struggled to match them to the right roles. The answer we kept arriving at was not more data, but better explanations. The team below built the platform around that idea — readiness that a student can act on, matches an employer can audit, and curriculum signals a university can use within a term.",
+  lead: "Fursah began as a question about why a country producing more graduates than ever still struggled to match them to the right roles. The answer we kept arriving at was not more data, but better explanations. The team below built the platform around that idea: readiness that a student can act on, matches an employer can audit, and curriculum signals a university can use within a term.",
 };
 
 export const team: TeamMember[] = [

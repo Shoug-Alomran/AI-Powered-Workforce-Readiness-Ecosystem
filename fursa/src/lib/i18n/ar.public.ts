@@ -1,6 +1,6 @@
 /** Landing page, national impact, team, support, login, and the policy pages. */
 export const publicSite: Record<string, string> = {
-  // Landing — hero and navigation
+  // Landing: hero and navigation
   "● ALIGNING WITH SAUDI VISION 2030": "● متوافق مع رؤية السعودية 2030",
   "Bridging Education &": "ربط التعليم مع",
   "Career Readiness": "الجاهزية المهنية",
@@ -19,7 +19,7 @@ export const publicSite: Record<string, string> = {
   "Skill Mapping": "خرائط المهارات",
   "Our Team": "فريقنا",
 
-  // Landing — preview card
+  // Landing: preview card
   "STUDENT CAREER HUB": "مركز المسار المهني للطالب",
   "Career Readiness Score": "درجة الجاهزية المهنية",
   "Data Analysis": "تحليل البيانات",
@@ -31,7 +31,7 @@ export const publicSite: Record<string, string> = {
   "96% Match": "تطابق 96%",
   "Explainable Rec": "توصية قابلة للتفسير",
 
-  // Landing — principles
+  // Landing: principles
   "Explainable AI": "ذكاء اصطناعي قابل للتفسير",
   "No black boxes. Every recommendation includes clear reasoning based on evidence-based data points.": "لا صناديق سوداء. كل توصية تتضمن تفسيراً واضحاً مبنياً على مؤشرات وأدلة حقيقية.",
   "Human Oversight": "إشراف بشري",
@@ -39,7 +39,7 @@ export const publicSite: Record<string, string> = {
   "Privacy-First": "الخصوصية أولاً",
   "Privacy-conscious data handling. Students own their data and control who can see their professional profile.": "تعامل واعٍ مع البيانات. يملك الطلاب بياناتهم ويتحكمون بمن يطّلع على ملفهم المهني.",
 
-  // Landing — solutions
+  // Landing: solutions
   "A Unified Workforce Ecosystem": "منظومة موحدة للقوى العاملة",
   "Fursah creates a feedback loop that benefits all stakeholders in the employment journey.": "تبني فرصة حلقة تغذية راجعة تخدم جميع الأطراف في رحلة التوظيف.",
   "For Students": "للطلاب",
@@ -58,7 +58,7 @@ export const publicSite: Record<string, string> = {
   "Graduate Tracking Insights": "مؤشرات تتبع الخريجين",
   "Automated Accreditation Reporting": "تقارير اعتماد آلية",
 
-  // Landing — workflow
+  // Landing: workflow
   "Seamless Workflow": "سير عمل متكامل",
   "Sync & Analyze": "المزامنة والتحليل",
   "Students sync their academic transcripts and projects. Fursah AI analyzes 200+ skill markers.": "يزامن الطلاب سجلاتهم الأكاديمية ومشاريعهم، ويحلل ذكاء فرصة أكثر من 200 مؤشر مهاري.",
@@ -67,7 +67,7 @@ export const publicSite: Record<string, string> = {
   "Match & Hire": "المطابقة والتوظيف",
   "Smart matching pairs ready candidates with roles and gives employers an explanation report for each fit.": "تربط المطابقة الذكية المرشحين الجاهزين بالفرص المناسبة وتمنح أصحاب العمل تقرير تفسير لكل ترشيح.",
 
-  // Landing — ethics band
+  // Landing: ethics band
   "Explainable AI: The Foundation of Trust": "الذكاء الاصطناعي القابل للتفسير: أساس الثقة",
   "Unlike traditional algorithms, Fursah provides “Reasoning Cards” for every recommendation. AI should be a tool for empowerment, not a black box for exclusion.": "بخلاف الخوارزميات التقليدية، تقدّم فرصة «بطاقات تفسير» لكل توصية. الذكاء الاصطناعي أداة للتمكين لا صندوق أسود للإقصاء.",
   "✓ Mitigated bias through audited datasets": "✓ الحد من التحيّز عبر بيانات مدققة",
@@ -82,7 +82,7 @@ export const publicSite: Record<string, string> = {
   "Skill Alignment": "مواءمة المهارات",
   "Full-Stack Engineering": "هندسة برمجيات متكاملة",
 
-  // Landing — metrics and closing
+  // Landing: metrics and closing
   "Demo Students": "طلاب تجريبيون",
   "Sample Opportunities": "فرص تجريبية",
   "Demo Employers": "أصحاب عمل تجريبيون",
@@ -107,7 +107,7 @@ export const publicSite: Record<string, string> = {
   "← Back to sign in": "← العودة لتسجيل الدخول",
   "Secure email and password authentication powered by Firebase.": "مصادقة آمنة بالبريد وكلمة المرور عبر Firebase.",
   "Explainable AI by design": "ذكاء اصطناعي قابل للتفسير بالتصميم",
-  "Recommendations support human decisions—they never replace them.": "التوصيات تدعم القرارات البشرية ولا تحل محلها أبداً.",
+  "Recommendations support human decisions; they never replace them.": "التوصيات تدعم القرارات البشرية ولا تحل محلها أبداً.",
   "By continuing, you agree to FURSAH's": "بالمتابعة، فإنك توافق على",
   "Explore with a prepared demo account": "استكشف عبر حساب تجريبي جاهز",
   "Prepared prototype users": "مستخدمو النموذج الأولي",
@@ -133,7 +133,7 @@ export const publicSite: Record<string, string> = {
   "The people behind Fursah.": "الأشخاص خلف فرصة.",
   "Who we are": "من نحن",
   "4 people, one platform": "أربعة أشخاص، منصة واحدة",
-  "Fursah began as a question about why a country producing more graduates than ever still struggled to match them to the right roles. The answer we kept arriving at was not more data, but better explanations. The team below built the platform around that idea — readiness that a student can act on, matches an employer can audit, and curriculum signals a university can use within a term.": "بدأت فرصة من سؤال: لماذا تجد دولة تُخرّج أعداداً غير مسبوقة من الخريجين صعوبة في مواءمتهم مع الوظائف المناسبة؟ كانت الإجابة التي وصلنا إليها مراراً ليست مزيداً من البيانات، بل تفسيرات أفضل. بنى الفريق أدناه المنصة حول هذه الفكرة: جاهزية يستطيع الطالب التصرف بناءً عليها، ومطابقات يمكن لصاحب العمل تدقيقها، ومؤشرات مناهج تستفيد منها الجامعة خلال فصل دراسي واحد.",
+  "Fursah began as a question about why a country producing more graduates than ever still struggled to match them to the right roles. The answer we kept arriving at was not more data, but better explanations. The team below built the platform around that idea: readiness that a student can act on, matches an employer can audit, and curriculum signals a university can use within a term.": "بدأت فرصة من سؤال: لماذا تجد دولة تُخرّج أعداداً غير مسبوقة من الخريجين صعوبة في مواءمتهم مع الوظائف المناسبة؟ كانت الإجابة التي وصلنا إليها مراراً ليست مزيداً من البيانات، بل تفسيرات أفضل. بنى الفريق أدناه المنصة حول هذه الفكرة: جاهزية يستطيع الطالب التصرف بناءً عليها، ومطابقات يمكن لصاحب العمل تدقيقها، ومؤشرات مناهج تستفيد منها الجامعة خلال فصل دراسي واحد.",
   "How we build": "كيف نبني",
   "Our approach": "منهجنا",
   "Explainable by default": "قابل للتفسير افتراضياً",
@@ -215,7 +215,7 @@ export const publicSite: Record<string, string> = {
   "Employers, universities, reviewers, and students remain responsible for consequential decisions. Automated results must not be used as the sole basis for rejection.": "يظل أصحاب العمل والجامعات والمراجعون والطلاب مسؤولين عن القرارات المؤثرة. ولا يجوز اعتماد النتائج الآلية أساساً وحيداً للرفض.",
   "Continuous improvement": "التحسين المستمر",
   "Models and rules should be tested in a sandbox, monitored for drift and quality, and rolled back when safeguards fail.": "تُختبر النماذج والقواعد في بيئة معزولة، وتُراقب للانحراف والجودة، ويُتراجع عنها عند إخفاق الضوابط.",
-  "Fursah uses transparent, reviewable automation designed to support—not replace—human judgment.": "تستخدم فرصة أتمتة شفافة قابلة للمراجعة مصممة لدعم الحكم البشري لا استبداله.",
+  "Fursah uses transparent, reviewable automation designed to support, not replace, human judgment.": "تستخدم فرصة أتمتة شفافة قابلة للمراجعة مصممة لدعم الحكم البشري لا استبداله.",
   "Fursah aims to provide an inclusive experience for users with different abilities, devices, languages, and connection speeds.": "تسعى فرصة لتقديم تجربة شاملة للمستخدمين باختلاف قدراتهم وأجهزتهم ولغاتهم وسرعات اتصالهم.",
   "We aim for keyboard access, clear focus states, readable contrast, descriptive labels, responsive layouts, and understandable language.": "نستهدف الوصول عبر لوحة المفاتيح، ووضوح مؤشر التركيز، وتباين مقروء، وتسميات وصفية، وتخطيطات متجاوبة، ولغة مفهومة.",
   "The service is designed for current standards-based browsers and responsive use on mobile and desktop devices.": "الخدمة مصممة للمتصفحات الحديثة المتوافقة مع المعايير وللاستخدام المتجاوب على الجوال وسطح المكتب.",
@@ -228,13 +228,13 @@ export const publicSite: Record<string, string> = {
   "National Impact | Fursah": "الأثر الوطني | فرصة",
   "National context": "السياق الوطني",
   "Saudi Arabia is not short of graduates.": "المملكة العربية السعودية لا تعاني نقصاً في الخريجين.",
-  "It is short of ways to prove what those graduates can do. Over the last decade the Kingdom roughly doubled its annual graduate output while unemployment fell and participation widened — national reform working exactly as intended. What remains is a matching problem at the level of the individual student and the individual job. That is the layer Fursah is built for.": "ما ينقصها هو وسائل تُثبت ما يستطيع هؤلاء الخريجون فعله. خلال العقد الماضي ضاعفت المملكة تقريباً إنتاجها السنوي من الخريجين بينما انخفضت البطالة واتسعت المشاركة — إصلاح وطني يعمل تماماً كما خُطط له. ما تبقّى هو مشكلة مواءمة على مستوى الطالب الفرد والوظيفة الفردية. وهذه هي الطبقة التي بُنيت فرصة من أجلها.",
+  "It is short of ways to prove what those graduates can do. Over the last decade the Kingdom roughly doubled its annual graduate output while unemployment fell and participation widened: national reform working exactly as intended. What remains is a matching problem at the level of the individual student and the individual job. That is the layer Fursah is built for.": "ما ينقصها هو وسائل تُثبت ما يستطيع هؤلاء الخريجون فعله. خلال العقد الماضي ضاعفت المملكة تقريباً إنتاجها السنوي من الخريجين بينما انخفضت البطالة واتسعت المشاركة: إصلاح وطني يعمل تماماً كما خُطط له. ما تبقّى هو مشكلة مواءمة على مستوى الطالب الفرد والوظيفة الفردية. وهذه هي الطبقة التي بُنيت فرصة من أجلها.",
   "Labour indicators": "مؤشرات سوق العمل",
   "Female labour force participation": "مشاركة المرأة في القوى العاملة",
-  "Female labour force participation, Q3 2024 — target was 30%": "مشاركة المرأة في القوى العاملة، الربع الثالث 2024 — كان المستهدف 30%",
+  "Female labour force participation, Q3 2024: target was 30%": "مشاركة المرأة في القوى العاملة، الربع الثالث 2024: كان المستهدف 30%",
   "The Vision 2030 target of 30% was passed ahead of schedule. The revised endpoint is 40%.": "تم تجاوز مستهدف رؤية 2030 البالغ 30% قبل الموعد. والمستهدف المحدّث هو 40%.",
   "Unemployment rate, Saudi nationals": "معدل البطالة بين السعوديين",
-  "Saudi unemployment, Q2 2025 — the Vision 2030 target of 7% was met early": "بطالة السعوديين، الربع الثاني 2025 — تحقق مستهدف رؤية 2030 البالغ 7% مبكراً",
+  "Saudi unemployment, Q2 2025: the Vision 2030 target of 7% was met early": "بطالة السعوديين، الربع الثاني 2025: تحقق مستهدف رؤية 2030 البالغ 7% مبكراً",
   "Vision 2030 target of 7% was met in 2024, six years early. The new target is 5%.": "تحقق مستهدف رؤية 2030 البالغ 7% في 2024 قبل ست سنوات من موعده. والمستهدف الجديد 5%.",
   "Most recent unemployment rate for Saudi nationals.": "أحدث معدل بطالة بين السعوديين.",
   "Labour force participation and unemployment, Q3 2024.": "المشاركة في القوى العاملة والبطالة، الربع الثالث 2024.",
@@ -250,11 +250,11 @@ export const publicSite: Record<string, string> = {
   "Where they graduate": "أين يتخرجون",
   "The mix shifted faster than the total": "تغيّر التوزيع أسرع من الإجمالي",
   "Volume is the less interesting half of the story. Between": "الحجم هو النصف الأقل إثارة من القصة. فبين",
-  "the share of graduates by field moved sharply — business administration alone went from a small minority to a third of all graduates. A national system can expand and still leave specific employer demand unmet.": "تغيّرت حصص الخريجين حسب التخصص تغيراً حاداً — إدارة الأعمال وحدها انتقلت من أقلية صغيرة إلى ثلث الخريجين. يمكن لنظام وطني أن يتوسع وتظل احتياجات محددة لدى أصحاب العمل دون تلبية.",
+  "the share of graduates by field moved sharply. Business administration alone went from a small minority to a third of all graduates. A national system can expand and still leave specific employer demand unmet.": "تغيّرت حصص الخريجين حسب التخصص تغيراً حاداً. إدارة الأعمال وحدها انتقلت من أقلية صغيرة إلى ثلث الخريجين. يمكن لنظام وطني أن يتوسع وتظل احتياجات محددة لدى أصحاب العمل دون تلبية.",
   "Share of all graduates by field. Source:": "حصة كل تخصص من إجمالي الخريجين. المصدر:",
   "Tertiary enrolment growth and the shift in graduate field mix.": "نمو القيد في التعليم العالي والتحول في توزيع تخصصات الخريجين.",
   "students enrolled in tertiary education in": "طالب مقيّد في التعليم العالي في",
-  "— the intake behind the graduate numbers above.": "— وهو المدخل الذي تقف خلفه أعداد الخريجين أعلاه.",
+  ", the intake behind the graduate numbers above.": "، وهو المدخل الذي تقف خلفه أعداد الخريجين أعلاه.",
   "Business administration": "إدارة الأعمال",
   "The reforms worked. The matching layer is what is left.": "نجحت الإصلاحات. وما تبقّى هو طبقة المواءمة.",
   "From national statistic to individual action": "من الإحصاء الوطني إلى الإجراء الفردي",
@@ -277,7 +277,7 @@ export const publicSite: Record<string, string> = {
   "Vision 2030": "رؤية 2030",
   "Vision 2030 official portal": "البوابة الرسمية لرؤية 2030",
   "Human Capability Development Program": "برنامج تنمية القدرات البشرية",
-  "Thriving Economy — Rewarding Opportunities": "اقتصاد مزدهر — فرص مثمرة",
+  "Thriving Economy: Rewarding Opportunities": "اقتصاد مزدهر: فرص مثمرة",
   "Develop a resilient education system aligned with labour-market needs and equip citizens with globally competitive skills.": "تطوير منظومة تعليم مرنة متوائمة مع احتياجات سوق العمل وتزويد المواطنين بمهارات منافسة عالمياً.",
   "Reduce unemployment among Saudi nationals and raise the share of citizens in productive private-sector work.": "خفض البطالة بين السعوديين ورفع نسبة المواطنين في أعمال منتجة بالقطاع الخاص.",
   "Base education and workforce policy on measurable, timely evidence rather than lagging annual surveys.": "بناء سياسات التعليم والقوى العاملة على أدلة قابلة للقياس وآنية بدل المسوح السنوية المتأخرة.",
@@ -286,7 +286,7 @@ export const publicSite: Record<string, string> = {
   "Sustainable Development Goal alignment": "المواءمة مع أهداف التنمية المستدامة",
   "The SDGs": "أهداف التنمية المستدامة",
   "United Nations": "الأمم المتحدة",
-  "United Nations — Sustainable Development Goals": "الأمم المتحدة — أهداف التنمية المستدامة",
+  "United Nations: Sustainable Development Goals": "الأمم المتحدة: أهداف التنمية المستدامة",
   "Quality Education": "التعليم الجيد",
   "Gender Equality": "المساواة بين الجنسين",
   "Decent Work and Economic Growth": "العمل اللائق ونمو الاقتصاد",
@@ -304,11 +304,11 @@ export const publicSite: Record<string, string> = {
   "Across": "عبر",
   "Every figure on this page is attributed to its publisher and dated. Figures were last checked in": "كل رقم في هذه الصفحة منسوب إلى ناشره ومؤرخ. وقد رُوجعت الأرقام آخر مرة في",
   "Where an authority's figure was published through a news outlet rather than a downloadable bulletin, both are named above so the chain can be followed back to the original.": "حين يُنشر رقم جهة رسمية عبر وسيلة إخبارية بدل نشرة قابلة للتنزيل، يُذكر الاثنان أعلاه لتتبع السلسلة وصولاً إلى المصدر الأصلي.",
-  "GASTAT — General Authority for Statistics": "الهيئة العامة للإحصاء",
+  "GASTAT: General Authority for Statistics": "الهيئة العامة للإحصاء",
   "GASTAT Labour Force Survey, Q2 2025 (via Argaam)": "مسح القوى العاملة، الهيئة العامة للإحصاء، الربع الثاني 2025 (عبر أرقام)",
   "Council of Universities Affairs": "مجلس شؤون الجامعات",
-  "UNESCO Global Education Monitoring Report — Saudi Arabia": "تقرير اليونسكو العالمي لرصد التعليم — السعودية",
-  "UNESCO Global Education Monitoring Report — Saudi Arabia case study": "تقرير اليونسكو العالمي لرصد التعليم — دراسة حالة السعودية",
+  "UNESCO Global Education Monitoring Report: Saudi Arabia": "تقرير اليونسكو العالمي لرصد التعليم: السعودية",
+  "UNESCO Global Education Monitoring Report: Saudi Arabia case study": "تقرير اليونسكو العالمي لرصد التعليم: دراسة حالة السعودية",
   "2009 and 2020": "2009 و2020",
   "2016 baseline": "خط الأساس 2016",
   "reported 2016": "المُبلّغ عنه 2016",
@@ -338,9 +338,15 @@ export const publicSite: Record<string, string> = {
   "Only aggregate trends are exposed here. Individual student data remains inside authorized role views, supporting PDPL-aligned data minimization.": "تُعرض هنا الاتجاهات المجمّعة فقط. وتبقى بيانات الطالب الفردية داخل واجهات الأدوار المصرح لها، بما يدعم تقليل البيانات وفق نظام حماية البيانات الشخصية.",
   "How the prototype makes decisions": "كيف يتخذ النموذج الأولي قراراته",
   "Transparent inputs": "مدخلات شفافة",
-  "Skills, certifications, experience and portfolio evidence—not protected traits.": "المهارات والشهادات والخبرة وأدلة الأعمال — لا الخصائص المحمية.",
+  "Skills, certifications, experience and portfolio evidence, not protected traits.": "المهارات والشهادات والخبرة وأدلة الأعمال، لا الخصائص المحمية.",
   "Explainable weighting": "ترجيح قابل للتفسير",
   "Every readiness and match score includes a visible category breakdown.": "كل درجة جاهزية ومطابقة تتضمن تفصيلاً ظاهراً حسب الفئة.",
   "Recommendations support decisions; employers and learners remain in control.": "التوصيات تدعم القرار، ويبقى أصحاب العمل والمتعلمون هم أصحاب القرار.",
   "AI-generated result": "نتيجة مولّدة بالذكاء الاصطناعي",
+  "Version": "الإصدار",
+  "· Effective": "· ساري من",
+  "· Last updated": "· آخر تحديث",
+  "Related policies": "سياسات ذات صلة",
+  "I’m a curious and driven Software Engineering and Cybersecurity student at Prince Sultan University with a deep passion for technology, data security, and innovation. I thrive on having a full plate; balancing projects, research, and creative pursuits keeps me learning and growing every day. I love tackling complex challenges, finding smart solutions, and turning ideas into impact, all while constantly pushing myself to do more and do it better.": "أنا طالبة هندسة برمجيات وأمن سيبراني في جامعة الأمير سلطان، شغوفة بالتقنية وأمن البيانات والابتكار. أزدهر حين تكون مهامي متعددة؛ فالموازنة بين المشاريع والبحث والمساعي الإبداعية تبقيني في تعلّم ونمو كل يوم. أحب خوض التحديات المعقدة وإيجاد حلول ذكية وتحويل الأفكار إلى أثر ملموس، مع دفع نفسي باستمرار لأقدّم أكثر وأفضل.",
+  "I’m passionate about Artificial Intelligence, technology, and the possibilities they create for solving real-world problems. My interests span AI, machine learning, software development, and building intelligent solutions that are both practical and impactful. I enjoy turning ideas into working solutions, exploring new technologies, and continuously strengthening my technical and problem- solving skills.I’m especially interested in opportunities that challenge me to think creatively, collaborate with others, and apply what I know in meaningful ways. Driven by curiosity and a desire to keep evolving, I’m always looking to take on new challenges, contribute to impactful projects, and connect with people who are shaping the future of technology.": "أنا شغوفة بالذكاء الاصطناعي والتقنية وما يتيحانه من إمكانات لحل مشكلات واقعية. وتمتد اهتماماتي إلى الذكاء الاصطناعي وتعلّم الآلة وتطوير البرمجيات وبناء حلول ذكية عملية ومؤثرة في آن. أستمتع بتحويل الأفكار إلى حلول عاملة، واستكشاف تقنيات جديدة، وتقوية مهاراتي التقنية ومهارات حل المشكلات باستمرار. وتستهويني تحديداً الفرص التي تدفعني للتفكير بإبداع والتعاون مع الآخرين وتوظيف ما أعرفه بطرق ذات معنى. وبدافع الفضول والرغبة في التطور المستمر، أبحث دائماً عن تحديات جديدة وإسهام في مشاريع مؤثرة وتواصل مع من يصنعون مستقبل التقنية.",
 };

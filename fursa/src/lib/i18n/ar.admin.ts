@@ -112,7 +112,7 @@ export const admin: Record<string, string> = {
   "Recommended experience (months)": "الخبرة الموصى بها (أشهر)",
   "recommended experience month(s)": "شهر خبرة موصى بها",
   "Readiness, matching and recommendation rules": "قواعد الجاهزية والمطابقة والتوصية",
-  "This is the reference table every readiness score, roadmap, and job-matching calculation reads from. Changes here take effect immediately — no code deploy needed.": "هذا الجدول المرجعي الذي تقرأ منه كل عمليات احتساب الجاهزية وخرائط الطريق ومطابقة الوظائف. التغييرات هنا تسري فوراً دون الحاجة لنشر برمجي.",
+  "This is the reference table every readiness score, roadmap, and job-matching calculation reads from. Changes here take effect immediately, with no code deploy needed.": "هذا الجدول المرجعي الذي تقرأ منه كل عمليات احتساب الجاهزية وخرائط الطريق ومطابقة الوظائف. التغييرات هنا تسري فوراً دون الحاجة لنشر برمجي.",
   "Format: name:weight(1-3):category(technical|soft), comma-separated.": "الصيغة: الاسم:الوزن(1-3):الفئة(technical|soft)، مفصولة بفواصل.",
   "e.g. Cloud Solutions Architect": "مثال: مهندس حلول سحابية",
 

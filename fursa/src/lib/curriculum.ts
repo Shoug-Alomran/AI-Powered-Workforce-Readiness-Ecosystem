@@ -65,7 +65,7 @@ export type OfferingInsight = {
   studentsTargeting: number;
   /** Certifications demanded by roles that also want this offering's skills. */
   relatedCertifications: string[];
-  /** Generated from the figures above — never prewritten copy. */
+  /** Generated from the figures above, never prewritten copy. */
   analysis: string;
   /** The highest-value skill this offering could add, if there is one. */
   suggestedAddition: DemandSkill | null;

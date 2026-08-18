@@ -56,7 +56,7 @@ export default async function Jobs({
     <main className="page-shell student-job-discovery">
       <span className="eyebrow">Explainable matching</span>
       <h1 className="page-title">Opportunities matched to you</h1>
-      <p className="muted">Scores show both strengths and gaps—never a black-box rejection.</p>
+      <p className="muted">Scores show both strengths and gaps, never a black-box rejection.</p>
 
       <form className="card" style={{ marginTop: 26, display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
         <label style={{ fontSize: 13, fontWeight: 650, color: "#43564f" }}>

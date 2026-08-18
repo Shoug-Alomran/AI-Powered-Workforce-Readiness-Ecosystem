@@ -42,7 +42,7 @@ export async function GET() {
   students.forEach((student) => tracksCount.set(student.targetCareer, (tracksCount.get(student.targetCareer) ?? 0) + 1));
 
   let csv = "";
-  csv += `Fursah workforce intelligence export — ${ctx.university.institution}\n`;
+  csv += `Fursah workforce intelligence export: ${ctx.university.institution}\n`;
   csv += `Generated,${new Date().toISOString()}\n\n`;
 
   csv += "Section,Metric,Value\n";

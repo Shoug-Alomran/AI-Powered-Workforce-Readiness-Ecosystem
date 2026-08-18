@@ -39,7 +39,7 @@ export default async function NewCurriculumActionPage() {
           <div className="cap-create-fields">
             <label>Accountable owner <b>*</b><input name="owner" required defaultValue={ctx.user.name}/></label>
             <label>Target completion date <b>*</b><input name="dueDate" type="date" required/></label>
-            <label>Starting stage <b>*</b><select name="status" defaultValue="PROPOSED"><option value="PROPOSED">Proposed — awaiting approval</option><option value="PLANNED">Planned — approved for scheduling</option><option value="IN_PROGRESS">In progress — work has started</option></select></label>
+            <label>Starting stage <b>*</b><select name="status" defaultValue="PROPOSED"><option value="PROPOSED">Proposed: awaiting approval</option><option value="PLANNED">Planned: approved for scheduling</option><option value="IN_PROGRESS">In progress: work has started</option></select></label>
             <label>Expected outcome <b>*</b><input name="expectedOutcome" required placeholder="e.g. Improve readiness score by 8 points"/></label>
           </div>
         </section>

@@ -33,7 +33,7 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
 
     {(query.setup === "passport" || evidenceCount === 0) && <section className="notice student-passport-setup">
       <strong>Start with your Skills Passport</strong>
-      <p>This is the record employers see. Add your skills, certifications, experience, and projects below — each entry is checked automatically, then verified by a person before it counts as evidence.</p>
+      <p>This is the record employers see. Add your skills, certifications, experience, and projects below. Each entry is checked automatically, then verified by a person before it counts as evidence.</p>
       <p className="muted">Once you have added your first entries, {s.targetCareer === "undecided" ? <>choose the career you are aiming at so your readiness can be scored against it.</> : <>your readiness is scored against {track?.label ?? "your target career"}.</>}</p>
       <div className="student-passport-setup-actions">
         <a className="button primary" href="#skills">Add your first skill</a>

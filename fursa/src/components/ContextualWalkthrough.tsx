@@ -27,7 +27,7 @@ function writeStorage(key: string, value: string) {
   try {
     window.localStorage.setItem(key, value);
   } catch {
-    /* storage unavailable — the tour still works for this session */
+    /* storage unavailable, the tour still works for this session */
   }
   window.dispatchEvent(new Event(EVENT_NAME));
 }

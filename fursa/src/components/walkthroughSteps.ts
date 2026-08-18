@@ -16,21 +16,21 @@ export type Tour = { key: string; label: string; steps: Step[] };
 /** Shown once per role, on the first portal page the user lands on. */
 export const chromeSteps: Record<PortalRole, Step[]> = {
   STUDENT: [
-    { title: "Your student workspace", body: "This navigation moves you between readiness, careers, jobs, applications, your roadmap, and your verified Skills Passport.", selector: ".student-nav", interact: { event: "click", hint: "Pick any destination to jump there — the tour follows you." } },
+    { title: "Your student workspace", body: "This navigation moves you between readiness, careers, jobs, applications, your roadmap, and your verified Skills Passport.", selector: ".student-nav", interact: { event: "click", hint: "Pick any destination to jump there. The tour follows you." } },
     { title: "Your account", body: "Open your account to update your photo, email, password, and personal details.", selector: ".student-profile-link" },
   ],
   EMPLOYER: [
-    { title: "Your hiring workspace", body: "Dashboard keeps hiring activity together. Post a Job opens the complete opportunity form.", selector: ".erd-nav", interact: { event: "click", hint: "Choose a destination — the tour re-anchors to whatever page you open." } },
+    { title: "Your hiring workspace", body: "Dashboard keeps hiring activity together. Post a Job opens the complete opportunity form.", selector: ".erd-nav", interact: { event: "click", hint: "Choose a destination. The tour re-anchors to whatever page you open." } },
     { title: "Search your roles", body: "Search by role name, career track, or required skill without leaving the employer portal.", selector: ".erd-search", interact: { event: "input", hint: "Type a role name to filter the dashboard." } },
     { title: "Your account", body: "Open your profile to update your organization-verified email, password, and profile image.", selector: ".erd-user-profile" },
   ],
   UNIVERSITY: [
-    { title: "Your university workspace", body: "Move between institutional outcomes, curriculum, workforce demand, and the human-reviewed action plan.", selector: ".uni-only-main nav", interact: { event: "click", hint: "Open any section — this tour continues on the page you land on." } },
+    { title: "Your university workspace", body: "Move between institutional outcomes, curriculum, workforce demand, and the human-reviewed action plan.", selector: ".uni-only-main nav", interact: { event: "click", hint: "Open any section. This tour continues on the page you land on." } },
     { title: "Page-specific actions", body: "The actions shown here change with the page, so exports and creation tools stay relevant to what you are looking at.", selector: ".uni-only-actions" },
     { title: "Your institution account", body: "Open the profile to manage the verified university identity and sign-in details.", selector: ".uni-only-user" },
   ],
   ADMIN: [
-    { title: "Governance workspace", body: "These primary destinations cover trust review, evidence audits, platform health, and security.", selector: ".admin-primary-nav", interact: { event: "click", hint: "Open a queue — the tour picks up the page you choose." } },
+    { title: "Governance workspace", body: "These primary destinations cover trust review, evidence audits, platform health, and security.", selector: ".admin-primary-nav", interact: { event: "click", hint: "Open a queue. The tour picks up the page you choose." } },
     { title: "On this page", body: "This contextual menu changes by page and jumps directly to the review section you need.", selector: ".admin-page-menu" },
     { title: "Administrator account", body: "Your account and sign-out controls remain available from every admin page.", selector: ".admin-header-account" },
   ],
@@ -49,11 +49,11 @@ const routeTours: Array<{ prefix: string; match?: RegExp; tour: Tour }> = [
       label: "Readiness dashboard",
       steps: [
         { title: "Readiness at a glance", body: "Your hero summarises the career track you are aiming at and where you stand today.", selector: ".student-dashboard-hero, .student-design-hero" },
-        { title: "Your readiness score", body: "The ring is calculated from verified skills, certifications, experience, and project evidence — never from personal traits.", selector: ".student-readiness-panel, .student-readiness-ring" },
+        { title: "Your readiness score", body: "The ring is calculated from verified skills, certifications, experience, and project evidence, never from personal traits.", selector: ".student-readiness-panel, .student-readiness-ring" },
         { title: "Category breakdown", body: "Every score is explainable. This breakdown shows which category is holding the number back.", selector: ".student-breakdown, .student-summary-metrics" },
         { title: "What the AI suggests", body: "Recommendations are advisory. They point at the next useful action; you decide whether to take it.", selector: ".student-ai-callout" },
         { title: "Employer feedback", body: "Decisions arrive with the employer's reasoning attached, so a rejection is never silent.", selector: ".student-feedback-section, .student-feedback-list" },
-        { title: "Take the next step", body: "These actions move you straight into the workflow the recommendation refers to.", selector: ".student-hero-actions", interact: { event: "click", hint: "Try one — the walkthrough continues wherever it takes you." } },
+        { title: "Take the next step", body: "These actions move you straight into the workflow the recommendation refers to.", selector: ".student-hero-actions", interact: { event: "click", hint: "Try one. The walkthrough continues wherever it takes you." } },
       ],
     },
   },
@@ -67,7 +67,7 @@ const routeTours: Array<{ prefix: string; match?: RegExp; tour: Tour }> = [
         { title: "Major first, then career", body: "Start with a broad major, then choose from only the careers related to it. You can change this later.", selector: ".student-career-setup, .student-career-selector-form, #choose-career", interact: { event: "change", hint: "Pick a major to see the related careers appear." } },
         { title: "Secondary interests", body: "Additional interests broaden your job matches without changing the track you are scored against.", selector: ".student-career-interests" },
         { title: "What this changes", body: "These stats update as soon as the target track changes, so you can compare directions before committing.", selector: ".student-interest-stats, .student-score-card" },
-        { title: "AI guidance", body: "The assistant explains why a track fits your current evidence — it does not choose for you.", selector: ".student-ai-callout, .student-ai-section" },
+        { title: "AI guidance", body: "The assistant explains why a track fits your current evidence; it does not choose for you.", selector: ".student-ai-callout, .student-ai-section" },
         { title: "Apply your choice", body: "Saving updates your roadmap and job matches immediately.", selector: ".student-track-actions", interact: { event: "click", hint: "Save when you are happy with the selection." } },
       ],
     },
@@ -119,8 +119,8 @@ const routeTours: Array<{ prefix: string; match?: RegExp; tour: Tour }> = [
       key: "student-passport",
       label: "Skills Passport",
       steps: [
-        { title: "Start here", body: "You land on your Skills Passport first because everything else — readiness, roadmap, job matches — is computed from what you enter here.", selector: ".student-passport-setup" },
-        { title: "Your Skills Passport", body: "This is the evidence-backed record employers see — identity, target track, and verification state.", selector: ".student-passport-hero, .student-passport-identity" },
+        { title: "Start here", body: "You land on your Skills Passport first because everything else (readiness, roadmap, job matches) is computed from what you enter here.", selector: ".student-passport-setup" },
+        { title: "Your Skills Passport", body: "This is the evidence-backed record employers see: identity, target track, and verification state.", selector: ".student-passport-hero, .student-passport-identity" },
         { title: "Verification status", body: "Nothing is presented as verified until a human administrator has approved the evidence behind it.", selector: ".student-passport-status" },
         { title: "Passport metrics", body: "Counts of skills, certifications, experience, and projects that currently carry evidence.", selector: ".student-passport-metrics" },
         { title: "Add to your passport", body: "Each section takes its own submission. Adding an entry starts an automated check, then human review.", selector: ".passport-section, .passport-form", interact: { event: "submit", hint: "Submit an entry to send it into the review queue." } },
@@ -173,7 +173,7 @@ const routeTours: Array<{ prefix: string; match?: RegExp; tour: Tour }> = [
       label: "Privacy and appeals",
       steps: [
         { title: "Control and correction", body: "Consent, appeals, and notifications about automated decisions live on this page.", selector: ".page-title" },
-        { title: "Purpose-specific consent", body: "Each purpose is granted or withdrawn separately — there is no single all-or-nothing switch.", heading: "Purpose-specific consent", interact: { event: "click", hint: "Toggle a purpose to see consent applied immediately." } },
+        { title: "Purpose-specific consent", body: "Each purpose is granted or withdrawn separately; there is no single all-or-nothing switch.", heading: "Purpose-specific consent", interact: { event: "click", hint: "Toggle a purpose to see consent applied immediately." } },
         { title: "Request human review", body: "Challenge a readiness score, a match, an evidence decision, or a data use, and a person reviews it.", heading: "Request human review" },
         { title: "Notifications", body: "Outcomes of your appeals and consent changes are recorded here.", heading: "Notifications" },
       ],
@@ -213,7 +213,7 @@ const routeTours: Array<{ prefix: string; match?: RegExp; tour: Tour }> = [
       key: "employer-post-job",
       label: "Post a job",
       steps: [
-        { title: "Create a real opportunity", body: "This form publishes a live opportunity that students can apply to — nothing here is a demo control.", selector: ".pjob-top" },
+        { title: "Create a real opportunity", body: "This form publishes a live opportunity that students can apply to; nothing here is a demo control.", selector: ".pjob-top" },
         { title: "Role basics", body: "Title, description, and location set what students see first in job discovery.", selector: ".pjob-section" },
         { title: "Work arrangement", body: "Arrangement and employment type feed the filters students search with.", selector: ".pjob-arrangement, .pjob-switch-grid" },
         { title: "Required skills", body: "Skills you add here become the weighted criteria behind every match score on this role.", selector: ".pjob-token-input", interact: { event: "input", hint: "Type a skill and add it to see the weighting build up." } },
@@ -230,7 +230,7 @@ const routeTours: Array<{ prefix: string; match?: RegExp; tour: Tour }> = [
       key: "employer-candidate",
       label: "Candidate review",
       steps: [
-        { title: "Human hiring decision", body: "Everything on this page supports your decision — the platform does not make it for you.", selector: ".employer-candidate-content .data-row, .page-title" },
+        { title: "Human hiring decision", body: "Everything on this page supports your decision; the platform does not make it for you.", selector: ".employer-candidate-content .data-row, .page-title" },
         { title: "Application snapshot", body: "Status, application date, and the applicant's own summary.", selector: ".employer-candidate-content .grid-3" },
         { title: "Explainable match", body: "Matched skills and missing requirements are listed before any score is acted on.", heading: "Explainable match" },
         { title: "Private documents", body: "Applicant files are private to the applicant, your organization, and authorized reviewers.", heading: "Private application documents" },
@@ -295,7 +295,7 @@ const routeTours: Array<{ prefix: string; match?: RegExp; tour: Tour }> = [
         { title: "Executive summary", body: "Start with the institution-level read on how the curriculum is tracking against demand.", selector: ".cc-executive, .cc-overview" },
         { title: "Alignment metrics", body: "Coverage, gaps, and the pulse of change since the last review.", selector: ".cc-metrics, .cc-pulse" },
         { title: "Search and filter", body: "Narrow to a department, a level, or a specific skill before you act.", selector: ".cc-search, .cc-filter", interact: { event: "input", hint: "Search for a course to filter the workspace." } },
-        { title: "Switch views", body: "The tabs move between courses, required skills, and certification mapping.", selector: ".cc-tabs", interact: { event: "click", hint: "Try another tab — the tour stays with you." } },
+        { title: "Switch views", body: "The tabs move between courses, required skills, and certification mapping.", selector: ".cc-tabs", interact: { event: "click", hint: "Try another tab. The tour stays with you." } },
         { title: "Courses", body: "Each course shows the skills it delivers and how those map to live demand.", selector: ".cc-course-grid, .cc-course" },
         { title: "AI analysis", body: "The analysis explains its reasoning so a curriculum committee can accept or reject it.", selector: ".cc-analysis" },
         { title: "Recommendations", body: "Recommended additions move into the offerings or action workflow rather than sitting as text.", selector: ".cc-recommend, .cc-required" },
@@ -421,7 +421,7 @@ const routeTours: Array<{ prefix: string; match?: RegExp; tour: Tour }> = [
         { title: "Queue volumes", body: "How much is waiting, and where the backlog is concentrated.", selector: ".page-shell .grid-3" },
         { title: "Pending employer accounts", body: "Approving an employer is what lets them publish live opportunities.", heading: "Pending employer accounts" },
         { title: "Certificate submissions", body: "The uploaded certificate is shown next to the decision so you review the evidence, not just the claim.", heading: "Pending certificate submissions" },
-        { title: "Evidence preview", body: "Open the submitted file before deciding — the preview is part of the audit record.", selector: ".certificate-preview" },
+        { title: "Evidence preview", body: "Open the submitted file before deciding; the preview is part of the audit record.", selector: ".certificate-preview" },
         { title: "Curriculum evidence", body: "University completion evidence arrives here after its automated completeness check.", heading: "Curriculum completion evidence" },
         { title: "Record your reasoning", body: "Review notes are stored with the decision so it can be explained later.", selector: ".admin-evidence-note", interact: { event: "input", hint: "Write a note to attach it to the decision." } },
       ],
@@ -476,7 +476,7 @@ const routeTours: Array<{ prefix: string; match?: RegExp; tour: Tour }> = [
       label: "Career tracks",
       steps: [
         { title: "Career tracks and skill weights", body: "Weights defined here drive every readiness score and job match on the platform.", selector: ".page-title" },
-        { title: "Existing tracks", body: "Review the current weighting before changing it — students are already scored against it.", selector: ".page-shell .card" },
+        { title: "Existing tracks", body: "Review the current weighting before changing it; students are already scored against it.", selector: ".page-shell .card" },
         { title: "Create a career track", body: "A new track becomes selectable by students as soon as it is saved.", heading: "Create a career track", interact: { event: "submit", hint: "Save a track to publish it." } },
       ],
     },

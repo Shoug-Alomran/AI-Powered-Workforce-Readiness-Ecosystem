@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ policy: s
   const { policy } = await params;
   const content = POLICIES[policy];
   if (!content) return {};
-  return { title: `${content.title} — Fursah`, description: content.summary };
+  return { title: `${content.title} | Fursah`, description: content.summary };
 }
 
 export default async function PolicyPage({ params }: { params: Promise<{ policy: string }> }) {

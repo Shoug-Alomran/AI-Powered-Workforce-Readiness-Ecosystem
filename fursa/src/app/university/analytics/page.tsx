@@ -64,12 +64,12 @@ export default async function UniversityAnalytics() {
       <div className="grid-3" style={{ marginTop: 26 }}>
         <div className="card">
           <span className="muted">Demand coverage</span>
-          <div className="metric">{intel.coveragePct === null ? "—" : `${intel.coveragePct}%`}</div>
+          <div className="metric">{intel.coveragePct === null ? "-" : `${intel.coveragePct}%`}</div>
           <span className="muted">of weighted employer demand taught</span>
         </div>
         <div className="card">
           <span className="muted">Cohort readiness</span>
-          <div className="metric">{cohort.averageScore === null ? "—" : `${cohort.averageScore}/100`}</div>
+          <div className="metric">{cohort.averageScore === null ? "-" : `${cohort.averageScore}/100`}</div>
           <span className="muted">
             {cohort.reportable ? `across ${cohort.students} students` : "cohort too small to report"}
           </span>

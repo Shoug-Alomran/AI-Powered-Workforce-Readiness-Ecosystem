@@ -33,8 +33,8 @@ export default async function StudentReadiness() {
         <h1 className="page-title">Student readiness</h1>
         <p className="muted">{cohort.summary}</p>
         <div className="notice" style={{ marginTop: 20 }}>
-          <strong>Aggregate reporting only.</strong> Readiness is reported for the cohort, never per named student —
-          individual records stay inside each student&apos;s own account. Cohort figures are withheld below{" "}
+          <strong>Aggregate reporting only.</strong> Readiness is reported for the cohort, never per named student.
+          Individual records stay inside each student&apos;s own account. Cohort figures are withheld below{" "}
           {MIN_COHORT} students because a distribution that small identifies the individuals in it.
         </div>
       </main>

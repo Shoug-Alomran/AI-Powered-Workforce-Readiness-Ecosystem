@@ -115,7 +115,7 @@ export default async function StudentInterests({
                   You meet the core requirements for {track.label}.{" "}
                   {openJobsForTrack.length
                     ? `${openJobsForTrack.length} open role(s) match this track right now.`
-                    : "No open roles in this track yet — you'll be ready the moment one is posted."}
+                    : "No open roles in this track yet. You'll be ready the moment one is posted."}
                 </div>
               ) : (
                 <div style={{ marginTop: 10 }}>
@@ -181,7 +181,7 @@ export default async function StudentInterests({
                 {best && <span className="pill">{best.match.score}% best match</span>}
               </div>
 
-              {!best && <div className="notice" style={{ marginTop: 10 }}>No open roles right now — you&apos;ll be notified here the moment one is posted.</div>}
+              {!best && <div className="notice" style={{ marginTop: 10 }}>No open roles right now. You&apos;ll be notified here the moment one is posted.</div>}
 
               {best && isReady && (
                 <div className="notice" style={{ marginTop: 10 }}>
@@ -260,7 +260,7 @@ export default async function StudentInterests({
             const isFavorite = favoriteEmployerIds.has(employer.id);
             return (
               <div className="data-row" key={employer.id}>
-                <div><strong>{employer.company}</strong><div className="muted">{employer.industry ?? "—"} · {employer.jobs.length} open role(s)</div></div>
+                <div><strong>{employer.company}</strong><div className="muted">{employer.industry ?? "-"} · {employer.jobs.length} open role(s)</div></div>
                 <form action={toggleFavoriteCompany}>
                   <input type="hidden" name="employerId" value={employer.id} />
                   <button className={`button ${isFavorite ? "secondary" : "primary"}`}>{isFavorite ? "Following ✓" : "Follow"}</button>

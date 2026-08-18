@@ -36,7 +36,7 @@ export type PolicyDocument = {
 
 const CONTROLLER =
   "Fursah AI (“Fursah”, “we”, “us”), Riyadh, Kingdom of Saudi Arabia";
-const CONTACT = "info@fursah.org";
+const CONTACT = "support@fursah.org";
 const EFFECTIVE = "19 August 2026";
 
 // ---------------------------------------------------------------------------
@@ -66,7 +66,7 @@ const PRIVACY: PolicyDocument = {
         "Account data: your name, email address, assigned role (student, employer, university, or administrator), account status, and the date the account was created.",
         "Student profile data: your target career, degree, institution, and an optional short biography that you write yourself.",
         "Competence data: the skills you list and the proficiency level you claim for each (a 1–5 scale), certifications, work and volunteer experience with duration, and projects.",
-        "Evidence files: documents you upload to support a certification, project, or experience — including the original filename, file type, size, and the outcome of automated file checks and human review.",
+        "Evidence files: documents you upload to support a certification, project, or experience, including the original filename, file type, size, and the outcome of automated file checks and human review.",
         "Activity data: applications you submit and their status, jobs you bookmark, employers and career tracks you follow, and the roadmap items generated for you or added by you.",
         "Governance records: your purpose-specific consent choices and their version, appeals you raise, data requests you make, support tickets you open, and notifications sent to you.",
         "Outcome data: structured feedback an employer records after a placement, across technical skill, communication, teamwork, problem-solving, adaptability, and an overall rating.",
@@ -87,7 +87,7 @@ const PRIVACY: PolicyDocument = {
         "Under the PDPL we must have a lawful basis for each purpose. Ours are:",
       ],
       bullets: [
-        "To provide the service you asked for — calculating your readiness score, showing your gaps, matching you to opportunities, and carrying your applications to employers. Basis: performance of the service you have requested.",
+        "To provide the service you asked for: calculating your readiness score, showing your gaps, matching you to opportunities, and carrying your applications to employers. Basis: performance of the service you have requested.",
         "To verify evidence you submit, so that a claimed skill or certification means something to an employer. Basis: performance of the service, and our legitimate interest in the integrity of the platform.",
         "To share approved evidence with an employer reviewing your application. Basis: your consent, given per purpose and withdrawable at any time.",
         "To send you notifications about opportunities matching employers and career tracks you follow. Basis: your consent.",
@@ -100,7 +100,7 @@ const PRIVACY: PolicyDocument = {
       heading: "5. Consent, and what happens when you withdraw it",
       paragraphs: [
         "Consent on Fursah is specific rather than bundled. Three purposes are separately controlled from your privacy settings: sharing verified evidence with employers, using anonymised outcomes to improve recommendations, and personalised opportunity notifications. Each is recorded with its own timestamp and policy version.",
-        "You may withdraw any consent at any time, and withdrawal is as easy as giving it — a single control in the same screen. Withdrawal takes effect immediately for future processing. It does not make past lawful processing unlawful, and it does not retract a document an employer has already lawfully viewed.",
+        "You may withdraw any consent at any time, and withdrawal is as easy as giving it: a single control in the same screen. Withdrawal takes effect immediately for future processing. It does not make past lawful processing unlawful, and it does not retract a document an employer has already lawfully viewed.",
         "Refusing or withdrawing consent does not disable your account, your readiness score, or your ability to apply for opportunities. Consent-based purposes are additional to the core service, never a condition of it. We do not use pre-ticked boxes, and we do not treat silence or inactivity as consent.",
       ],
     },
@@ -111,7 +111,7 @@ const PRIVACY: PolicyDocument = {
         "Your data is disclosed only in these circumstances:",
       ],
       bullets: [
-        "To an employer, when you apply to their opportunity — your profile, your match score, and the explanation behind it. Supporting evidence is included only if you have granted the employer-evidence consent.",
+        "To an employer, when you apply to their opportunity: your profile, your match score, and the explanation behind it. Supporting evidence is included only if you have granted the employer-evidence consent.",
         "To a holder of a sharing link you created yourself. Passport links are time-limited, carry an expiry date you set, and can be revoked by you at any moment, which invalidates the link immediately.",
         "To your university, only in aggregate form and subject to the suppression rule in clause 7. A university does not receive named student records or per-student scores through institutional reporting.",
         "To service providers who process data on our instructions under written agreement: Google Firebase Authentication for sign-in, Cloudflare R2 for encrypted storage of evidence files, and Vercel for application hosting. They may not use your data for their own purposes.",
@@ -157,13 +157,13 @@ const PRIVACY: PolicyDocument = {
         "The PDPL gives you rights over your personal data, and the platform implements them as working features rather than as an email address to write to. From your data-rights screen you may:",
       ],
       bullets: [
-        "Be informed — this policy, and the explanation shown with every automated result.",
-        "Access — request confirmation of what we hold about you.",
-        "Obtain a copy — request your data in a readable, portable form.",
-        "Request correction — ask us to rectify data that is inaccurate, incomplete, or out of date.",
-        "Request deletion — ask us to erase your personal data where we have no overriding legal reason to retain it.",
-        "Withdraw consent — for any purpose you previously allowed.",
-        "Object to a solely automated decision — and require human review, as set out in the Responsible AI Policy.",
+        "Be informed: this policy, and the explanation shown with every automated result.",
+        "Access: request confirmation of what we hold about you.",
+        "Obtain a copy: request your data in a readable, portable form.",
+        "Request correction: ask us to rectify data that is inaccurate, incomplete, or out of date.",
+        "Request deletion: ask us to erase your personal data where we have no overriding legal reason to retain it.",
+        "Withdraw consent: for any purpose you previously allowed.",
+        "Object to a solely automated decision, and require human review, as set out in the Responsible AI Policy.",
       ],
     },
     {
@@ -221,7 +221,7 @@ const RESPONSIBLE_AI: PolicyDocument = {
       heading: "2. What the system actually is",
       paragraphs: [
         "Honesty about the mechanism is part of explainability, so we state it plainly: Fursah's readiness and matching engine is a deterministic, rule-based scoring system with published weights. It is not a machine-learning model trained on historical hiring decisions.",
-        "This is a deliberate architectural choice. A model trained on past hiring outcomes learns past hiring preference, including its inequities. A weighted rule engine cannot silently acquire a bias from history, because it has no history to learn from — its inputs are the skills, certifications, experience, and projects a candidate can evidence, and its weights are visible, versioned, and auditable.",
+        "This is a deliberate architectural choice. A model trained on past hiring outcomes learns past hiring preference, including its inequities. A weighted rule engine cannot silently acquire a bias from history, because it has no history to learn from; its inputs are the skills, certifications, experience, and projects a candidate can evidence, and its weights are visible, versioned, and auditable.",
         "The trade-off is that the engine cannot discover patterns nobody encoded. We accept that limitation in exchange for a system whose every output can be reconstructed and challenged. Any future introduction of a learned component would require bias auditing and a published impact assessment before deployment.",
       ],
     },
@@ -231,11 +231,11 @@ const RESPONSIBLE_AI: PolicyDocument = {
         "We publish the weightings rather than describing them in general terms. A Career Readiness Score is composed of:",
       ],
       bullets: [
-        "Technical skills matched against the target career track — 35%.",
-        "Certifications held, counting only those verified — 20%.",
-        "Relevant experience, measured in months against the track's recommended duration — 20%.",
-        "Soft skills matched against the track — 15%.",
-        "Projects evidencing applied work — 10%.",
+        "Technical skills matched against the target career track: 35%.",
+        "Certifications held, counting only those verified: 20%.",
+        "Relevant experience, measured in months against the track's recommended duration: 20%.",
+        "Soft skills matched against the track: 15%.",
+        "Projects evidencing applied work: 10%.",
       ],
     },
     {
@@ -275,7 +275,7 @@ const RESPONSIBLE_AI: PolicyDocument = {
         "Protected characteristics are excluded from ranking inputs. As set out in the Privacy Policy, they are not collected at all, which is a stronger guarantee than excluding them at scoring time.",
         "Excluding an attribute does not exclude a proxy for it. Institution name, region, and career interruption can all stand in for characteristics we never collect. We therefore monitor outcomes for uneven impact across institution and region, and treat a disparity we cannot explain by evidence of skill as a defect in the system rather than a fact about the candidates.",
         "Employers may enable blind review on an opportunity, which withholds identifying details from the reviewer at the screening stage.",
-        "A low score means the evidence on file is incomplete, and the interface is required to say so in those terms. A candidate who is self-taught, who trained through a bootcamp, or who is returning after an interruption may hold real competence the pipeline was not built to read. Alternative evidence — portfolio, practical assessment, employer attestation — feeds the same taxonomy for exactly this reason.",
+        "A low score means the evidence on file is incomplete, and the interface is required to say so in those terms. A candidate who is self-taught, who trained through a bootcamp, or who is returning after an interruption may hold real competence the pipeline was not built to read. Alternative evidence (portfolio, practical assessment, employer attestation) feeds the same taxonomy for exactly this reason.",
       ],
     },
     {
@@ -290,7 +290,7 @@ const RESPONSIBLE_AI: PolicyDocument = {
       paragraphs: [
         "This clause binds us in advance, before there is any commercial pressure to reason around it.",
         "Ranking is never for sale. Fursah will not accept payment from an employer for improved visibility within match results, and will not accept payment from a training provider for placement inside a student's gap analysis or roadmap.",
-        "Should sponsored content ever appear on the platform, it must be labelled as such, must be visually distinct from evidence-based recommendations, and must be excluded from the match computation entirely. Because a Reasoning Card must disclose every input that produced a recommendation, a commercial input could not be introduced quietly — it would either appear in the explanation or make the explanation false.",
+        "Should sponsored content ever appear on the platform, it must be labelled as such, must be visually distinct from evidence-based recommendations, and must be excluded from the match computation entirely. Because a Reasoning Card must disclose every input that produced a recommendation, a commercial input could not be introduced quietly; it would either appear in the explanation or make the explanation false.",
         "Breach of this clause triggers suspension of the commercial feature and remediation under this policy.",
       ],
     },
@@ -301,7 +301,7 @@ const RESPONSIBLE_AI: PolicyDocument = {
       ],
       bullets: [
         "Using a readiness score or match score as the sole basis for rejecting a candidate or denying access to a programme.",
-        "Using inferred signals — readiness weaknesses, gap patterns, socioeconomic or accessibility proxies — for advertising, for targeting, or for any form of profiling unrelated to the purpose for which the data was given.",
+        "Using inferred signals (readiness weaknesses, gap patterns, socioeconomic or accessibility proxies) for advertising, for targeting, or for any form of profiling unrelated to the purpose for which the data was given.",
         "Disclosing platform data to a third party for advertising or profiling, under any commercial arrangement.",
         "Re-identifying individuals from aggregate institutional reporting, or combining aggregates to defeat the suppression threshold.",
         "Presenting a score to a candidate without its accompanying explanation.",
@@ -319,7 +319,7 @@ const RESPONSIBLE_AI: PolicyDocument = {
       heading: "13. Governance and review",
       paragraphs: [
         "This policy is reviewed at least annually and whenever the scoring logic, weights, or data inputs change materially. The specific figures published in clauses 3 and 4 are versioned with the engine, so that a score computed last quarter can be interpreted against the rules that actually produced it.",
-        "Governance scenarios raised against the platform are recorded with the risk level, the issues detected, the action proposed, and the human decision reached — including where a human overrode the proposed action, since an oversight mechanism that never disagrees is not evidence of oversight.",
+        "Governance scenarios raised against the platform are recorded with the risk level, the issues detected, the action proposed, and the human decision reached, including where a human overrode the proposed action, since an oversight mechanism that never disagrees is not evidence of oversight.",
       ],
     },
   ],
@@ -398,7 +398,7 @@ const TERMS: PolicyDocument = {
       heading: "8. Acceptable use",
       paragraphs: ["You must not:"],
       bullets: [
-        "Manipulate scores, rankings, evidence, or feedback, or attempt to reverse-engineer the scoring engine in order to game it. The weights are published in the Responsible AI Policy — you do not need to reverse-engineer them, and using them to inflate unearned claims is a breach of clause 5.",
+        "Manipulate scores, rankings, evidence, or feedback, or attempt to reverse-engineer the scoring engine in order to game it. The weights are published in the Responsible AI Policy; you do not need to reverse-engineer them, and using them to inflate unearned claims is a breach of clause 5.",
         "Scrape, harvest, or bulk-extract profiles or opportunity data.",
         "Attempt to access another user's account, data, or evidence, including by guessing or reusing a passport sharing link not issued to you.",
         "Probe, disrupt, or overload the platform's infrastructure.",
@@ -408,7 +408,7 @@ const TERMS: PolicyDocument = {
     {
       heading: "9. Your content",
       paragraphs: [
-        "You keep ownership of everything you upload. You grant us the limited licence needed to store, process, display, and share it in the ways this agreement and your consent choices permit — nothing wider. That licence ends when you delete the content or close your account, subject to the retention rules in the Privacy Policy.",
+        "You keep ownership of everything you upload. You grant us the limited licence needed to store, process, display, and share it in the ways this agreement and your consent choices permit, and nothing wider. That licence ends when you delete the content or close your account, subject to the retention rules in the Privacy Policy.",
       ],
     },
     {
@@ -457,7 +457,7 @@ const ACCESSIBILITY: PolicyDocument = {
     {
       heading: "1. Our commitment",
       paragraphs: [
-        "A platform that mediates access to employment must be usable by the people it claims to serve. An inaccessible interface does not merely inconvenience a user — on a platform like this one, it excludes them from opportunity. We therefore treat accessibility as a condition of the service working, not as an enhancement to it.",
+        "A platform that mediates access to employment must be usable by the people it claims to serve. An inaccessible interface does not merely inconvenience a user; on a platform like this one, it excludes them from opportunity. We therefore treat accessibility as a condition of the service working, not as an enhancement to it.",
       ],
     },
     {
@@ -492,7 +492,7 @@ const ACCESSIBILITY: PolicyDocument = {
       bullets: [
         "The platform has not yet undergone a full independent WCAG 2.1 AA audit. Our conformance claim is based on internal review and is stated as a target we are working to, not a certified result.",
         "Arabic coverage is partial and still being extended across all portals.",
-        "Documents uploaded by users — transcripts, certificates, portfolios — may not themselves be accessible, as we do not control how they were produced. We can accept an accessible alternative on request.",
+        "Documents uploaded by users (transcripts, certificates, portfolios) may not themselves be accessible, as we do not control how they were produced. We can accept an accessible alternative on request.",
         "Some data-dense dashboard views are still being improved for screen-reader navigation.",
       ],
     },
@@ -500,7 +500,7 @@ const ACCESSIBILITY: PolicyDocument = {
       heading: "6. Reporting a barrier",
       paragraphs: [
         `If any part of Fursah is difficult or impossible for you to use, tell us at ${CONTACT}. Include the page, what you were trying to do, and the device or assistive technology you use. We aim to acknowledge within five working days.`,
-        "If a barrier prevents you from completing something time-sensitive — submitting an application, responding to an employer, filing an appeal — say so, and we will provide an alternative route so that the deadline does not pass because of our defect.",
+        "If a barrier prevents you from completing something time-sensitive (submitting an application, responding to an employer, filing an appeal), say so, and we will provide an alternative route so that the deadline does not pass because of our defect.",
       ],
     },
     {
@@ -521,7 +521,7 @@ export const POLICIES: Record<string, PolicyDocument> = {
     ...RESPONSIBLE_AI,
     attachment: {
       label: "AI Readiness Report (PDF)",
-      body: "The full technical and governance report behind this policy. It maps every stage of the Fursah pipeline — sources, connectivity, pre-processing, models, human oversight, analytics, and interfaces — to SDAIA's Principles and Controls of AI Ethics, the PDPL, national data-governance standards, and the Human Capability Development Programme, and works through the scenarios in which the system could be contested.",
+      body: "The full technical and governance report behind this policy. It maps every stage of the Fursah pipeline (sources, connectivity, pre-processing, models, human oversight, analytics, and interfaces) to SDAIA's Principles and Controls of AI Ethics, the PDPL, national data-governance standards, and the Human Capability Development Programme, and works through the scenarios in which the system could be contested.",
       href: "/fursah-ai-readiness-hackathon-submission.pdf",
     },
   },

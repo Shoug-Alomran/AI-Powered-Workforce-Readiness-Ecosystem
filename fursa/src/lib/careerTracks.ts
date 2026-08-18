@@ -725,7 +725,7 @@ export const CAREER_TRACKS: CareerTrack[] = [
   },
 ];
 
-/** Static fallback lookup — used only before the DB taxonomy is seeded. */
+/** Static fallback lookup, used only before the DB taxonomy is seeded. */
 export function getCareerTrack(id: string): CareerTrack {
   return (
     CAREER_TRACKS.find((c) => c.id === id) ?? CAREER_TRACKS[0]
@@ -759,6 +759,6 @@ export function slugify(label: string): string {
 
 // Note: the DB-backed, admin-editable versions of this taxonomy
 // (getAllCareerTracksAsync / getCareerTrackAsync) live in
-// "@/lib/careerTracks.server" — a separate, server-only module. Keeping
+// "@/lib/careerTracks.server", a separate, server-only module. Keeping
 // this file free of any `@/lib/db` import (even a dynamic one) means it
 // stays safe to import from client components like FirebaseAuthPanel.

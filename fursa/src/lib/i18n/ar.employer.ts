@@ -135,7 +135,7 @@ export const employer: Record<string, string> = {
   "Candidates": "المرشحون",
   "CANDIDATE PROFILE": "ملف المرشح",
   "Candidates, ranked with full explainability": "المرشحون مرتبون بتفسير كامل",
-  "Click a candidate to view their full profile and take action — this list stays put so you can compare everyone at once.": "اضغط على مرشح لعرض ملفه الكامل واتخاذ إجراء — تبقى هذه القائمة ثابتة لتقارن الجميع دفعة واحدة.",
+  "Click a candidate to view their full profile and take action. This list stays put so you can compare everyone at once.": "اضغط على مرشح لعرض ملفه الكامل واتخاذ إجراء. تبقى هذه القائمة ثابتة لتقارن الجميع دفعة واحدة.",
   "Sorted by AI readiness score": "مرتبة حسب درجة الجاهزية",
   "AI candidate ranking": "ترتيب المرشحين بالذكاء الاصطناعي",
   "AI-assisted ranking": "ترتيب بمساعدة الذكاء الاصطناعي",
