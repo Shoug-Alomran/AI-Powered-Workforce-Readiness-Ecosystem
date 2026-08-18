@@ -47,28 +47,28 @@ export const team: TeamMember[] = [
   }, {
     name: "Lolwah Alsaadoun",
     role: "Full-stack engineer",
-    bio: "I’m a curious and driven Software Engineering and Cybersecurity student at Prince Sultan University with a deep passion for technology, data security, and innovation. I thrive on having a full plate; balancing projects, research, and creative pursuits keeps me learning and growing every day. I love tackling complex challenges, finding smart solutions, and turning ideas into impact, all while constantly pushing myself to do more and do it better.",
+    bio: "I’m passionate about Artificial Intelligence, technology, and the possibilities they create for solving real-world problems. My interests span AI, machine learning, software development, and building intelligent solutions that are both practical and impactful. I enjoy turning ideas into working solutions, exploring new technologies, and continuously strengthening my technical and problem- solving skills.I’m especially interested in opportunities that challenge me to think creatively, collaborate with others, and apply what I know in meaningful ways. Driven by curiosity and a desire to keep evolving, I’m always looking to take on new challenges, contribute to impactful projects, and connect with people who are shaping the future of technology.",
     focus: ["Product direction", "Readiness scoring", "Explainable matching", "Next.js & Prisma"],
     email: "lolwah.alsaadoun@fursah.org",
     links: [
       { label: "GitHub", href: "https://github.com/Lolwah-sa" },
       { label: "LinkedIn", href: "https://www.linkedin.com/in/lolwah-alsaadoun/" },
     ],
-  },{
+  }, {
     name: "Renad Alsulaiman",
-    role: "Full-stack engineer",
-    bio: "I’m a curious and driven Software Engineering and Cybersecurity student at Prince Sultan University with a deep passion for technology, data security, and innovation. I thrive on having a full plate; balancing projects, research, and creative pursuits keeps me learning and growing every day. I love tackling complex challenges, finding smart solutions, and turning ideas into impact, all while constantly pushing myself to do more and do it better.",
-    focus: ["Product direction", "Readiness scoring", "Explainable matching", "Next.js & Prisma"],
+      role: "?",
+      bio: "?",
+      focus: ["?"],
     email: "renad.alsulaiman@fursah.org",
     links: [
       { label: "GitHub", href: "https://github.com/Renad-Alsulaiman" },
       { label: "LinkedIn", href: "https://www.linkedin.com/in/renad-alsulaiman/" },
     ],
-  },{
+  }, {
     name: "Taleen Bin Nader",
-    role: "Full-stack engineer",
-    bio: "I’m a curious and driven Software Engineering and Cybersecurity student at Prince Sultan University with a deep passion for technology, data security, and innovation. I thrive on having a full plate; balancing projects, research, and creative pursuits keeps me learning and growing every day. I love tackling complex challenges, finding smart solutions, and turning ideas into impact, all while constantly pushing myself to do more and do it better.",
-    focus: ["Product direction", "Readiness scoring", "Explainable matching", "Next.js & Prisma"],
+    role: "?",
+    bio: "?",
+    focus: ["?"],
     email: "taleen.binnader@fursah.org",
     links: [
       { label: "GitHub", href: "https://github.com/Taleen-Bin-Nader" },
