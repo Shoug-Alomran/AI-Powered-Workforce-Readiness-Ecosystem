@@ -1762,3 +1762,29 @@ body:has(.imp)>header{display:none}
 .team-card{padding:20px;border-radius:16px}
 .team-links a{flex:1;justify-content:center}
 }
+
+.home-ethics-doc{display:inline-flex;align-items:center;min-height:44px;margin-top:26px;padding:0 20px;border:1px solid #ffffff33;border-radius:8px;background:#ffffff12;color:#fff;font-weight:700;text-decoration:none;transition:background .2s,border-color .2s,transform .2s}
+.home-ethics-doc:hover{background:#ffffff1f;border-color:#34d399;transform:translateY(-2px)}
+
+/* The Responsible-AI band used to be a hard-coded navy slab, which read as a dark
+   patch in the middle of the light landing page. It now tints with the page and
+   only returns to the dark slab under the dark theme. */
+.home-ethics{background:linear-gradient(135deg,#eff6ff,#f5f3ff);color:var(--hn);border:1px solid #e2e8f0}
+.home-ethics>div>p{color:#475569}
+.home-ethics li{color:#334155}
+.home-ethics>article{background:#fff;border:1px solid #e2e8f0;box-shadow:0 18px 40px #0f172a12}
+.home-ethics article>section{background:#f8fafc;border-color:var(--hb)}
+.home-ethics article>section.violet{border-color:var(--hv)}
+.home-ethics section.violet p em{font-style:normal}
+.home-ethics-doc{border-color:#c7d2fe;background:#ffffffcc;color:var(--hb)}
+.home-ethics-doc:hover{background:#fff;border-color:var(--hb)}
+:root[data-theme="dark"] .home-ethics{background:#0f172a;color:#f8fafc;border-color:#263244}
+:root[data-theme="dark"] .home-ethics>div>p{color:#cbd5e1}
+:root[data-theme="dark"] .home-ethics li{color:#e2e8f0}
+:root[data-theme="dark"] .home-ethics-doc{border-color:#ffffff33;background:#ffffff12;color:#fff}
+:root[data-theme="dark"] .home-ethics-doc:hover{background:#ffffff1f;border-color:#34d399}
+[dir="rtl"] .home-ethics article>section{border-left:none;border-right:4px solid var(--hb)}
+[dir="rtl"] .home-ethics article>section.violet{border-right-color:var(--hv)}
+[dir="rtl"] .home-ethics section.violet p span{float:left}
+[dir="rtl"] .home-opportunity em{text-align:left}
+[dir="rtl"] .home-workflow article:not(:last-child):after{left:auto;right:62%}
