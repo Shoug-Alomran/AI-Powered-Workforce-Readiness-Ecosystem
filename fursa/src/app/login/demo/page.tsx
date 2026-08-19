@@ -1,9 +1,19 @@
 import Link from "next/link";
+import { cacheLife } from "next/cache";
 import { prisma } from "@/lib/db";
 import { loginAsUser } from "@/actions/auth";
 
+// The prepared demo accounts change only when the prototype data is reseeded,
+// so the list is cached and this page prerenders instead of querying on every
+// visit.
+async function getDemoUsers() {
+  "use cache";
+  cacheLife("hours");
+  return prisma.user.findMany({ orderBy: [{ role: "asc" }, { name: "asc" }], take: 20 });
+}
+
 export default async function DemoUsersPage() {
-  const users = await prisma.user.findMany({ orderBy: [{ role: "asc" }, { name: "asc" }], take: 20 });
+  const users = await getDemoUsers();
   const roleLabel={STUDENT:"Student",EMPLOYER:"Employer",UNIVERSITY:"University",ADMIN:"Administrator"} as const;
   const roleDescription={STUDENT:"Explore career readiness and opportunities",EMPLOYER:"Review candidates and manage roles",UNIVERSITY:"Manage curriculum and workforce alignment",ADMIN:"Review credentials and platform governance"} as const;
   return <main className="demo-page"><div className="demo-shell">

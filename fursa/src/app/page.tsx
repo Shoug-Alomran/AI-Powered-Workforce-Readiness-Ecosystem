@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cacheLife } from "next/cache";
 import { prisma } from "@/lib/db";
 import SiteHeader from "@/components/SiteHeader";
 import { allSkillNames } from "@/lib/careerTracks";
@@ -8,7 +9,26 @@ const solutions=[["♙","For Students",["Personalized Skill Maps","Verified Digi
 const workflow=[["1","Upload & Extract","Students upload certificates, projects, and experience. Fursah reads each document and proposes the skills it evidences, with the supporting text and a confidence level, for a human to confirm."],["2","Identify & Upskill","Receive a Readiness Score and a custom roadmap to bridge gaps identified by real employer demands."],["3","Match & Hire","Smart matching pairs ready candidates with roles and gives employers an explanation report for each fit."]] as const;
 
 const fallback=[10,8,4] as const;
-export default async function Home(){const query=Promise.all([prisma.student.count(),prisma.job.count({where:{status:"open"}}),prisma.employer.count()]);const timeout=new Promise<typeof fallback>(r=>setTimeout(()=>r(fallback),2000));const [students,jobs,employers]=await Promise.race([query,timeout]);const metrics=[[students,"Demo Students"],[jobs,"Sample Opportunities"],[employers,"Demo Employers"],[allSkillNames().length,"Skills in Taxonomy"]] as const;return <main className="home-design">
+// The stats band. Cached rather than read per request so the landing page —
+// far and away the most visited route — is prerendered and served from the
+// CDN. The counts refresh on the cache's schedule, which is ample for figures
+// that move a few times a week. The old 2s timeout race is gone: it existed to
+// stop a slow database blocking the render, which caching now prevents outright.
+async function getHomeCounts(): Promise<readonly [number, number, number]> {
+  "use cache";
+  cacheLife("hours");
+  try {
+    return await Promise.all([
+      prisma.student.count(),
+      prisma.job.count({ where: { status: "open" } }),
+      prisma.employer.count(),
+    ]);
+  } catch {
+    return fallback;
+  }
+}
+
+export default async function Home(){const [students,jobs,employers]=await getHomeCounts();const metrics=[[students,"Demo Students"],[jobs,"Sample Opportunities"],[employers,"Demo Employers"],[allSkillNames().length,"Skills in Taxonomy"]] as const;return <main className="home-design">
   <SiteHeader onHome />
   <section className="home-hero"><div><Link href="/impact" className="home-vision">●　ALIGNING WITH SAUDI VISION 2030</Link><h1><span>Bridging Education &amp; </span><em>Career Readiness</em><span> with Explainable AI.</span></h1><p>Fursah connects students, employers, and universities through a transparent, evidence-based matching engine. Empowering the next generation of Saudi talent.</p><div className="home-ctas"><Link href="/login/demo">Explore Prototype</Link><a href="#how-it-works" className="secondary">▷　Watch Demo</a></div></div><div className="home-preview"><header><i/><i/><i/><small>STUDENT CAREER HUB</small><span/></header><div className="home-preview-body"><section className="home-score"><div><small>Career Readiness Score</small><b>84%</b></div><i><em/></i></section><div className="home-preview-grid"><article><small>VERIFIED SKILLS</small><p><span>Python</span><span>Data Analysis</span></p></article><article><small>GAP ANALYSIS</small><p><span>Public Speaking</span></p></article></div><section className="home-opportunity"><small>RECOMMENDED OPPORTUNITY</small><div><i>▦</i><span><b>AI Research Intern</b><small>Aramco • Dhahran</small></span><em><b>96% Match</b><small>Explainable Rec</small></em></div></section></div></div></section>
   <section className="home-principles">{principles.map(([icon,title,body],i)=><article key={title}><i className={`p${i}`}>{icon}</i><div><h3>{title}</h3><p>{body}</p></div></article>)}</section>
