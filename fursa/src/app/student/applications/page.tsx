@@ -20,7 +20,7 @@ export default async function StudentApplications() {
   });
 
   return (
-    <main className="page-shell" style={{ maxWidth: 860 }}>
+    <main className="page-shell reading-page">
       <span className="eyebrow">Explainable outcomes</span>
       <h1 className="page-title">Your applications</h1>
       <p className="muted">Every status change comes with the employer&apos;s reasoning, not a silent rejection.</p>

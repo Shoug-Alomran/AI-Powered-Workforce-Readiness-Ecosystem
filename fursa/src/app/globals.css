@@ -1880,8 +1880,25 @@ body:has(.imp)>header{display:none}
 :where([class*="actions"],[class*="ctas"])>:where(a,button,form,.button){align-self:center}
 .student-hero-actions{align-self:start}
 
+/* ---------------------------------------------------------------------------
+   Reading pages.
+   Replaces the per-page inline `style={{maxWidth:NNN}}` caps, which pinned
+   content to a fixed pixel band no stylesheet could override and left large
+   empty gutters on anything wider than a small laptop. The container is fluid
+   to a sensible maximum; prose is capped by measure instead, so headings,
+   cards, tables and figures use the screen while line length stays readable.
+   --------------------------------------------------------------------------- */
+.reading-page{width:min(62rem,calc(100% - 2*var(--gutter)))}
+.reading-page>p,.reading-page .card>p,.reading-page li{max-width:min(68ch,100%)}
+.reading-page .page-title{font-size:var(--step-4);line-height:1.08}
+.reading-page .grid-2{grid-template-columns:repeat(auto-fit,minmax(min(22rem,100%),1fr));gap:var(--space-s)}
+.reading-page .grid-3{grid-template-columns:repeat(auto-fit,minmax(min(17rem,100%),1fr));gap:var(--space-s)}
+
 /* Policy pages: fluid type and spacing, tokens for every colour. */
-.policy-page{--policy-measure:min(72ch,100%)}
+/* Wider than the old inline 820px cap so the page uses the screen it has,
+   while paragraphs stay capped at a readable measure rather than running the
+   full width. Headings and cards get the extra room; line length does not. */
+.policy-page{--policy-measure:min(68ch,100%);width:min(62rem,calc(100% - 2*var(--gutter)))}
 .policy-page .page-title{font-size:var(--step-5);line-height:1.05}
 .policy-page>.muted{font-size:var(--step--1)}
 .policy-page .notice{font-size:var(--step-0);line-height:1.65;padding:var(--space-s) var(--space-m);background:color-mix(in srgb,var(--color-accent) 8%,var(--color-surface));border-color:color-mix(in srgb,var(--color-accent) 24%,transparent);color:var(--color-text)}
@@ -1958,12 +1975,32 @@ body:has(.admin-portal) [data-navbar-placeholder]{display:none}
 .pipeline-kicker{margin:0;font-size:var(--step--1);font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--color-subtle)}
 .pipeline-sub{margin:var(--space-3xs) 0 var(--space-m);font-size:var(--step--1);color:var(--color-muted)}
 
+/* Column counts are explicit rather than auto-fit. With seven stages, auto-fit
+   produced six tracks and dropped the seventh onto a row of its own at a sixth
+   of the width — the empty cells beside it are not collapsed, because auto-fit
+   only collapses a track that is empty in every row. Each breakpoint below
+   either divides seven exactly or lets the last stage span the remainder, so
+   the row never ends in a hole. */
 .pipeline-row{
   list-style:none;margin:0;padding:0;
   display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(clamp(9.5rem,13vw,12rem),1fr));
+  grid-template-columns:1fr;
   gap:var(--space-s);
-  align-items:start;
+  align-items:stretch;
+}
+@media (min-width:44rem){
+  .pipeline-row{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .pipeline-node:last-child{grid-column:1 / -1}
+}
+@media (min-width:64rem){
+  .pipeline-row{grid-template-columns:repeat(4,minmax(0,1fr))}
+  .pipeline-node:nth-child(5){grid-column:1 / span 2}
+  .pipeline-node:nth-child(6){grid-column:3 / span 1}
+  .pipeline-node:last-child{grid-column:4 / span 1}
+}
+@media (min-width:78rem){
+  .pipeline-row{grid-template-columns:repeat(7,minmax(0,1fr));gap:var(--space-xs)}
+  .pipeline-node:nth-child(5),.pipeline-node:nth-child(6),.pipeline-node:last-child{grid-column:auto}
 }
 .pipeline-node{display:flex;flex-direction:column;gap:var(--space-2xs);min-width:0;position:relative}
 .pipeline-card{

@@ -20,7 +20,9 @@ export default async function PolicyPage({ params }: { params: Promise<{ policy:
   const content = POLICIES[policy];
   if (!content) notFound();
 
-  return <main className="page-shell policy-page" style={{ maxWidth: 820 }}>
+  {/* Width is set in globals.css so the figure can break out of the prose
+      column; an inline maxWidth here would win over the stylesheet. */}
+  return <main className="page-shell policy-page">
     <span className="eyebrow">Fursah policies</span>
     <h1 className="page-title">{content.title}</h1>
     <p className="muted">Version {content.version} · Effective {content.effective} · Last updated {content.updated}</p>
