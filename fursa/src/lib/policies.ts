@@ -40,7 +40,10 @@ export type PolicyDocument = {
 
 const CONTROLLER =
   "Fursah AI (“Fursah”, “we”, “us”), Riyadh, Kingdom of Saudi Arabia";
-const CONTACT = "support@fursah.org";
+// Must match the address published in the report and the site footer: a
+// privacy notice naming a different address than the rest of the platform
+// gives a data subject two routes and no assurance either is monitored.
+const CONTACT = "info@fursah.org";
 const EFFECTIVE = "19 August 2026";
 
 // ---------------------------------------------------------------------------

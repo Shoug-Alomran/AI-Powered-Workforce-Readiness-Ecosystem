@@ -189,65 +189,95 @@ This allows academic programs to become increasingly responsive to real workforc
 
 ---
 
-## Responsible AI
+## How the AI actually works
 
-Responsible AI is integrated into the design of the ecosystem.
+Fursah has two components, and the boundary between them is the central design
+decision in the platform.
 
-### Human Oversight
-AI supports recruitment and career decisions but does not replace human decision-making.
+### Deterministic intelligence — everything that produces a number
 
-### Explainable AI
-Career recommendations, readiness assessments, and candidate-job matches should provide understandable reasoning rather than unexplained scores.
+The Career Readiness Score, skill-gap analysis, and candidate–role matching are
+computed by a **rule-based engine with published weights** ([`src/lib/ai.ts`](fursa/src/lib/ai.ts)).
+No machine-learning model trained on historical hiring data is involved in any
+score that affects a person.
 
-### Fairness
-Models should be continuously evaluated for potential bias and inequitable outcomes.
+| Career Readiness Score | Weight | | Candidate–role match | Weight |
+|---|---|---|---|---|
+| Technical skills vs. track | 35% | | Required skills | 55% |
+| Certifications (verified only) | 20% | | Required certifications | 25% |
+| Relevant experience | 20% | | Experience vs. minimum | 20% |
+| Soft skills vs. track | 15% | | *within skills: essential* | *80%* |
+| Projects | 10% | | *within skills: preferred* | *20%* |
 
-### Privacy & Security
-Student, employer, and institutional information must be protected through appropriate security and data-governance mechanisms.
+This is deliberate. A model trained on past hiring outcomes learns past hiring
+preference, including its inequities. A weighted rule engine cannot silently
+acquire a bias from history because it has no history to learn from, and every
+output can be reconstructed and challenged. The trade-off — it cannot discover
+patterns nobody encoded — is one we accept for a system that affects access to
+employment.
+
+Scores are banded as Career Ready (≥80), Developing (55–79), and Early Stage
+(<55). A band describes evidence on file, not a person's ability.
+
+### Generative AI — reading documents and explaining results
+
+A general-purpose language model (Llama 3.1 8B via Cloudflare Workers AI,
+reached through our own Worker — see [`src/lib/assistant/llm.ts`](fursa/src/lib/assistant/llm.ts))
+does exactly two things:
+
+1. **Evidence extraction** ([`src/lib/evidence-ai.ts`](fursa/src/lib/evidence-ai.ts)) — reads an
+   uploaded certificate, project, or experience document and proposes the
+   skills it evidences, each with a confidence value and the supporting text.
+   **Extraction never verifies evidence.** A human reviewer approves or rejects
+   before an extracted skill becomes trusted.
+2. **The role-scoped assistant** — answers questions about results already
+   produced by the deterministic layer. It is grounded on those facts and
+   cannot compute or alter a score, a ranking, or a verification decision.
+
+The model sits on the explanatory side of the boundary. Language models are
+well suited to reading a document and explaining a result, and poorly suited to
+being the reason a person did or did not get an opportunity.
 
 ---
 
-## AI & Machine Learning Pipeline
+## Governance, in code rather than in prose
 
-The proposed intelligence pipeline consists of four major stages:
+Each of these is an implemented mechanism, not an aspiration:
 
-### 1. Data Collection
-Relevant information may include:
+| Commitment | Where it lives |
+|---|---|
+| No protected attributes collected — no gender, nationality, age, or GPA field exists | [`prisma/schema.prisma`](fursa/prisma/schema.prisma) |
+| Cohort aggregates suppressed below 5 students, so a distribution cannot re-identify | `MIN_COHORT` in [`src/lib/cohort.ts`](fursa/src/lib/cohort.ts) |
+| Every consequential action logged with its ruleset version and reasoning | `AuditEvent` model |
+| Purpose-specific consent, versioned, independently withdrawable | `ConsentRecord` model |
+| Four PDPL request types: access, portability, correction, deletion | `DataRequest` model |
+| Appeals against readiness, match, evidence, and data decisions | `Appeal` model |
+| Drift monitoring with a `PAUSED` state, so rollback is an available action | `MonitoringSnapshot` model |
+| Governance decisions recorded including where a human **overrode** the proposal | `GovernanceScenario.humanDecision` |
+| Assistant role-scoping verified automatically — a university context can never contain an individual student record | [`scripts/verify-assistant.ts`](fursa/scripts/verify-assistant.ts) |
+| Employer blind review, withholding identifying detail at screening | `Job.blindReview` |
 
-- Student profiles
-- Academic records
-- Skills Passport data
-- Career goals
-- Job requirements
-- Employer feedback
-- Workforce outcomes
+Published policies: [Privacy](https://fursah.org/policies/privacy) ·
+[Responsible AI](https://fursah.org/policies/responsible-ai) ·
+[Terms](https://fursah.org/policies/terms) ·
+[Accessibility](https://fursah.org/policies/accessibility)
 
-### 2. Feature Engineering
-Data is transformed into meaningful indicators such as:
+### Known limitations
 
-- Skill-gap measurements
-- Career-role alignment
-- Experience relevance
-- Competency coverage
-- Readiness indicators
+Stated here rather than discovered later:
 
-### 3. Model Intelligence
-AI/ML components support:
-
-- Career pathway recommendations
-- Skills-gap analysis
-- Career readiness assessment
-- Candidate-job matching
-- Workforce trend analysis
-
-### 4. Deployment & Monitoring
-Models are continuously evaluated for:
-
-- Recommendation quality
-- Matching performance
-- Bias and fairness
-- Model drift
-- Reliability
+- **Prototype hosting is not in-Kingdom.** Application hosting (Vercel),
+  storage (Cloudflare R2), and model inference (Cloudflare Workers AI) are not
+  currently pinned to a Saudi region. Production deployment requires binding
+  these to a compliant region and documenting any residual transfer.
+- **No independent WCAG 2.1 AA audit** has been carried out; the conformance
+  claim is a target based on internal review.
+- **Arabic coverage is partial** and still being extended across all portals.
+- **Fairness monitoring cannot use protected attributes**, because none are
+  collected. Disparity review therefore depends on institutions conducting
+  evaluation under their own lawful basis with separately governed data.
+- Some demonstration data is seeded rather than measured. See
+  `npm run seed:governance`.
 
 ---
 

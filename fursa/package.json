@@ -12,7 +12,8 @@
     "start": "next start",
     "lint": "eslint",
     "create-admin": "tsx scripts/create-admin.ts",
-    "db:migrate:production": "node scripts/apply-trust-support-migration.mjs"
+    "db:migrate:production": "node scripts/apply-trust-support-migration.mjs",
+    "seed:governance": "tsx --require ./scripts/allow-server-only.cjs scripts/seed-governance.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1102.0",
