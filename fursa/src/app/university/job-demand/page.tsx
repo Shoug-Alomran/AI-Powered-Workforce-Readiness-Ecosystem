@@ -1,34 +1,335 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db";
 import { getCurrentUniversity } from "@/lib/session";
+import { getEcosystemIntelligence, getUniversityIntelligence } from "@/lib/intelligence";
+import { MIN_COHORT } from "@/lib/cohort";
 
-const skillCards=[
-  ["Cloud Infrastructure","AWS, Azure, GCP","CRITICAL GAP","94","+28% YoY","4,820","Low (35%)","Update Curriculum"],
-  ["Data Science & AI","ML, Python, R","HIGH DEMAND","88","+114% YoY","2,140","Moderate (62%)","Review Courses"],
-  ["Cybersecurity Ops","SOAR, SIEM, Forensics","EMERGING","82","+42% YoY","1,890","Low (28%)","Add Certificate"],
-];
+export default async function UniversityJobDemand() {
+  const ctx = await getCurrentUniversity();
+  if (!ctx) redirect("/login");
 
-const skillDestinations=[
-  "/university/curriculum#course-cloud-infrastructure",
-  "/university/curriculum#course-data-science-ai",
-  "/university/curriculum#certification-mapping",
-];
+  const [ecosystem, intelligence] = await Promise.all([
+    getEcosystemIntelligence(),
+    getUniversityIntelligence(ctx.university.id),
+  ]);
 
-export default async function UniversityJobDemand(){
-  const ctx=await getCurrentUniversity(); if(!ctx) redirect("/login");
-  const jobs=await prisma.job.findMany({where:{status:"open"},include:{employer:true}});
-  const employers=new Set(jobs.map(j=>j.employerId)).size;
-  const avg=jobs.length?(jobs.reduce((n,j)=>n+j.minExperience,0)/jobs.length/12).toFixed(1):"3.2";
-  return <main className="wdi-page">
-    <header className="wdi-title"><div><h1>Workforce Demand Intelligence</h1><p>⌾ Riyadh Region, KSA　 ·　 ◷ Data Freshness: 12h ago　 ·　 ♙ 1,248 Employers Analyzed　 ·　 ▣ 45,200 Active Postings</p></div><div><a href="/api/university/export">⚑ Generate Report</a></div></header>
-    <section className="wdi-summary"><b>✦　AI EXECUTIVE SUMMARY</b><p>Software Engineering demand remains strong across Riyadh. Cloud computing, Python, DevOps, and AI skills continue<br/>to grow while spreadsheet-focused roles are gradually declining. A <strong>12% mismatch</strong> exists between existing CS<br/>curriculum and industry cloud requirements.</p></section>
-    <section className="wdi-metrics">{[["ACTIVE POSTINGS",jobs.length||"45,212","↗ 8.4%"],["EMPLOYERS",employers||"1,248","↗ 2.1%"],["CAREER TRACKS","142","Stable"],["AVG EXPERIENCE",`${avg}y`,"↗ 0.4y"],["TOP EMERGING SKILL","GenAI","♧ +420%"],["ALIGNMENT SCORE","72%","↘ 4%"]].map((x,i)=><article className={i===5?"score":""} key={x[0]}><small>{x[0]}</small><strong>{x[1]}</strong><b>{x[2]}</b></article>)}</section>
-    <section className="wdi-filters"><button>▽　Filters</button><button>Career Track　⌄</button><button>Industry　⌄</button><button>Employer　⌄</button><button>Experience　⌄</button><button>Demand Trend　⌄</button><span>Riyadh　×</span><a>Saved Filters</a><small>Clear All</small></section>
-    <div className="wdi-layout"><div>
-      <section className="wdi-skills"><header><h2>ϟ　Skill Intelligence</h2></header><div>{skillCards.map((s,i)=><article key={s[0]}><label className={`t${i}`}>{s[2]}</label><h3>{s[0]}</h3><p>{s[1]}</p><div className="demand"><span>Demand Score</span><b>{s[3]}/100</b><i><em style={{width:`${s[3]}%`}}/></i></div><div className="skill-stats"><span><small>GROWTH</small><b>{s[4]}</b></span><span><small>OPEN JOBS</small><strong>{s[5]}</strong></span></div><footer>UNIV COVERAGE: <b>{s[6]}</b><Link href={skillDestinations[i]}>{s[7]}</Link></footer></article>)}</div></section>
-      <section className="wdi-gaps"><header><h2>Curriculum Gap Analysis</h2><div><span>Total Gaps: 24</span><b>High Priority: 6</b></div></header>{[["Cloud Deployment Strategies","Employer demand for AWS Lambda and Serverless architectures has spiked 240% in Riyadh Fintech sector.","80% Deficit","Integrate AWS Cloud Practitioner track into Year 3 CS.","420 Students affected","Apply Recommendation"],["AI Prompt Engineering","Enterprise employers now list prompt engineering as a core competency for all developer and analyst roles.","100% Deficit","Add 2-week lab module to Introductory Computing.","1,250 Students affected","Review Lab Plan"]].map((g,i)=><article key={g[0]}><div><h3>{g[0]}</h3><p>{g[1]}</p><span>{i?"MIS 201　 GEN 101":"CS 402　 SWE 310"}</span></div><div><small>COVERAGE GAP</small><b className="deficit">━━　 {g[2]}</b><small>EMPLOYABILITY IMPACT</small><b className="positive">+{i?"12":"18"}% Hireability</b></div><div><small>SUGGESTED ACTION</small><p>{g[3]}</p><small>READY CANDIDATES</small><b>{g[4]}</b></div><button className={i?"secondary":""}>{g[5]}</button></article>)}</section>
-      <section className="wdi-bottom"><article className="wdi-employers"><h2>♙ Employer Demand Breakdown</h2><small>TOP HIRING COMPANIES</small><div className="companies"><span>STC</span><span>ARM Aramco</span><span>PIF</span><span>NEOM</span></div><div className="sectors"><span>SECTOR DEMAND<label>Public Sector <b>62%</b><i><em style={{width:"62%"}}/></i></label><label>Private Sector <b>38%</b><i><em style={{width:"38%"}}/></i></label></span><strong>24%<small>Jobs Remote/Hybrid</small></strong></div></article><article className="wdi-trends"><h2>⌁ Predictive Trends (2025-2027)</h2><div className="growth"><b>♧　HIGH GROWTH FORECAST</b><p>Quantum Computing and Bio-Tech integration is projected to grow by 120% in the Riyadh Tech Hub by 2026.</p></div><div className="decline"><b>⌁　DECLINING DEMAND</b><p>Manual QA and basic Data Entry roles are projected to shrink by 45% as LLM automation matures.</p></div>{[["2025","43%"],["2026","68%"],["2027","91%"]].map(y=><label key={y[0]}>{y[0]}<i><em style={{width:y[1]}}/></i></label>)}</article></section>
-    </div><aside className="wdi-aside"><section className="wdi-action"><h2>ϟ AI Action Center</h2><small>HIGHEST PRIORITY</small><article><h3>Revise SWE 402: Distributed Systems</h3><p>Current focus is legacy monolithic. Market requires Kubernetes & Microservices.</p><b>+14% Placement <a>Start Revision</a></b></article><small>RECOMMENDED CERTIFICATION</small><article><h3>▣　AWS Cloud Practitioner</h3><p>84 Employers request this</p><button>Partner with AWS</button></article><small>EMERGING TECH TO WATCH</small>{[["Web3 & Solidity","+18%"],["Digital Twins","+12%"],["Rust Programming","+34%"]].map(x=><label key={x[0]}>{x[0]}<b>{x[1]}</b></label>)}<div className="forecast"><small>ALIGNMENT IMPROVEMENT FORECAST</small><strong>84% <em>Target if actions applied by Q3 2024</em></strong><i/></div></section><section className="wdi-partners"><h3>Suggested Industry Partners</h3><p><b>M</b><span><strong>Microsoft Gulf</strong><small>AI & Cloud Track</small></span>⊕</p><p><b>S</b><span><strong>SAP Saudi</strong><small>ERP Transformation</small></span>⊕</p></section></aside></div>
-  </main>;
+  const topSkills = ecosystem.skills.slice(0, 3);
+  const gaps = intelligence.recommendations.filter((entry) => entry.type === "ADD_OFFERING").slice(0, 3);
+
+  const coverageBySkillId = new Map(intelligence.coveredSkills.map((skill) => [skill.skillId, skill]));
+
+  const employerSectors = [...
+    ecosystem.hardToFillRoles.reduce((map, role) => {
+      map.set(role.careerTrack, (map.get(role.careerTrack) ?? 0) + 1);
+      return map;
+    }, new Map<string, number>())]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4);
+
+  return (
+    <main className="wdi-page">
+      <header className="wdi-title">
+        <div>
+          <h1>Workforce Demand Intelligence</h1>
+          <p>
+            ◷ Generated {ecosystem.generatedAt.toLocaleString()}　 ·　 ♙ {ecosystem.employerCount} verified employer(s)
+            analysed　 ·　 ▣ {ecosystem.openRoleCount} open posting(s)　 ·　 ⌾ Model {ecosystem.modelVersion}
+          </p>
+        </div>
+        <div>
+          <a href="/api/university/export">⚑ Generate Report</a>
+        </div>
+      </header>
+
+      <section className="wdi-summary">
+        <b>✦　EXECUTIVE SUMMARY</b>
+        <p>
+          {ecosystem.summary.join(" ")} Figures on this page are counts over the platform&apos;s current records. No
+          growth rate or forecast is shown, because no historical demand series is stored.
+        </p>
+      </section>
+
+      <section className="wdi-metrics">
+        {[
+          ["ACTIVE POSTINGS", String(ecosystem.openRoleCount), "Live"],
+          ["EMPLOYERS", String(ecosystem.employerCount), "Verified"],
+          ["CAREER TRACKS", String(ecosystem.careerTracks.length), "Configured"],
+          ["REQUESTED SKILLS", String(ecosystem.skills.length), "Distinct"],
+          [
+            "STUDENT PROFILES",
+            String(ecosystem.studentCount),
+            ecosystem.readinessReportable ? `${ecosystem.averageReadiness}/100 avg` : `< ${MIN_COHORT} scored`,
+          ],
+          ["YOUR COVERAGE", `${intelligence.weightedDemandCoverage}%`, `${intelligence.gaps.length} gaps`],
+        ].map((entry, index) => (
+          <article className={index === 5 ? "score" : ""} key={entry[0]}>
+            <small>{entry[0]}</small>
+            <strong>{entry[1]}</strong>
+            <b>{entry[2]}</b>
+          </article>
+        ))}
+      </section>
+
+      <div className="wdi-layout">
+        <div>
+          <section className="wdi-skills">
+            <header>
+              <h2>ϟ　Skill Intelligence</h2>
+              <Link href="/university/curriculum">Curriculum workspace →</Link>
+            </header>
+            <div>
+              {topSkills.length ? (
+                topSkills.map((skill, index) => {
+                  const coverage = coverageBySkillId.get(skill.id);
+                  const covered = coverage?.covered ?? false;
+                  const demandScore = Math.round(
+                    (skill.demandPoints / Math.max(1, ecosystem.skills[0].demandPoints)) * 100,
+                  );
+
+                  return (
+                    <article key={skill.id}>
+                      <label className={covered ? `t${index === 0 ? 1 : 2}` : ""}>
+                        {covered ? "COVERED" : "COVERAGE GAP"}
+                      </label>
+                      <h3>{skill.name}</h3>
+                      <p>{skill.category === "soft" ? "Soft skill" : "Technical skill"}</p>
+                      <div className="demand">
+                        <span>Relative demand</span>
+                        <b>{demandScore}/100</b>
+                        <i>
+                          <em style={{ width: `${demandScore}%` }} />
+                        </i>
+                      </div>
+                      <div className="skill-stats">
+                        <span>
+                          <small>STUDENTS EVIDENCING</small>
+                          <b>{skill.studentsWithSkill}</b>
+                        </span>
+                        <span>
+                          <small>OPEN ROLES</small>
+                          <strong>{skill.openRoleCount}</strong>
+                        </span>
+                      </div>
+                      <footer>
+                        UNIV COVERAGE: <b>{covered ? coverage!.offeringTitles.join(", ") : "None"}</b>
+                        <Link href={covered ? "/university/curriculum" : "/university/offerings"}>
+                          {covered ? "Review course" : "Add an offering"}
+                        </Link>
+                      </footer>
+                    </article>
+                  );
+                })
+              ) : (
+                <article>
+                  <h3>No skill demand recorded</h3>
+                  <p>No open role currently lists a structured skill requirement.</p>
+                </article>
+              )}
+            </div>
+          </section>
+
+          <section className="wdi-gaps">
+            <header>
+              <h2>Curriculum Gap Analysis</h2>
+              <div>
+                <span>Total gaps: {intelligence.gaps.length}</span>
+                <b>Compounded: {intelligence.compoundedGaps.length}</b>
+              </div>
+            </header>
+            {gaps.length ? (
+              gaps.map((gap) => (
+                <article key={gap.skillId}>
+                  <div>
+                    <h3>{gap.skillName}</h3>
+                    <p>{gap.reason}</p>
+                    <span>{gap.alreadyPlanned ? "Initiative exists" : "No initiative yet"}</span>
+                  </div>
+                  <div>
+                    <small>OPEN ROLES REQUESTING</small>
+                    <b className="deficit">{gap.relatedOpenRoles}</b>
+                    <small>COHORT MISSING</small>
+                    <b className="positive">
+                      {gap.cohortMissingSharePct === null ? "Withheld" : `${gap.cohortMissingSharePct}%`}
+                    </b>
+                  </div>
+                  <div>
+                    <small>PRIORITY SCORE</small>
+                    <p>
+                      {Math.round(gap.priorityScore)} — derived from employer demand points, requesting role count, and
+                      the share of your reported cohort missing the skill.
+                    </p>
+                    <small>DECISION</small>
+                    <b>Institution&apos;s</b>
+                  </div>
+                  <Link className="button secondary" href="/university/actions/new">
+                    Open initiative
+                  </Link>
+                </article>
+              ))
+            ) : (
+              <article>
+                <div>
+                  <h3>No uncovered demand</h3>
+                  <p>Every skill currently requested by an open role is mapped to at least one of your offerings.</p>
+                </div>
+                <div />
+                <div />
+                <Link className="button secondary" href="/university/curriculum">
+                  Review curriculum
+                </Link>
+              </article>
+            )}
+          </section>
+
+          <section className="wdi-bottom">
+            <article className="wdi-employers">
+              <h2>♙ Employer Demand Breakdown</h2>
+              <small>CAREER TRACKS WITH OPEN ROLES</small>
+              <div className="companies">
+                {ecosystem.careerTracks
+                  .filter((track) => track.openRoleCount > 0)
+                  .slice(0, 4)
+                  .map((track) => (
+                    <span key={track.careerTrackId}>
+                      {track.careerTrackLabel} ({track.openRoleCount})
+                    </span>
+                  ))}
+                {ecosystem.careerTracks.every((track) => track.openRoleCount === 0) && <span>No open roles</span>}
+              </div>
+              <div className="sectors">
+                <span>
+                  ROLES BY DIFFICULTY
+                  {employerSectors.length ? (
+                    employerSectors.map(([track, count]) => (
+                      <label key={track}>
+                        {track.replaceAll("-", " ")} <b>{count}</b>
+                        <i>
+                          <em
+                            style={{
+                              width: `${Math.round((count / Math.max(1, employerSectors[0][1])) * 100)}%`,
+                            }}
+                          />
+                        </i>
+                      </label>
+                    ))
+                  ) : (
+                    <label>No structured requirements recorded</label>
+                  )}
+                </span>
+                <strong>
+                  {ecosystem.hardToFillRoles.filter((role) => role.qualifiedStudents === 0).length}
+                  <small>Roles with no fully qualified profile</small>
+                </strong>
+              </div>
+            </article>
+
+            <article className="wdi-trends">
+              <h2>⌁ Talent supply against demand</h2>
+              <div className="growth">
+                <b>♧　WIDEST SUPPLY GAPS</b>
+                <p>
+                  {ecosystem.supplyGaps.length
+                    ? ecosystem.supplyGaps
+                        .slice(0, 3)
+                        .map(
+                          (skill) =>
+                            `${skill.name}: ${skill.studentsWithSkill} student(s) evidence it against ${skill.openRoleCount} requesting role(s)`,
+                        )
+                        .join("; ")
+                    : "No requested skill currently has fewer evidencing students than requesting roles."}
+                </p>
+              </div>
+              <div className="decline">
+                <b>⌁　NOT MEASURED</b>
+                <p>
+                  Growth, decline, and forecast figures are not published: the platform records no historical demand
+                  snapshots, so change over time cannot be evidenced.
+                </p>
+              </div>
+              {ecosystem.skills.slice(0, 3).map((skill) => (
+                <label key={skill.id}>
+                  {skill.name}
+                  <i>
+                    <em
+                      style={{
+                        width: `${Math.round((skill.demandPoints / Math.max(1, ecosystem.skills[0].demandPoints)) * 100)}%`,
+                      }}
+                    />
+                  </i>
+                </label>
+              ))}
+            </article>
+          </section>
+        </div>
+
+        <aside className="wdi-aside">
+          <section className="wdi-action">
+            <h2>ϟ Action Center</h2>
+            <small>HIGHEST PRIORITY</small>
+            {intelligence.recommendations[0] ? (
+              <article>
+                <h3>{intelligence.recommendations[0].skillName}</h3>
+                <p>{intelligence.recommendations[0].reason}</p>
+                <b>
+                  Priority {Math.round(intelligence.recommendations[0].priorityScore)}{" "}
+                  <Link href="/university/actions/new">Open initiative</Link>
+                </b>
+              </article>
+            ) : (
+              <article>
+                <h3>No action required</h3>
+                <p>No uncovered employer demand is currently detected for this catalogue.</p>
+              </article>
+            )}
+
+            <small>CERTIFICATION DEMAND</small>
+            {ecosystem.certifications.length ? (
+              ecosystem.certifications.slice(0, 2).map((certification) => (
+                <article key={certification.certificationId}>
+                  <h3>▣　{certification.name}</h3>
+                  <p>
+                    {certification.openRoleCount} open role(s) require it · {certification.verifiedHolders} student(s)
+                    hold it with verified evidence ·{" "}
+                    {certification.offeredByUniversity ? "granted by an offering" : "not granted here"}
+                  </p>
+                </article>
+              ))
+            ) : (
+              <article>
+                <h3>No certification requested</h3>
+                <p>No open role currently requires a specific certification.</p>
+              </article>
+            )}
+
+            <small>ROLES THE POOL CANNOT FILL</small>
+            {ecosystem.hardToFillRoles.slice(0, 3).map((role) => (
+              <label key={role.jobId}>
+                {role.jobTitle}
+                <b>{role.qualifiedStudents} qualified</b>
+              </label>
+            ))}
+            {ecosystem.hardToFillRoles.length === 0 && <label>No role with structured requirements yet</label>}
+          </section>
+
+          <section className="wdi-partners">
+            <h3>Coverage summary</h3>
+            <p>
+              <b>{intelligence.weightedDemandCoverage}%</b>
+              <span>
+                <strong>Weighted demand covered</strong>
+                <small>{intelligence.offeringCount} offering(s) published</small>
+              </span>
+            </p>
+            <p>
+              <b>{intelligence.gaps.length}</b>
+              <span>
+                <strong>Uncovered requested skills</strong>
+                <small>{intelligence.compoundedGaps.length} also missing across your cohort</small>
+              </span>
+            </p>
+          </section>
+        </aside>
+      </div>
+    </main>
+  );
 }

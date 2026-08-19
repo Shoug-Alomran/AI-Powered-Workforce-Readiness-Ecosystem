@@ -43,20 +43,52 @@ export default async function Jobs({
       : {}),
   };
 
-  const [jobs, tracks] = await Promise.all([
+  const [jobs, tracks, offerings] = await Promise.all([
     prisma.job.findMany({
       where,
       include: { employer: true, requiredSkills: { include: { skill: true } }, requiredCerts: { include: { certification: true } } },
       orderBy: { createdAt: "desc" },
     }),
     getAllCareerTracksAsync(),
+    prisma.offering.findMany({
+      include: { university: true, skills: { include: { skill: true } } },
+    }),
   ]);
+
+  // One lookup built once, rather than a query per job: which offering closes a
+  // given skill gap, so a missing requirement can be shown next to the course
+  // that addresses it.
+  const offeringBySkill = new Map<string, { title: string; institution: string; url: string | null }>();
+  for (const offering of offerings) {
+    for (const entry of offering.skills) {
+      const key = entry.skill.name.trim().toLowerCase();
+      if (!offeringBySkill.has(key)) {
+        offeringBySkill.set(key, {
+          title: offering.title,
+          institution: offering.university.institution,
+          url: offering.url,
+        });
+      }
+    }
+  }
+
+  const verifiedCertificationCount = student.certifications.filter(
+    (entry) => entry.verificationStatus === "APPROVED",
+  ).length;
+
+  const unverifiedCertificationCount = student.certifications.length - verifiedCertificationCount;
 
   return (
     <main className="page-shell student-job-discovery">
       <span className="eyebrow">Explainable matching</span>
       <h1 className="page-title">Opportunities matched to you</h1>
       <p className="muted">Scores show both strengths and gaps, never a black-box rejection.</p>
+      <p className="muted" style={{ fontSize: 13 }}>
+        Matching counts {verifiedCertificationCount} human-verified certification(s).
+        {unverifiedCertificationCount > 0
+          ? ` ${unverifiedCertificationCount} submitted certification(s) are still awaiting review and do not yet count towards a match.`
+          : ""}
+      </p>
 
       <form className="card" style={{ marginTop: 26, display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
         <label style={{ fontSize: 13, fontWeight: 650, color: "#43564f" }}>
@@ -100,6 +132,42 @@ export default async function Jobs({
                 </div>
               </div>
               <div className="notice student-job-explanation">{m.explanation}</div>
+
+              {m.missingSkills.length > 0 && (
+                <div style={{ marginTop: 10 }}>
+                  <strong>Highest-impact skills for this role</strong>
+                  {job.requiredSkills
+                    .filter((requirement) => m.missingSkills.includes(requirement.skill.name))
+                    .sort(
+                      (a, b) =>
+                        b.weight - a.weight ||
+                        Number(b.requirementType === "ESSENTIAL") - Number(a.requirementType === "ESSENTIAL"),
+                    )
+                    .slice(0, 3)
+                    .map((requirement) => {
+                      const offering = offeringBySkill.get(requirement.skill.name.trim().toLowerCase());
+                      return (
+                        <div className="data-row" key={requirement.id}>
+                          <div>
+                            <strong>{requirement.skill.name}</strong>
+                            <div className="muted" style={{ fontSize: 12 }}>
+                              {requirement.requirementType === "PREFERRED" ? "Preferred" : "Essential"} · importance{" "}
+                              {requirement.weight}/3
+                              {offering ? ` · taught by ${offering.title} (${offering.institution})` : ""}
+                            </div>
+                          </div>
+                          {offering?.url ? (
+                            <a className="link" href={offering.url} target="_blank" rel="noreferrer">
+                              View course →
+                            </a>
+                          ) : (
+                            <span className="pill">Gap</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
               <footer className="student-job-card-footer">
                 <form action={applyToJob} className="student-job-apply-form">
                   <input type="hidden" name="jobId" value={job.id} />

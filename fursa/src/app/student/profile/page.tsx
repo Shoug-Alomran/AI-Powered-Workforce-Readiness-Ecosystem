@@ -20,7 +20,9 @@ export default async function Profile({ searchParams }: { searchParams: Promise<
   ]);
   const track = tracks.find(item => item.id === s.targetCareer) ?? tracks[0];
   const readiness = track ? computeReadinessScore(s, track) : { score: 0 };
-  const verifiedCerts = s.certifications.filter(item => item.verificationStatus === "VERIFIED").length;
+  // "APPROVED" is the value the review workflow writes; the previous
+  // "VERIFIED" comparison never matched, so this count always read zero.
+  const verifiedCerts = s.certifications.filter(item => item.verificationStatus === "APPROVED").length;
   const evidenceCount = s.skills.length + s.projects.length + s.certifications.length + s.experiences.length;
   const initials = ctx.user.name.split(" ").map(part => part[0]).slice(0,2).join("").toUpperCase();
 

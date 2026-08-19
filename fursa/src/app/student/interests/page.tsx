@@ -4,7 +4,8 @@ import { prisma } from "@/lib/db";
 import { getCurrentStudent } from "@/lib/session";
 import { computeJobMatch, computeReadinessScore, getTrackGaps, matchOfferingsToGaps, readinessBand } from "@/lib/ai";
 import { getAllCareerTracksAsync } from "@/lib/careerTracks.server";
-import { setPrimaryCareerTrack, toggleFavoriteCompany, toggleFavoriteCareerTrack } from "@/actions/student";
+import { dismissCareerSuggestion, exploreSuggestedCareer, setPrimaryCareerTrack, toggleFavoriteCompany, toggleFavoriteCareerTrack } from "@/actions/student";
+import { getStudentIntelligence } from "@/lib/intelligence";
 import PageToc from "@/components/PageToc";
 import CareerMajorSelector from "@/components/CareerMajorSelector";
 
@@ -17,7 +18,7 @@ export default async function StudentInterests({
   if (!ctx) redirect("/login");
   const { trackQ = "", companyQ = "", setup = "" } = await searchParams;
 
-  const [student, tracks, employers, offerings] = await Promise.all([
+  const [student, tracks, employers, offerings, intelligence] = await Promise.all([
     prisma.student.findUniqueOrThrow({
       where: { id: ctx.student.id },
       include: {
@@ -43,7 +44,11 @@ export default async function StudentInterests({
     prisma.offering.findMany({
       include: { university: true, skills: { include: { skill: true } }, certification: true },
     }),
+    getStudentIntelligence(ctx.student.id),
   ]);
+
+  const directionSuggestion = intelligence.directionSuggestion;
+  const careerMatches = intelligence.careerMatches.slice(0, 5);
 
   const trackById = new Map(tracks.map((t) => [t.id, t]));
   const favoriteTrackIds = new Set(student.favoriteCareerTracks.map((f) => f.careerTrackId));
@@ -81,7 +86,85 @@ export default async function StudentInterests({
         <form action={setPrimaryCareerTrack} className="student-career-selector-form"><CareerMajorSelector tracks={tracks.map(({id,label})=>({id,label}))} initialCareer={hasPrimaryCareer?student.targetCareer:""} careerName="careerTrackId"/><button className="button primary">Save target career</button></form>
       </section>}
 
-      <section className="card student-ai-section" id="recommendations" style={{ marginTop: 26, scrollMarginTop: 80 }}>
+      {directionSuggestion.shouldSuggestChange && directionSuggestion.suggestedCareer && (
+        <section className="card" style={{ marginTop: 26, borderWidth: 2 }}>
+          <span className="eyebrow">CAREER DIRECTION SIGNAL</span>
+          <h2>Your activity may be pointing toward {directionSuggestion.suggestedCareer.careerTrackLabel}</h2>
+          <p className="muted">{directionSuggestion.reason}</p>
+          {directionSuggestion.supportingSignals.length > 0 && (
+            <ul className="muted" style={{ fontSize: 12, paddingLeft: 18 }}>
+              {directionSuggestion.supportingSignals.slice(0, 4).map((signal, index) => (
+                <li key={`${signal.type}-${index}`}>{signal.reason}</li>
+              ))}
+              {directionSuggestion.disengagementSignals.slice(0, 2).map((signal, index) => (
+                <li key={`negative-${signal.type}-${index}`}>{signal.reason}</li>
+              ))}
+            </ul>
+          )}
+          <div className="actions" style={{ marginTop: 12 }}>
+            <form action={exploreSuggestedCareer}>
+              <input type="hidden" name="careerTrackId" value={directionSuggestion.suggestedCareer.careerTrackId} />
+              <button className="button primary">Explore this direction</button>
+            </form>
+            <form action={dismissCareerSuggestion}>
+              <input type="hidden" name="careerTrackId" value={directionSuggestion.suggestedCareer.careerTrackId} />
+              <button className="button secondary">
+                Keep {directionSuggestion.currentCareer?.careerTrackLabel ?? "my current target"}
+              </button>
+            </form>
+          </div>
+          <p className="muted" style={{ fontSize: 13, marginTop: 10 }}>
+            Exploring follows the track so recommendations include it. Your target career is only ever changed by you.
+          </p>
+        </section>
+      )}
+
+      <section className="card" style={{ marginTop: 18 }}>
+        <span className="eyebrow">CAREER MATCHING</span>
+        <h2>Careers your evidence currently points to</h2>
+        <p className="muted">
+          Ranked from readiness against each career track, demonstrated interest in your own activity, and how often
+          employers currently request the skills that career needs.
+        </p>
+        {careerMatches.length ? (
+          careerMatches.map((career, index) => (
+            <div className="data-row" key={career.careerTrackId}>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+                  <span className="pill">#{index + 1}</span>
+                  <strong>{career.careerTrackLabel}</strong>
+                  {career.careerTrackId === student.targetCareer && <span className="pill">Current target</span>}
+                </div>
+                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
+                  Readiness {career.readinessScore}% · Interest {career.interestScore}% · Employer demand{" "}
+                  {career.marketDemandScore}%
+                </div>
+                <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+                  {career.reasons.join(" ")}
+                </div>
+              </div>
+              <div className="actions" style={{ flexDirection: "column", alignItems: "flex-end" }}>
+                <span className="pill">{career.recommendationScore}% fit</span>
+                {career.careerTrackId !== student.targetCareer && (
+                  <form action={setPrimaryCareerTrack}>
+                    <input type="hidden" name="careerTrackId" value={career.careerTrackId} />
+                    <button className="button secondary">Set as target</button>
+                  </form>
+                )}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="notice">
+            Career matching appears once career tracks are configured and your passport has structured evidence.
+          </div>
+        )}
+        <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+          Model {intelligence.modelVersion}. Recommendations only; Fursah never changes your target career for you.
+        </p>
+      </section>
+
+      <section className="card student-ai-section" id="recommendations" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">AI career interest matching</span>
         <h2>Your matches & recommendations</h2>
 

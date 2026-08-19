@@ -145,6 +145,57 @@ try {
 
 
   // =========================================================
+  // ROADMAP INTELLIGENCE METADATA MIGRATION
+  // =========================================================
+  // Adds the columns the intelligence engine writes when it generates a
+  // roadmap recommendation (career direction, skill/offering/certification the
+  // recommendation addresses, its explanation, score, generation time, and an
+  // explicit dismissal marker). Additive only: existing roadmap rows keep
+  // their values and simply carry NULL metadata until the next sync.
+
+  const roadmapColumns =
+    await client.execute(
+      "PRAGMA table_info('RoadmapItem')"
+    );
+
+  const hasRecommendationReason =
+    roadmapColumns.rows.some(
+      (row) => row.name === "recommendationReason"
+    );
+
+  const hasDismissedAt =
+    roadmapColumns.rows.some(
+      (row) => row.name === "dismissedAt"
+    );
+
+  if (
+    !hasRecommendationReason ||
+    !hasDismissedAt
+  ) {
+    console.log(
+      "Applying roadmap intelligence metadata migration..."
+    );
+
+    const intelligenceMigration =
+      await readFile(
+        new URL(
+          "../prisma/migrations/20260819030000_intelligence_metadata/migration.sql",
+          import.meta.url
+        ),
+        "utf8"
+      );
+
+    await client.executeMultiple(
+      intelligenceMigration
+    );
+
+    console.log(
+      "Roadmap intelligence metadata migration applied."
+    );
+  }
+
+
+  // =========================================================
   // VERIFY DATABASE STATE
   // =========================================================
 
@@ -245,6 +296,34 @@ try {
     throw new Error(
       "Evidence AI migration verification failed: aiAnalyzedAt column missing"
     );
+  }
+
+
+  // Roadmap intelligence verification
+  const roadmapCheck =
+    await client.execute(
+      "PRAGMA table_info('RoadmapItem')"
+    );
+
+  for (const column of [
+    "careerTrackId",
+    "skillId",
+    "offeringId",
+    "certificationId",
+    "recommendationReason",
+    "recommendationScore",
+    "generatedAt",
+    "dismissedAt",
+  ]) {
+    if (
+      !roadmapCheck.rows.some(
+        (row) => row.name === column
+      )
+    ) {
+      throw new Error(
+        `Roadmap intelligence migration verification failed: ${column} column missing`
+      );
+    }
   }
 
 

@@ -1,4 +1,4 @@
-import { GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, GetObjectCommand, PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
 const accountId = process.env.R2_ACCOUNT_ID;
 const accessKeyId = process.env.R2_ACCESS_KEY_ID;
@@ -46,6 +46,11 @@ export async function downloadPrivateDocument(key: string) {
   const result = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
   if (!result.Body) throw new Error("Private document is empty");
   return result.Body.transformToByteArray();
+}
+
+export async function deletePrivateDocument(key: string) {
+  const { client, bucket } = getR2Client();
+  await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 }
 
 export const uploadPrivateCertificate = uploadPrivateDocument;

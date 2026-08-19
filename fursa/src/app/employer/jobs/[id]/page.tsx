@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentEmployer } from "@/lib/session";
 import { computeJobMatch } from "@/lib/ai";
+import { getEmployerIntelligence } from "@/lib/intelligence";
 import { closeJob, reopenJob } from "@/actions/employer";
 import PageToc from "@/components/PageToc";
 import EmployerHeader from "@/components/EmployerHeader";
@@ -45,10 +46,16 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
 
   if (!job || job.employerId !== ctx.employer.id) notFound();
 
-  const jobDocuments = await prisma.evidenceDocument.findMany({
-    where: { contextType: "JOB", contextId: job.id },
-    orderBy: { createdAt: "asc" },
-  });
+  const [jobDocuments, intelligence] = await Promise.all([
+    prisma.evidenceDocument.findMany({
+      where: { contextType: "JOB", contextId: job.id },
+      orderBy: { createdAt: "asc" },
+    }),
+    getEmployerIntelligence(ctx.employer.id),
+  ]);
+
+  const jobIntelligence = intelligence.jobs.find((entry) => entry.jobId === job.id) ?? null;
+  const fitByStudent = new Map((jobIntelligence?.candidateFits ?? []).map((fit) => [fit.studentId, fit]));
 
   const feedbackByStudent = new Map(job.feedbacks.map((f) => [f.studentId, f]));
   const candidates = job.applications
@@ -109,10 +116,92 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
         </div>}
       </section>
 
+      {jobIntelligence && (
+        <section className="card" style={{ marginTop: 18 }}>
+          <span className="eyebrow">Role intelligence</span>
+          <h2>Pipeline and requirement quality</h2>
+          <div className="grid-3">
+            <div>
+              <div className="data-row">
+                <strong>Requirement quality</strong>
+                <b>{jobIntelligence.quality.score}%</b>
+              </div>
+              <div className="bar"><i style={{ width: `${jobIntelligence.quality.score}%` }} /></div>
+              <p className="muted" style={{ fontSize: 12 }}>
+                Completeness {jobIntelligence.quality.completenessScore}% · structure{" "}
+                {jobIntelligence.quality.requirementQualityScore}% · market realism{" "}
+                {jobIntelligence.quality.marketRealismScore}%
+              </p>
+            </div>
+            <div>
+              <div className="data-row">
+                <strong>Talent availability</strong>
+                <b>{jobIntelligence.candidatePoolSize}</b>
+              </div>
+              <p className="muted" style={{ fontSize: 12 }}>
+                student profile(s) score 60% or above against these requirements;{" "}
+                {jobIntelligence.strongCandidateCount} score 80% or above, out of {intelligence.studentPoolSize} on the
+                platform.
+              </p>
+            </div>
+            <div>
+              <div className="data-row">
+                <strong>Hiring difficulty</strong>
+                <b>{jobIntelligence.hiringDifficulty}</b>
+              </div>
+              <p className="muted" style={{ fontSize: 12 }}>
+                Derived from how many profiles satisfy the structured requirements, not from any candidate attribute.
+              </p>
+            </div>
+          </div>
+
+          {jobIntelligence.insights.length > 0 && (
+            <div className="notice" style={{ marginTop: 12 }}>{jobIntelligence.insights.join(" ")}</div>
+          )}
+
+          {jobIntelligence.quality.issues.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <strong>Suggested improvements to this posting</strong>
+              {jobIntelligence.quality.issues.map((issue) => (
+                <div className="data-row" key={issue}><span className="muted">{issue}</span></div>
+              ))}
+            </div>
+          )}
+
+          {jobIntelligence.recurringGaps.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <strong>Requirements applicants most often cannot evidence</strong>
+              {jobIntelligence.recurringGaps.slice(0, 5).map((gap) => (
+                <div className="data-row" key={gap.skillName}>
+                  <span>{gap.skillName}</span>
+                  <b>
+                    {gap.applicantCount} applicant(s) · {gap.sharePct}%
+                  </b>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {jobIntelligence.scarceSkills.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <strong>Scarce in the current talent pool</strong>
+              <p className="muted">
+                {jobIntelligence.scarceSkills.map((skill) => skill.name).join(", ")}
+              </p>
+            </div>
+          )}
+        </section>
+      )}
+
       <section className="card" id="candidates" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">AI candidate ranking</span>
         <h2>Candidates, ranked with full explainability</h2>
         <p className="muted">Click a candidate to view their full profile and take action. This list stays put so you can compare everyone at once.</p>
+        <p className="muted" style={{ fontSize: 13 }}>
+          Ranking uses only job-related evidence: skills against the requirements above, certifications, experience, and
+          whether that evidence has been human-verified. No demographic or protected characteristic takes part. Fursah
+          provides decision support; the hiring decision is yours and is recorded against your account.
+        </p>
         {candidates.length === 0 && <div className="notice">No applications yet. Students will appear here as soon as they apply.</div>}
         <div className="stack" style={{ marginTop: 12 }}>
           {candidates.map(({ application, match }) => {
@@ -131,6 +220,21 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
                   <p className="muted" style={{ fontSize: 13, marginTop: 4 }}>
                     {match.matchedSkills.length ? `Matches: ${match.matchedSkills.slice(0, 4).join(", ")}` : "No skill matches yet"}
                   </p>
+                  {match.missingSkills.length > 0 && (
+                    <p className="muted" style={{ fontSize: 13 }}>
+                      Missing: {match.missingSkills.slice(0, 4).join(", ")}
+                    </p>
+                  )}
+                  {(() => {
+                    const fit = fitByStudent.get(s.id);
+                    if (!fit) return null;
+                    return (
+                      <p className="muted" style={{ fontSize: 12, marginTop: 4 }}>
+                        {fit.verifiedEvidenceItems} of {fit.evidenceItems} evidence item(s) human-verified ·{" "}
+                        {fit.verifiedExperienceMonths} of {fit.experienceMonths} experience month(s) verified
+                      </p>
+                    );
+                  })()}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, alignItems: "flex-end" }}>
                   <span className="pill">{match.score}% match</span>

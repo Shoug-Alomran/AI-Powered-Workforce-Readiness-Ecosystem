@@ -5,12 +5,13 @@ import { getCurrentUniversity } from "@/lib/session";
 import { getAllCareerTracksAsync } from "@/lib/careerTracks.server";
 import { computeCohortReadiness, MIN_COHORT } from "@/lib/cohort";
 import PageToc from "@/components/PageToc";
+import { getUniversityIntelligence } from "@/lib/intelligence";
 
 export default async function StudentReadiness() {
   const ctx = await getCurrentUniversity();
   if (!ctx) redirect("/login");
 
-  const [students, tracks] = await Promise.all([
+  const [students, tracks, intelligence] = await Promise.all([
     prisma.student.findMany({
       select: {
         targetCareer: true,
@@ -22,9 +23,17 @@ export default async function StudentReadiness() {
       },
     }),
     getAllCareerTracksAsync(),
+    getUniversityIntelligence(ctx.university.id),
   ]);
 
   const cohort = computeCohortReadiness({ students, tracks, institution: ctx.university.institution });
+
+  // Where employers ask for a skill the cohort has not evidenced: the point at
+  // which readiness reporting becomes a curriculum decision.
+  const demandExceedingReadiness = intelligence.coveredSkills
+    .filter((skill) => skill.openRoleCount > 0 && (skill.cohortMissingCount ?? 0) > 0)
+    .sort((a, b) => (b.cohortMissingSharePct ?? 0) - (a.cohortMissingSharePct ?? 0))
+    .slice(0, 6);
 
   if (!cohort.reportable) {
     return (
@@ -168,6 +177,35 @@ export default async function StudentReadiness() {
               open a curriculum initiative
             </Link>
             .
+          </div>
+        )}
+      </section>
+
+      <section className="card" style={{ marginTop: 18 }}>
+        <span className="eyebrow">Demand vs readiness</span>
+        <h2>Where employer demand exceeds cohort readiness</h2>
+        <p className="muted">
+          Each row is a skill open roles currently request that part of this cohort has not evidenced for their target
+          career. The right-hand column shows whether the catalogue already teaches it.
+        </p>
+        {demandExceedingReadiness.length ? (
+          demandExceedingReadiness.map((skill) => (
+            <div className="data-row" key={skill.skillId}>
+              <div>
+                <strong>{skill.skillName}</strong>
+                <div className="muted">
+                  {skill.openRoleCount} open role(s) request it · missing for {skill.cohortMissingSharePct}% of the
+                  cohort
+                </div>
+              </div>
+              <span className={`pill status-${skill.covered ? "approved" : "pending"}`}>
+                {skill.covered ? `Taught: ${skill.offeringTitles[0]}` : "Not taught here"}
+              </span>
+            </div>
+          ))
+        ) : (
+          <div className="notice">
+            No requested skill is currently missing across this cohort, or cohort figures are withheld.
           </div>
         )}
       </section>

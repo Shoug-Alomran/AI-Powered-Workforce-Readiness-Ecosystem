@@ -7,7 +7,7 @@ import { getCurrentStudent } from "@/lib/session";
 import { getFirebaseAdminDb } from "@/lib/firebase-admin";
 import { redirect } from "next/navigation";
 import { getCareerTrackAsync } from "@/lib/careerTracks.server";
-import { computeReadinessScore } from "@/lib/ai";
+import { getStudentIntelligence, recommendationKey } from "@/lib/intelligence/student";
 import { storeEvidenceDocuments } from "@/lib/documents";
 
 async function requireStudent() {
@@ -292,22 +292,229 @@ export async function toggleFavoriteCareerTrack(formData: FormData) {
 export async function syncRoadmap() {
   const ctx = await getCurrentStudent();
   if (!ctx) throw new Error("Not signed in as a student");
-  const student = await prisma.student.findUniqueOrThrow({
-    where: { id: ctx.student.id },
-    include: { skills: { include: { skill: true } }, certifications: { include: { certification: true } }, experiences: true, projects: true },
-  });
-  const track = await getCareerTrackAsync(student.targetCareer);
-  const result = computeReadinessScore(student, track);
-  const existing = await prisma.roadmapItem.findMany({ where: { studentId: student.id } });
-  const activeTitles = new Set(existing.filter((item) => item.status !== "COMPLETED").map((item) => item.title));
-  for (const [index, title] of result.nextActions.entries()) {
-    if (!activeTitles.has(title)) {
-      await prisma.roadmapItem.create({ data: { studentId: student.id, title, category: title.includes("certification") ? "CERTIFICATION" : title.includes("internship") ? "EXPERIENCE" : title.includes("project") ? "PORTFOLIO" : "SKILL", expectedImpact: Math.max(2, 8 - index) } });
-    }
+
+  const intelligence = await getStudentIntelligence(ctx.student.id);
+
+  const existing = await prisma.roadmapItem.findMany({ where: { studentId: ctx.student.id } });
+
+  // An item is "already handled" when it is still open (so re-adding it would
+  // duplicate work) or when the student dismissed it (so re-adding it would
+  // override an explicit decision). Completed items are allowed to return only
+  // if the underlying gap re-opens, which the intelligence engine decides.
+  const handledKeys = new Set(
+    existing
+      .filter((item) => item.status !== "COMPLETED" || item.dismissedAt !== null)
+      .map((item) =>
+        recommendationKey({
+          careerTrackId: item.careerTrackId,
+          skillId: item.skillId,
+          certificationId: item.certificationId,
+          title: item.title,
+        }),
+      ),
+  );
+
+  const toCreate = intelligence.roadmapRecommendations.filter(
+    (recommendation) =>
+      !handledKeys.has(
+        recommendationKey({
+          careerTrackId: recommendation.careerTrackId,
+          skillId: recommendation.skillId,
+          certificationId: recommendation.certificationId,
+          title: recommendation.title,
+        }),
+      ),
+  );
+
+  if (toCreate.length > 0) {
+    await prisma.roadmapItem.createMany({
+      data: toCreate.map((recommendation) => ({
+        studentId: ctx.student.id,
+        title: recommendation.title,
+        category: recommendation.category,
+        source: "AI",
+        expectedImpact: recommendation.expectedImpact,
+        careerTrackId: recommendation.careerTrackId,
+        skillId: recommendation.skillId,
+        offeringId: recommendation.offeringId,
+        certificationId: recommendation.certificationId,
+        recommendationReason: recommendation.reason,
+        recommendationScore: recommendation.recommendationScore,
+        generatedAt: recommendation.generatedAt,
+      })),
+    });
   }
-  await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: "ROADMAP_SYNCED", entityType: "STUDENT", entityId: student.id, modelVersion: "readiness-rules-v1", explanation: `${result.nextActions.length} current recommendations evaluated` } });
+
+  // Refresh the explanation on recommendations that already exist, so a
+  // roadmap item never keeps stale reasoning after the evidence behind it
+  // changed. Scores and reasons only; the student's own status is untouched.
+  const byKey = new Map(
+    intelligence.roadmapRecommendations.map((recommendation) => [
+      recommendationKey({
+        careerTrackId: recommendation.careerTrackId,
+        skillId: recommendation.skillId,
+        certificationId: recommendation.certificationId,
+        title: recommendation.title,
+      }),
+      recommendation,
+    ]),
+  );
+
+  const refreshable = existing.filter(
+    (item) =>
+      item.source === "AI" &&
+      item.dismissedAt === null &&
+      item.status !== "COMPLETED" &&
+      byKey.has(
+        recommendationKey({
+          careerTrackId: item.careerTrackId,
+          skillId: item.skillId,
+          certificationId: item.certificationId,
+          title: item.title,
+        }),
+      ),
+  );
+
+  await Promise.all(
+    refreshable.map((item) => {
+      const recommendation = byKey.get(
+        recommendationKey({
+          careerTrackId: item.careerTrackId,
+          skillId: item.skillId,
+          certificationId: item.certificationId,
+          title: item.title,
+        }),
+      )!;
+
+      return prisma.roadmapItem.update({
+        where: { id: item.id },
+        data: {
+          recommendationReason: recommendation.reason,
+          recommendationScore: recommendation.recommendationScore,
+          expectedImpact: recommendation.expectedImpact,
+          offeringId: recommendation.offeringId,
+          generatedAt: recommendation.generatedAt,
+        },
+      });
+    }),
+  );
+
+  await prisma.auditEvent.create({
+    data: {
+      actorUserId: ctx.user.id,
+      action: "ROADMAP_SYNCED",
+      entityType: "STUDENT",
+      entityId: ctx.student.id,
+      modelVersion: intelligence.modelVersion,
+      explanation: `${intelligence.roadmapRecommendations.length} recommendation(s) evaluated, ${toCreate.length} added, ${refreshable.length} refreshed.`,
+    },
+  });
+
   revalidatePath("/student/roadmap");
   revalidatePath("/student/dashboard");
+}
+
+/**
+ * Explicit dismissal. Stronger evidence of disinterest than simply leaving an
+ * item unfinished, and recorded as such: the recommendation is not deleted,
+ * and the student can restore it.
+ */
+export async function dismissRoadmapItem(formData: FormData) {
+  const ctx = await getCurrentStudent();
+  if (!ctx) throw new Error("Not signed in as a student");
+  const itemId = String(formData.get("itemId") ?? "");
+  if (!itemId) return;
+
+  const item = await prisma.roadmapItem.findFirst({ where: { id: itemId, studentId: ctx.student.id } });
+  if (!item) throw new Error("Roadmap item not found");
+
+  await prisma.roadmapItem.update({ where: { id: item.id }, data: { dismissedAt: new Date() } });
+  await prisma.auditEvent.create({
+    data: {
+      actorUserId: ctx.user.id,
+      action: "ROADMAP_DISMISSED",
+      entityType: "ROADMAP_ITEM",
+      entityId: item.id,
+      explanation: String(formData.get("note") ?? "").trim() || null,
+    },
+  });
+
+  revalidatePath("/student/roadmap");
+  revalidatePath("/student/dashboard");
+}
+
+export async function restoreRoadmapItem(formData: FormData) {
+  const ctx = await getCurrentStudent();
+  if (!ctx) throw new Error("Not signed in as a student");
+  const itemId = String(formData.get("itemId") ?? "");
+  if (!itemId) return;
+
+  const item = await prisma.roadmapItem.findFirst({ where: { id: itemId, studentId: ctx.student.id } });
+  if (!item) throw new Error("Roadmap item not found");
+
+  await prisma.roadmapItem.update({ where: { id: item.id }, data: { dismissedAt: null } });
+  await prisma.auditEvent.create({
+    data: { actorUserId: ctx.user.id, action: "ROADMAP_RESTORED", entityType: "ROADMAP_ITEM", entityId: item.id },
+  });
+
+  revalidatePath("/student/roadmap");
+  revalidatePath("/student/dashboard");
+}
+
+/**
+ * The student chooses to look at a suggested alternative career. This follows
+ * the track so recommendations start including it; it deliberately does NOT
+ * change `targetCareer`, which only the student can do from their profile or
+ * interests page.
+ */
+export async function exploreSuggestedCareer(formData: FormData) {
+  const ctx = await getCurrentStudent();
+  if (!ctx) throw new Error("Not signed in as a student");
+  const careerTrackId = String(formData.get("careerTrackId") ?? "").trim();
+  if (!careerTrackId) return;
+
+  const existing = await prisma.favoriteCareerTrack.findUnique({
+    where: { studentId_careerTrackId: { studentId: ctx.student.id, careerTrackId } },
+  });
+
+  if (!existing) {
+    await prisma.favoriteCareerTrack.create({ data: { studentId: ctx.student.id, careerTrackId } });
+  }
+
+  await prisma.auditEvent.create({
+    data: {
+      actorUserId: ctx.user.id,
+      action: "CAREER_SUGGESTION_EXPLORED",
+      entityType: "CAREER_TRACK",
+      entityId: careerTrackId,
+      explanation: "Student chose to explore a suggested alternative. Target career unchanged.",
+    },
+  });
+
+  revalidatePath("/student/interests");
+  revalidatePath("/student/dashboard");
+  redirect("/student/interests#recommendations");
+}
+
+/** The student keeps their current direction; the suggestion is suppressed. */
+export async function dismissCareerSuggestion(formData: FormData) {
+  const ctx = await getCurrentStudent();
+  if (!ctx) throw new Error("Not signed in as a student");
+  const careerTrackId = String(formData.get("careerTrackId") ?? "").trim();
+  if (!careerTrackId) return;
+
+  await prisma.auditEvent.create({
+    data: {
+      actorUserId: ctx.user.id,
+      action: "CAREER_SUGGESTION_DISMISSED",
+      entityType: "CAREER_TRACK",
+      entityId: careerTrackId,
+      explanation: "Student confirmed their current target career. Suggestion suppressed.",
+    },
+  });
+
+  revalidatePath("/student/dashboard");
+  revalidatePath("/student/interests");
 }
 
 export async function updateRoadmapItem(formData: FormData) {
@@ -323,7 +530,25 @@ export async function updateRoadmapItem(formData: FormData) {
   await prisma.roadmapItem.update({ where: { id: item.id }, data: { status, studentNote: note || null } });
   if (status === "STRUGGLING" || status === "SKIPPED") {
     const alternativeTitle = status === "STRUGGLING" ? `Take a foundational or mentored alternative for: ${item.title}` : `Choose an alternative route toward: ${item.title}`;
-    await prisma.roadmapItem.create({ data: { studentId: ctx.student.id, title: alternativeTitle, category: item.category, source: "AI", expectedImpact: Math.max(1, item.expectedImpact - 1), alternativeForId: item.id } });
+    await prisma.roadmapItem.create({
+      data: {
+        studentId: ctx.student.id,
+        title: alternativeTitle,
+        category: item.category,
+        source: "AI",
+        expectedImpact: Math.max(1, item.expectedImpact - 1),
+        alternativeForId: item.id,
+        // Carry the intelligence metadata across so the alternative stays
+        // attached to the same career direction and skill gap.
+        careerTrackId: item.careerTrackId,
+        skillId: item.skillId,
+        certificationId: item.certificationId,
+        offeringId: item.offeringId,
+        recommendationReason: `Offered because the student reported ${status === "STRUGGLING" ? "difficulty with" : "skipping"} "${item.title}".`,
+        recommendationScore: item.recommendationScore,
+        generatedAt: new Date(),
+      },
+    });
   }
   await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: `ROADMAP_${status}`, entityType: "ROADMAP_ITEM", entityId: item.id, explanation: note || null } });
   revalidatePath("/student/roadmap");

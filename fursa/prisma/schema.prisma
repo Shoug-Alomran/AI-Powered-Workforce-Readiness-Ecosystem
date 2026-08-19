@@ -306,21 +306,59 @@ model Application {
 // time rather than recalculating a stateless list on every page load.
 
 model RoadmapItem {
-  id               String    @id @default(cuid())
-  studentId        String
-  student          Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  title            String
-  category         String
-  status           String    @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | COMPLETED | SKIPPED | STRUGGLING
-  source           String    @default("AI") // AI | STUDENT | ADVISOR
-  expectedImpact   Int       @default(0)
-  targetDate       DateTime?
-  studentNote      String?
+  id        String  @id @default(cuid())
+  studentId String
+  student   Student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+
+  title    String
+  category String
+
+  status String @default("NOT_STARTED") // NOT_STARTED | IN_PROGRESS | COMPLETED | SKIPPED | STRUGGLING
+  source String @default("AI") // AI | STUDENT | ADVISOR
+
+  expectedImpact Int       @default(0)
+  targetDate     DateTime?
+  studentNote    String?
+
+  // Used when this item is an alternative to another recommendation.
   alternativeForId String?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+
+  // -----------------------------------------------------------------------
+  // Intelligence metadata
+  // -----------------------------------------------------------------------
+
+  // Career direction that caused this recommendation.
+  careerTrackId String?
+
+  // Skill gap this roadmap item is intended to address.
+  skillId String?
+
+  // University offering associated with this recommendation.
+  offeringId String?
+
+  // Certification associated with this recommendation.
+  certificationId String?
+
+  // Explanation generated from the deterministic recommendation inputs.
+  recommendationReason String?
+
+  // Internal ranking score used by the recommendation engine.
+  recommendationScore Float?
+
+  // When the intelligence engine generated or regenerated this recommendation.
+  generatedAt DateTime?
+
+  // Explicit dismissal is a stronger negative-interest signal than simply
+  // leaving an item unfinished.
+  dismissedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([studentId, status])
+  @@index([studentId, careerTrackId])
+  @@index([studentId, skillId])
+  @@index([studentId, offeringId])
 }
 
 model ConsentRecord {

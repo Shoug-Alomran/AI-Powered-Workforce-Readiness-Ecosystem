@@ -3,6 +3,7 @@ import { notFound, redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentEmployer } from "@/lib/session";
 import { computeJobMatch } from "@/lib/ai";
+import { computeCandidateFit } from "@/lib/intelligence";
 import { updateApplicationStatus, submitFeedback } from "@/actions/employer";
 import EmployerHeader from "@/components/EmployerHeader";
 
@@ -49,6 +50,9 @@ export default async function CandidateProfile({
   const job = application.job;
   const s = application.student;
   const match = computeJobMatch(s, job);
+  // Same score the student saw and the candidate list shows; the fit adds the
+  // component-level explanation and the evidence-verification picture.
+  const fit = computeCandidateFit(s, job);
   const [feedbacks, applicationDocuments] = await Promise.all([
     prisma.feedback.findMany({ where: { jobId: job.id, studentId: s.id } }),
     prisma.evidenceDocument.findMany({
@@ -97,6 +101,33 @@ export default async function CandidateProfile({
           </div>
         </div>
         <div className="notice" style={{ marginTop: 10 }}>{match.explanation}</div>
+
+        <div className="grid-2" style={{ marginTop: 14 }}>
+          <div>
+            <div className="data-row"><strong>Essential skills</strong><b>{fit.essentialSkillScore}%</b></div>
+            <div className="bar"><i style={{ width: `${fit.essentialSkillScore}%` }} /></div>
+            <div className="data-row" style={{ marginTop: 10 }}><strong>Preferred skills</strong><b>{fit.preferredSkillScore}%</b></div>
+            <div className="bar"><i style={{ width: `${fit.preferredSkillScore}%` }} /></div>
+          </div>
+          <div>
+            <div className="data-row"><strong>Certifications</strong><b>{fit.certificationScore}%</b></div>
+            <div className="bar"><i style={{ width: `${fit.certificationScore}%` }} /></div>
+            <div className="data-row" style={{ marginTop: 10 }}><strong>Experience</strong><b>{fit.experienceScore}%</b></div>
+            <div className="bar"><i style={{ width: `${fit.experienceScore}%` }} /></div>
+          </div>
+        </div>
+
+        <div className="notice" style={{ marginTop: 12 }}>
+          <strong>Evidence status.</strong> {fit.verifiedEvidenceItems} of {fit.evidenceItems} evidence item(s) have been
+          human-verified, including {fit.verifiedCertificationCount} certification(s) and {fit.verifiedExperienceMonths}{" "}
+          of {fit.experienceMonths} recorded experience month(s). Unverified items are shown for context but do not count
+          towards the certification component of this score.
+        </div>
+
+        <p className="muted" style={{ fontSize: 13, marginTop: 10 }}>
+          This score compares evidence against the requirements you defined for this role. It is decision support, not a
+          hiring decision, and no demographic or protected characteristic is used.
+        </p>
       </section>
 
       <section className="card" style={{ marginTop: 18 }}>
@@ -128,13 +159,13 @@ export default async function CandidateProfile({
             )) : <p className="muted">No skills listed.</p>}
             <strong style={{ display: "block", marginTop: 14 }}>Certifications</strong>
             {s.certifications.length ? s.certifications.map((c) => (
-              <div className="data-row" key={c.id}><span>{c.certification.name}</span><span className={`pill status-${c.verificationStatus.toLowerCase()}`}>{c.verificationStatus}</span></div>
+              <div className="data-row" key={c.id}><span>{c.certification.name}</span><span className={`pill status-${c.verificationStatus.toLowerCase()}`}>{c.verificationStatus === "APPROVED" ? "HUMAN VERIFIED" : c.verificationStatus === "PENDING" ? "AWAITING HUMAN REVIEW" : c.verificationStatus}</span></div>
             )) : <p className="muted">None submitted.</p>}
           </div>
           <div>
             <strong>Experience</strong>
             {s.experiences.length ? s.experiences.map((e) => (
-              <div className="data-row" key={e.id}><div><strong>{e.title}</strong><div className="muted">{e.org} · {e.months} month(s)</div></div><span className="pill">{e.type}</span></div>
+              <div className="data-row" key={e.id}><div><strong>{e.title}</strong><div className="muted">{e.org} · {e.months} month(s) · {e.verificationStatus === "APPROVED" ? "human verified" : e.verificationStatus === "SELF_REPORTED" ? "self-reported" : "awaiting human review"}</div></div><span className="pill">{e.type}</span></div>
             )) : <p className="muted">None listed.</p>}
             <strong style={{ display: "block", marginTop: 14 }}>Projects</strong>
             {s.projects.length ? s.projects.map((p) => (

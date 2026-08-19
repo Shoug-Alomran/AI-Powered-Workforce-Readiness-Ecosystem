@@ -2,20 +2,440 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentUniversity } from "@/lib/session";
+import { getUniversityIntelligence } from "@/lib/intelligence";
+import { MIN_COHORT } from "@/lib/cohort";
 
-const demandRows=[["Cloud Architecture (AWS/Azure)",85,"+32.4%","145 Companies","CS301, IT402"],["Large Language Model Engineering",95,"+118.0%","82 Companies","None Linked"],["Cybersecurity Governance",60,"+12.8%","210 Companies","CS450, IT320"],["On-Premise Infrastructure Mgmt",25,"-18.2%","45 Companies","IT201, IT205"]];
-const pathways=[["⌘","Full-Stack Engineer","High Growth","1,240","82%","94%","4.5/5",["GraphQL","Next.js"]],["◉","Data Scientist","Trending","850","65%","72%","3.8/5",["TensorFlow","Cloud Compute"]],["♢","Cybersecurity Analyst","Skill Gap","420","48%","85%","3.2/5",["Ethical Hacking","SIEM"]]];
+/** Renders a figure the database can support, or an explicit unknown state. */
+function value(input: number | string | null, suffix = "") {
+  if (input === null) return "—";
+  return `${input}${suffix}`;
+}
 
-export default async function UniversityDashboard(){
-  const ctx=await getCurrentUniversity();if(!ctx)redirect("/login");
-  const [students,jobs,offerings]=await Promise.all([prisma.student.count({where:{university:ctx.university.institution}}),prisma.job.findMany({where:{status:"open"},include:{employer:true}}),prisma.offering.count({where:{universityId:ctx.university.id}})]);
-  const studentCount=students||4250; const employerCount=new Set(jobs.map(j=>j.employerId)).size||145;
-  return <main className="ud-page"><header className="ud-hero"><div className="ud-heading"><p>Institution　›　<b>{ctx.university.institution}</b></p><h1>University Workforce Intelligence Overview</h1><div><span>AY 2024-2025</span><span>Faculty: Engineering &amp; IT</span><span>Cohort: {studentCount.toLocaleString()} Students</span></div></div><div className="ud-actions"><a href="/api/university/export">⇧ Export Report</a></div><section className="ud-summary"><span>✦</span><div><b>AI EXECUTIVE SUMMARY</b><p>Your Software Engineering program aligns well with current market demand (88th percentile), but <strong>Cloud Computing, DevOps, and AI competencies</strong> remain underrepresented across the curriculum. Recent hiring trends show a <strong>+24% surge</strong> in demand for specialized Machine Learning Operations (MLOps), which currently matches only 12% of graduate output.</p></div></section></header>
-  <div className="ud-content"><nav className="ud-toc" aria-label="Dashboard sections"><span><b>EXPLORE DASHBOARD</b><small>Jump directly to a section</small></span><a className="current" href="#dashboard-overview">Overview</a><a href="#workforce-demand">Demand</a><a href="#curriculum-alignment">Curriculum Alignment</a><a href="#graduate-outcomes">Outcomes</a><a href="#career-pathways">Career Pathways</a></nav>
-  <section className="ud-metrics" id="dashboard-overview">{[["Students Analyzed",studentCount,"+12%","vs Prev Period","BM: 3,800 (Avg)"],["Avg Career Readiness","78.4%","+3.2%","Trend Up","BM: 72% National"],["Employment Rate","84.2%","-0.8%","Slight Drop","Status: Stable"],["Internship Participation","92%","+15%","Peak Performance","Status: Excellent"],["Avg Job Match Score","4.2/5.0","","No Change","BM: 3.8 Industry Avg"],["Graduate Success Rate","76.8%","+5%","Post-6 Mo","BM: 70% Target"],["Alignment Score",offerings?"64.5%":"64.5%","-4.5%","Gap Widening","Status: Critical"]].map((m,i)=><article className={i===6?"critical":""} key={String(m[0])}><small>{m[0]}</small><strong>{m[1]}</strong><p className={String(m[2]).startsWith("-")?"down":""}><b>{m[2]}</b> {m[3]}</p><footer>{m[4]}</footer></article>)}</section>
-  <div className="ud-layout"><div className="ud-main"><section className="ud-panel ud-demand" id="workforce-demand"><header><h2>Workforce Demand Analysis</h2><div><span>Regional Demand</span><b>National Demand</b></div></header><div className="ud-table"><div className="head"><b>SKILL / COMPETENCY</b><b>TREND</b><b>GROWTH (%)</b><b>EMPLOYERS</b><b>RELATED COURSES</b></div>{demandRows.map((r,i)=><div className="row" key={String(r[0])}><strong>{r[0]}</strong><i><em style={{width:`${r[1]}%`}}/></i><b className={i===3?"negative":i===2?"blue":""}>{r[2]}</b><span>{r[3]}</span><span>{r[4]}</span></div>)}</div></section>
-  <section className="ud-panel ud-alignment" id="curriculum-alignment"><header><h2>Curriculum Alignment Map</h2></header><div className="ud-alignment-body"><div className="ud-alignment-stats">{[["Alignment Score","64.5%"],["Topic Coverage","72/115"],["Missing Skills","14"],["Overrepresented","8"]].map((s,i)=><div className={`s${i}`} key={s[0]}><small>{s[0]}</small><b>{s[1]}</b></div>)}</div><h3>IDENTIFIED CURRICULUM GAPS</h3><article><header><div><b>GAP: ADVANCED KUBERNETES ORCHESTRATION</b><p>High industry demand identified in Fintech and HealthTech sectors.</p></div><span>Priority: High</span></header><div><label>Employers Requesting<b>{employerCount} Local Partners</b></label><label>Affected Programs<b>B.Sc. Software Engineering</b></label><label>Expected Improvement<b>+8.5% Job Match</b></label></div><aside>✦　AI Recommendation: Integrate a 4-week module into SE402 Distributed Systems or offer a certification bridge program.</aside></article><article><header><div><b className="medium">REDUNDANCY: LEGACY COBOL PROGRAMMING</b><p>Current curriculum allocates 6 credits; market demand is at historical lows (&lt; 2% open roles).</p></div><span className="medium">Priority: Med</span></header><aside>✦　AI Recommendation: Deprecate CS202 and replace with Python-based System Architecture module.</aside></article></div></section>
-  <section className="ud-panel ud-outcomes" id="graduate-outcomes"><header><h2>Graduate Outcomes Performance</h2></header><div><section><h3>INDUSTRY DISTRIBUTION</h3>{[["Information Technology",42],["Financial Services",28],["Public Sector",15],["Other",15]].map(x=><label key={String(x[0])}>{x[0]} <b>{x[1]}%</b><i><em style={{width:`${x[1]}%`}}/></i></label>)}</section><section><small>TOP HIRING COMPANIES</small>{[["GlobalTech Corp","24 Grads"],["Nexus Systems","18 Grads"],["FinBridge Intl","12 Grads"],["Apex Solutions","9 Grads"]].map(x=><p key={x[0]}>{x[0]}<b>{x[1]}</b></p>)}</section><section><small>AVERAGE TIME TO EMPLOYMENT</small><strong>2.4 Months</strong><span>↘ -15 days from AY23</span></section></div></section>
-  <section className="ud-panel ud-pathways" id="career-pathways"><header><h2>Student Career Pathways Analytics</h2><span>▽</span></header><div>{pathways.map((p,i)=><article key={String(p[1])}><header><i>{p[0]}</i><span className={`p${i}`}>{p[2]}</span></header><h3>{p[1]}</h3><div><label>Students<b>{p[3]}</b></label><label>Readiness<b>{p[4]}</b></label><label>Employment<b>{p[5]}</b></label><label>Match Score<b>{p[6]}</b></label></div><footer>Top Missing Skills {(p[7] as string[]).map(s=><span key={s}>{s}</span>)}</footer></article>)}</div></section></div>
-  <aside className="ud-aside"><section className="ud-advisor"><header><h2>♧ AI Curriculum Advisor</h2><span>NEW INSIGHTS</span></header>{[["HIGHEST PRIORITY ACTION","Deploy “ML Engineering Foundations” Course","Rationale: Market demand for this skill is growing 12x faster than current student graduation rate.","Add to Strategic Plan"],["PARTNERSHIP OPPORTUNITY","Nvidia Academic Alliance","Rationale: AI infrastructure coursework lacks hardware certification. Nvidia offers credits for institutional partners.","Review Partnership"],["OPTIMIZATION SUGGESTION","Merge CS304 and CS310","Rationale: High overlap (42%) in syllabus. Consolidation allows for 3 credits of practical lab work.","View Analysis"]].map((a,i)=><article key={a[0]}><small>{a[0]}</small><h3>{a[1]}</h3><p>{a[2]}</p><Link className={i?"outline":""} href={i===0?"/university/actions":"/university/curriculum"}>{a[3]}</Link></article>)}</section><section className="ud-panel ud-partners"><header><h2>Industry Partnerships</h2></header>{[["M","Microsoft","Azure Certifications","Active"],["A","AWS Educate","Internship Partner","Active"],["O","Oracle Cloud","Pending Renewal","Review"]].map(x=><article key={x[1]}><i>{x[0]}</i><div><b>{x[1]}</b><small>{x[2]}</small></div><span>{x[3]}</span></article>)}<footer><small>HIRING TRENDS</small><p>8 new companies expressed interest in hiring Data Science graduates this month.</p></footer></section><section className="ud-panel ud-forecast"><header><h2>2026 Forecasting</h2><span>ⓘ</span></header>{[["Projected Skill Demand (AI)","+450%",90],["Employment Risk Index","High",75],["Curriculum Adaptation Readiness","68%",68]].map((x,i)=><label key={x[0]}>{x[0]}<b className={i===1?"red":""}>{x[1]}</b><i><em style={{width:`${x[2]}%`}}/></i></label>)}</section></aside></div></div></main>;
+export default async function UniversityDashboard() {
+  const ctx = await getCurrentUniversity();
+  if (!ctx) redirect("/login");
+
+  const [intelligence, cohortApplications] = await Promise.all([
+    getUniversityIntelligence(ctx.university.id),
+    // Outcomes for students who list this institution, aggregated only.
+    prisma.application.findMany({
+      where: { student: { university: ctx.university.institution } },
+      include: { job: { include: { employer: true } } },
+    }),
+  ]);
+
+  const { cohort } = intelligence;
+
+  const hires = cohortApplications.filter((application) => application.status === "hired");
+  const shortlisted = cohortApplications.filter((application) =>
+    ["shortlisted", "hired"].includes(application.status),
+  );
+
+  const hiringCompanies = [...
+    hires.reduce((map, application) => {
+      const company = application.job.employer.company;
+      map.set(company, (map.get(company) ?? 0) + 1);
+      return map;
+    }, new Map<string, number>())]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 4);
+
+  const industryDistribution = [...
+    hires.reduce((map, application) => {
+      const industry = application.job.employer.industry ?? "Not stated";
+      map.set(industry, (map.get(industry) ?? 0) + 1);
+      return map;
+    }, new Map<string, number>())]
+    .map(([industry, count]) => ({ industry, count, sharePct: Math.round((count / Math.max(1, hires.length)) * 100) }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 4);
+
+  const topDemand = intelligence.coveredSkills.slice(0, 6);
+
+  const metrics: Array<[string, string, string, string]> = [
+    [
+      "Students analysed",
+      value(cohort.reportable ? cohort.students : null),
+      cohort.reportable ? "listing this institution" : `withheld below ${MIN_COHORT}`,
+      `Platform career tracks: ${intelligence.requestedSkillCount > 0 ? "configured" : "not configured"}`,
+    ],
+    [
+      "Avg career readiness",
+      value(cohort.averageScore, "/100"),
+      cohort.reportable ? `median ${cohort.medianScore}/100` : "cohort too small to report",
+      "Same calculation students see",
+    ],
+    [
+      "Career ready share",
+      value(cohort.reportable ? cohort.bands.find((band) => band.label === "Career Ready")?.sharePct ?? 0 : null, "%"),
+      "scoring 80 or above",
+      "Aggregate only",
+    ],
+    [
+      "Open roles tracked",
+      String(intelligence.openRoleCount),
+      `${intelligence.requestedSkillCount} distinct skills requested`,
+      "From verified employers",
+    ],
+    [
+      "Offerings published",
+      String(intelligence.offeringCount),
+      `${intelligence.curriculumActionCount} curriculum initiative(s)`,
+      `${intelligence.completedCurriculumActionCount} verified complete`,
+    ],
+    [
+      "Placement outcomes",
+      String(hires.length),
+      `${shortlisted.length} shortlisted or hired`,
+      `${cohortApplications.length} application(s) recorded`,
+    ],
+    [
+      "Demand coverage",
+      `${intelligence.weightedDemandCoverage}%`,
+      "of weighted employer demand taught",
+      intelligence.gaps.length > 0 ? `${intelligence.gaps.length} uncovered skill(s)` : "Fully covered",
+    ],
+  ];
+
+  return (
+    <main className="ud-page">
+      <header className="ud-hero">
+        <div className="ud-heading">
+          <p>
+            Institution　›　<b>{ctx.university.institution}</b>
+          </p>
+          <h1>University Workforce Intelligence Overview</h1>
+          <div>
+            <span>Model {intelligence.modelVersion}</span>
+            <span>Generated {intelligence.generatedAt.toLocaleString()}</span>
+            <span>
+              Cohort:{" "}
+              {cohort.reportable ? `${cohort.students} students` : `withheld below ${MIN_COHORT} students`}
+            </span>
+          </div>
+        </div>
+        <div className="ud-actions">
+          <a href="/api/university/export">⇧ Export Report</a>
+        </div>
+        <section className="ud-summary">
+          <span>✦</span>
+          <div>
+            <b>EXECUTIVE SUMMARY</b>
+            {intelligence.executiveSummary.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+        </section>
+      </header>
+
+      <div className="ud-content">
+        <nav className="ud-toc" aria-label="Dashboard sections">
+          <span>
+            <b>EXPLORE DASHBOARD</b>
+            <small>Jump directly to a section</small>
+          </span>
+          <a className="current" href="#dashboard-overview">
+            Overview
+          </a>
+          <a href="#workforce-demand">Demand</a>
+          <a href="#curriculum-alignment">Curriculum Alignment</a>
+          <a href="#graduate-outcomes">Outcomes</a>
+          <a href="#career-pathways">Career Pathways</a>
+        </nav>
+
+        <section className="ud-metrics" id="dashboard-overview">
+          {metrics.map(([label, figure, note, footnote], index) => (
+            <article className={index === 6 && intelligence.gaps.length > 0 ? "critical" : ""} key={label}>
+              <small>{label}</small>
+              <strong>{figure}</strong>
+              <p>{note}</p>
+              <footer>{footnote}</footer>
+            </article>
+          ))}
+        </section>
+
+        <div className="ud-layout">
+          <div className="ud-main">
+            <section className="ud-panel ud-demand" id="workforce-demand">
+              <header>
+                <h2>Workforce Demand Analysis</h2>
+                <div>
+                  <span>{intelligence.openRoleCount} open role(s)</span>
+                  <b>Live employer data</b>
+                </div>
+              </header>
+              <div className="ud-table">
+                <div className="head">
+                  <b>SKILL / COMPETENCY</b>
+                  <b>DEMAND</b>
+                  <b>OPEN ROLES</b>
+                  <b>COHORT GAP</b>
+                  <b>COVERED BY</b>
+                </div>
+                {topDemand.length ? (
+                  topDemand.map((skill) => (
+                    <div className="row" key={skill.skillId}>
+                      <strong>{skill.skillName}</strong>
+                      <i>
+                        <em
+                          style={{
+                            width: `${Math.round((skill.demandPoints / Math.max(1, topDemand[0].demandPoints)) * 100)}%`,
+                          }}
+                        />
+                      </i>
+                      <b className={skill.covered ? "" : "negative"}>{skill.openRoleCount}</b>
+                      <span>
+                        {skill.cohortMissingSharePct === null
+                          ? "Withheld"
+                          : `${skill.cohortMissingSharePct}% of cohort`}
+                      </span>
+                      <span>{skill.covered ? skill.offeringTitles.join(", ") : "No offering"}</span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="row">
+                    <strong>No open role currently lists a required skill.</strong>
+                    <i />
+                    <b>0</b>
+                    <span>—</span>
+                    <span>—</span>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <section className="ud-panel ud-alignment" id="curriculum-alignment">
+              <header>
+                <h2>Curriculum Alignment Map</h2>
+              </header>
+              <div className="ud-alignment-body">
+                <div className="ud-alignment-stats">
+                  {[
+                    ["Alignment score", `${intelligence.weightedDemandCoverage}%`],
+                    ["Skills requested", String(intelligence.requestedSkillCount)],
+                    ["Uncovered skills", String(intelligence.gaps.length)],
+                    ["Compounded gaps", String(intelligence.compoundedGaps.length)],
+                  ].map(([label, figure], index) => (
+                    <div className={`s${index}`} key={label}>
+                      <small>{label}</small>
+                      <b>{figure}</b>
+                    </div>
+                  ))}
+                </div>
+
+                <h3>IDENTIFIED CURRICULUM GAPS</h3>
+                {intelligence.recommendations.length ? (
+                  intelligence.recommendations.slice(0, 4).map((recommendation) => (
+                    <article key={`${recommendation.type}-${recommendation.skillId}`}>
+                      <header>
+                        <div>
+                          <b className={recommendation.priorityScore >= 40 ? "" : "medium"}>
+                            {recommendation.type.replaceAll("_", " ")}: {recommendation.skillName}
+                          </b>
+                          <p>{recommendation.reason}</p>
+                        </div>
+                        <span className={recommendation.priorityScore >= 40 ? "" : "medium"}>
+                          Priority: {Math.round(recommendation.priorityScore)}
+                        </span>
+                      </header>
+                      <div>
+                        <label>
+                          Open roles requesting
+                          <b>{recommendation.relatedOpenRoles}</b>
+                        </label>
+                        <label>
+                          Cohort missing
+                          <b>
+                            {recommendation.cohortMissingSharePct === null
+                              ? "Withheld"
+                              : `${recommendation.cohortMissingSharePct}%`}
+                          </b>
+                        </label>
+                        <label>
+                          Existing initiative
+                          <b>{recommendation.alreadyPlanned ? "Yes" : "None"}</b>
+                        </label>
+                      </div>
+                      <aside>
+                        ✦　Decision support only. A curriculum change is made by the institution; Fursah records the
+                        evidence behind the recommendation.
+                      </aside>
+                    </article>
+                  ))
+                ) : (
+                  <article>
+                    <header>
+                      <div>
+                        <b className="medium">No curriculum gap identified</b>
+                        <p>
+                          Every skill currently requested by an open role is mapped to at least one offering in this
+                          catalogue.
+                        </p>
+                      </div>
+                    </header>
+                  </article>
+                )}
+              </div>
+            </section>
+
+            <section className="ud-panel ud-outcomes" id="graduate-outcomes">
+              <header>
+                <h2>Graduate Outcomes Performance</h2>
+              </header>
+              <div>
+                <section>
+                  <h3>INDUSTRY DISTRIBUTION OF HIRES</h3>
+                  {industryDistribution.length ? (
+                    industryDistribution.map((entry) => (
+                      <label key={entry.industry}>
+                        {entry.industry} <b>{entry.sharePct}%</b>
+                        <i>
+                          <em style={{ width: `${entry.sharePct}%` }} />
+                        </i>
+                      </label>
+                    ))
+                  ) : (
+                    <p>No hire has been recorded for this institution&apos;s students yet.</p>
+                  )}
+                </section>
+                <section>
+                  <small>HIRING COMPANIES</small>
+                  {hiringCompanies.length ? (
+                    hiringCompanies.map(([company, count]) => (
+                      <p key={company}>
+                        {company}
+                        <b>
+                          {count} hire{count === 1 ? "" : "s"}
+                        </b>
+                      </p>
+                    ))
+                  ) : (
+                    <p>No hiring outcome recorded yet.</p>
+                  )}
+                </section>
+                <section>
+                  <small>TIME TO EMPLOYMENT</small>
+                  <strong>—</strong>
+                  <span>Not recorded: the platform stores no employment start dates.</span>
+                </section>
+              </div>
+            </section>
+
+            <section className="ud-panel ud-pathways" id="career-pathways">
+              <header>
+                <h2>Student Career Pathways Analytics</h2>
+                <span>{cohort.reportable ? `${cohort.tracks.length} track(s)` : "Withheld"}</span>
+              </header>
+              <div>
+                {cohort.reportable && cohort.tracks.length ? (
+                  cohort.tracks.slice(0, 3).map((track, index) => (
+                    <article key={track.id}>
+                      <header>
+                        <i>◎</i>
+                        <span className={`p${index}`}>
+                          {track.averageScore >= 80 ? "Strong" : track.averageScore >= 55 ? "Developing" : "Skill gap"}
+                        </span>
+                      </header>
+                      <h3>{track.label}</h3>
+                      <div>
+                        <label>
+                          Students<b>{track.students}</b>
+                        </label>
+                        <label>
+                          Avg readiness<b>{track.averageScore}/100</b>
+                        </label>
+                        <label>
+                          Open roles
+                          <b>
+                            {intelligence.coveredSkills.length > 0 ? intelligence.openRoleCount : 0}
+                          </b>
+                        </label>
+                        <label>
+                          Top gap<b>{track.topGap ?? "None shared"}</b>
+                        </label>
+                      </div>
+                      <footer>
+                        Most common gap {track.topGap ? <span>{track.topGap}</span> : <span>None</span>}
+                      </footer>
+                    </article>
+                  ))
+                ) : (
+                  <article>
+                    <h3>Cohort pathways withheld</h3>
+                    <p>{cohort.summary}</p>
+                  </article>
+                )}
+              </div>
+            </section>
+          </div>
+
+          <aside className="ud-aside">
+            <section className="ud-advisor">
+              <header>
+                <h2>♧ Curriculum Advisor</h2>
+                <span>EVIDENCE-BASED</span>
+              </header>
+              {intelligence.recommendations.length ? (
+                intelligence.recommendations.slice(0, 3).map((recommendation, index) => (
+                  <article key={`advisor-${recommendation.type}-${recommendation.skillId}`}>
+                    <small>{index === 0 ? "HIGHEST PRIORITY ACTION" : recommendation.type.replaceAll("_", " ")}</small>
+                    <h3>{recommendation.skillName}</h3>
+                    <p>{recommendation.reason}</p>
+                    <Link className={index ? "outline" : ""} href="/university/actions/new">
+                      {recommendation.alreadyPlanned ? "Review initiative" : "Open an initiative"}
+                    </Link>
+                  </article>
+                ))
+              ) : (
+                <article>
+                  <small>NO ACTION REQUIRED</small>
+                  <h3>No uncovered demand</h3>
+                  <p>Nothing in the current employer dataset points to a missing offering.</p>
+                  <Link href="/university/curriculum">Review curriculum</Link>
+                </article>
+              )}
+            </section>
+
+            <section className="ud-panel ud-partners">
+              <header>
+                <h2>Certification demand</h2>
+              </header>
+              {intelligence.recommendations.filter((entry) => entry.type === "EXPAND_OFFERING").length ? (
+                intelligence.recommendations
+                  .filter((entry) => entry.type === "EXPAND_OFFERING")
+                  .slice(0, 3)
+                  .map((entry) => (
+                    <article key={entry.skillId}>
+                      <i>▣</i>
+                      <div>
+                        <b>{entry.skillName}</b>
+                        <small>{entry.relatedOpenRoles} open role(s) require it</small>
+                      </div>
+                      <span>Not granted</span>
+                    </article>
+                  ))
+              ) : (
+                <article>
+                  <i>▣</i>
+                  <div>
+                    <b>No unmet certification demand</b>
+                    <small>Every certification employers request is granted by an offering here.</small>
+                  </div>
+                  <span>OK</span>
+                </article>
+              )}
+              <footer>
+                <small>DATA SUFFICIENCY</small>
+                <p>
+                  Figures come from {intelligence.openRoleCount} open role(s) and{" "}
+                  {cohort.reportable ? `${cohort.students} cohort profile(s)` : "a cohort too small to report"}. Fursah
+                  publishes no growth or forecast figures because no historical demand series is recorded.
+                </p>
+              </footer>
+            </section>
+          </aside>
+        </div>
+      </div>
+    </main>
+  );
 }

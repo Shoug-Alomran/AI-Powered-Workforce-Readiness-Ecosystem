@@ -1817,3 +1817,10 @@ body:has(.imp)>header{display:none}
 form[aria-busy="true"] .input,form[aria-busy="true"] .document-upload{opacity:.6;pointer-events:none}
 @keyframes submitSpin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.submit-spinner{animation-duration:2s}.submit-status{animation:none}}
+
+/* The floating theme/language dock is fixed to the bottom-right corner, where the
+   create-opportunity action bar also lives; without this it covers the publish
+   button and swallows its clicks. Offset clears the tallest footer variant (80px). */
+body:has(.pjob-footer) .preference-controls{bottom:calc(clamp(12px,2vw,24px) + 88px)}
+.pjob-footer button[disabled]{opacity:.72;cursor:progress}
+.pjob-footer button .submit-spinner{margin-right:8px;vertical-align:-2px}

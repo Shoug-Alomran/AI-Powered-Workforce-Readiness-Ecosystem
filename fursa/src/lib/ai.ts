@@ -9,6 +9,12 @@
 // ---------------------------------------------------------------------------
 
 import type { CareerTrack } from "./careerTracks";
+import {
+  computeCareerReadiness,
+  READINESS_WEIGHTS,
+  type ReadinessEvidenceInput,
+  type ReadinessTrackInput,
+} from "./intelligence/readiness";
 
 export type StudentSkillLike = { level: number; skill: { name: string; category: string } };
 export type StudentCertLike = { certification: { name: string }; verificationStatus?: string };
@@ -36,103 +42,68 @@ export interface ReadinessResult {
   nextActions: string[];
 }
 
-const WEIGHTS = {
-  technicalSkills: 0.35,
-  softSkills: 0.15,
-  certifications: 0.2,
-  experience: 0.2,
-  projects: 0.1,
-};
+export const READINESS_WEIGHTS_DISPLAY = READINESS_WEIGHTS;
+
+/** Normalizes a loaded student record into the shared readiness evidence shape. */
+export function toReadinessEvidence(student: StudentForScoring): ReadinessEvidenceInput {
+  return {
+    skills: student.skills.map((entry) => ({ skillId: null, name: entry.skill.name, level: entry.level })),
+    certifications: student.certifications.map((entry) => ({
+      certificationId: null,
+      name: entry.certification.name,
+      // Legacy callers pass records without a status; those predate evidence
+      // verification and are treated as already verified rather than dropped.
+      verified: !entry.verificationStatus || entry.verificationStatus === "APPROVED",
+    })),
+    experienceMonths: student.experiences.reduce((sum, entry) => sum + Math.max(0, entry.months), 0),
+    projectCount: student.projects.length,
+  };
+}
+
+/** Normalizes a career track into the shared readiness requirement shape. */
+export function toReadinessTrack(track: CareerTrack): ReadinessTrackInput {
+  return {
+    id: track.id,
+    label: track.label,
+    skills: [
+      ...track.technicalSkills.map((entry) => ({ skillId: null, name: entry.name, category: "technical", weight: entry.weight })),
+      ...track.softSkills.map((entry) => ({ skillId: null, name: entry.name, category: "soft", weight: entry.weight })),
+    ],
+    certifications: track.certifications.map((name) => ({ certificationId: null, name })),
+    recommendedExperienceMonths: track.recommendedExperienceMonths,
+  };
+}
 
 /**
  * Career Readiness Score (0-100).
- * Mirrors the "Feature Engineering" stage of the ML pipeline: raw profile
- * data is converted into normalized indicators (skills competency, cert
- * relevance, experience relevance, portfolio strength) which are then
- * combined into a single explainable score.
+ *
+ * Thin wrapper over the single authoritative calculation in
+ * "@/lib/intelligence/readiness". Kept because the roadmap, passport, cohort
+ * rollup and public workforce page all call it; the arithmetic itself lives
+ * in one place so no two surfaces can disagree about a student's score.
  */
 export function computeReadinessScore(student: StudentForScoring, track: CareerTrack): ReadinessResult {
-  // --- Technical skills coverage ---
-  const techTotal = track.technicalSkills.reduce((s, x) => s + x.weight, 0) || 1;
-  let techEarned = 0;
-  const haveSkillMap = new Map(
-    student.skills.map((s) => [s.skill.name.toLowerCase(), s.level])
-  );
-  for (const req of track.technicalSkills) {
-    const level = haveSkillMap.get(req.name.toLowerCase());
-    if (level) techEarned += req.weight * Math.min(level / 5, 1);
-  }
-  const techScore = Math.round((techEarned / techTotal) * 100);
+  const core = computeCareerReadiness(toReadinessEvidence(student), toReadinessTrack(track));
 
-  // --- Soft skills coverage ---
-  const softTotal = track.softSkills.reduce((s, x) => s + x.weight, 0) || 1;
-  let softEarned = 0;
-  for (const req of track.softSkills) {
-    const level = haveSkillMap.get(req.name.toLowerCase());
-    if (level) softEarned += req.weight * Math.min(level / 5, 1);
-  }
-  const softScore = Math.round((softEarned / softTotal) * 100);
+  const breakdown: ReadinessBreakdown[] = core.components.map((component) => ({
+    category: component.name,
+    score: component.percentage,
+    weight: component.weight,
+    detail: component.detail,
+  }));
 
-  // --- Certifications coverage ---
+  const haveSkillMap = new Map(student.skills.map((s) => [s.skill.name.toLowerCase(), s.level]));
   const haveCerts = new Set(
-    student.certifications.filter((c) => !c.verificationStatus || c.verificationStatus === "APPROVED").map((c) => c.certification.name.toLowerCase())
-  );
-  const certTotal = track.certifications.length || 1;
-  const certEarned = track.certifications.filter((c) =>
-    haveCerts.has(c.toLowerCase())
-  ).length;
-  const certScore = Math.round((certEarned / certTotal) * 100);
-
-  // --- Experience coverage ---
-  const totalMonths = student.experiences.reduce((s, e) => s + e.months, 0);
-  const expScore = Math.min(
-    100,
-    Math.round((totalMonths / Math.max(track.recommendedExperienceMonths, 1)) * 100)
+    student.certifications
+      .filter((c) => !c.verificationStatus || c.verificationStatus === "APPROVED")
+      .map((c) => c.certification.name.toLowerCase()),
   );
 
-  // --- Portfolio / projects ---
-  const projectScore = Math.min(100, student.projects.length * 34);
-
-  const breakdown: ReadinessBreakdown[] = [
-    {
-      category: "Technical Skills",
-      score: techScore,
-      weight: WEIGHTS.technicalSkills,
-      detail: `${track.technicalSkills.filter((r) => haveSkillMap.has(r.name.toLowerCase())).length}/${track.technicalSkills.length} target skills present`,
-    },
-    {
-      category: "Soft Skills",
-      score: softScore,
-      weight: WEIGHTS.softSkills,
-      detail: `${track.softSkills.filter((r) => haveSkillMap.has(r.name.toLowerCase())).length}/${track.softSkills.length} target soft skills present`,
-    },
-    {
-      category: "Certifications",
-      score: certScore,
-      weight: WEIGHTS.certifications,
-      detail: `${certEarned}/${certTotal} recommended certifications earned`,
-    },
-    {
-      category: "Experience",
-      score: expScore,
-      weight: WEIGHTS.experience,
-      detail: `${totalMonths} of ${track.recommendedExperienceMonths} recommended months completed`,
-    },
-    {
-      category: "Portfolio & Projects",
-      score: projectScore,
-      weight: WEIGHTS.projects,
-      detail: `${student.projects.length} project(s) documented`,
-    },
-  ];
-
-  const overall = Math.round(
-    breakdown.reduce((sum, b) => sum + b.score * b.weight, 0)
-  );
-
-  const nextActions = buildNextActions(student, track, haveSkillMap, haveCerts);
-
-  return { score: overall, breakdown, nextActions };
+  return {
+    score: core.score,
+    breakdown,
+    nextActions: buildNextActions(student, track, haveSkillMap, haveCerts),
+  };
 }
 
 /** Adaptive learning: recommend the highest-impact next actions. */
@@ -306,22 +277,18 @@ export interface TrackGaps {
   missingCertNames: string[];
 }
 
-/** Structured version of the readiness gap analysis, for a given (possibly non-primary) track. */
+/**
+ * Structured version of the readiness gap analysis, for a given (possibly
+ * non-primary) track. Uses the same "requirement met" threshold as the
+ * readiness score, so a gap listed here is exactly a gap the score penalizes.
+ */
 export function getTrackGaps(student: StudentForScoring, track: CareerTrack): TrackGaps {
-  const haveSkillMap = new Map(student.skills.map((s) => [s.skill.name.toLowerCase(), s.level]));
-  const haveCerts = new Set(
-    student.certifications
-      .filter((c) => !c.verificationStatus || c.verificationStatus === "APPROVED")
-      .map((c) => c.certification.name.toLowerCase())
-  );
+  const core = computeCareerReadiness(toReadinessEvidence(student), toReadinessTrack(track));
 
-  const missingSkillNames = [...track.technicalSkills, ...track.softSkills]
-    .filter((req) => (haveSkillMap.get(req.name.toLowerCase()) ?? 0) < 3)
-    .map((req) => req.name);
-
-  const missingCertNames = track.certifications.filter((c) => !haveCerts.has(c.toLowerCase()));
-
-  return { missingSkillNames, missingCertNames };
+  return {
+    missingSkillNames: core.missingSkills.map((entry) => entry.name),
+    missingCertNames: core.missingCertifications.map((entry) => entry.name),
+  };
 }
 
 export type OfferingForMatching = {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useFormStatus } from "react-dom";
 
 const FORM_ID = "create-job-form";
 const DRAFT_KEY = "fursah:create-job-draft";
@@ -95,4 +96,11 @@ export function JobDraftActions() {
       </section>
     </div>}
   </>;
+}
+
+export function JobPublishButton() {
+  const { pending } = useFormStatus();
+  return <button type="submit" disabled={pending} aria-busy={pending}>
+    {pending ? <><span className="submit-spinner" aria-hidden="true" />Publishing…</> : "Publish Opportunity　♧"}
+  </button>;
 }

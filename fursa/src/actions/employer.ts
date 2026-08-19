@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentEmployer } from "@/lib/session";
 import { storeEvidenceDocuments } from "@/lib/documents";
+import { deletePrivateDocument, r2Configured } from "@/lib/r2";
 
 async function requireEmployer() {
   const ctx = await getCurrentEmployer();
@@ -85,6 +86,37 @@ export async function closeJob(formData: FormData) {
   });
   revalidatePath("/employer/dashboard");
   revalidatePath(`/employer/jobs/${jobId}`);
+}
+
+export type JobDeleteState = { error?: string };
+
+// Deleting is irreversible and takes applications, matches, and uploaded
+// requirement documents with it, so the employer has to retype the exact role
+// title. The check is repeated here because the client dialog can be bypassed.
+export async function deleteJob(_prev: JobDeleteState, formData: FormData): Promise<JobDeleteState> {
+  const employer = await requireEmployer();
+  const jobId = String(formData.get("jobId") ?? "");
+  const confirmTitle = String(formData.get("confirmTitle") ?? "").trim();
+  const job = await prisma.job.findFirst({ where: { id: jobId, employerId: employer.id } });
+  if (!job) return { error: "This opportunity no longer exists." };
+  if (confirmTitle.toLowerCase() !== job.title.trim().toLowerCase()) {
+    return { error: `Type the role title exactly ("${job.title}") to confirm deletion.` };
+  }
+
+  // Evidence documents are linked polymorphically, so cascade deletes miss them.
+  const documents = await prisma.evidenceDocument.findMany({ where: { contextType: "JOB", contextId: job.id }, select: { id: true, storageKey: true } });
+  if (r2Configured) {
+    await Promise.all(documents.map(async (document) => {
+      // A stored blob that fails to delete must not block removing the role.
+      try { await deletePrivateDocument(document.storageKey); }
+      catch (error) { console.error("Failed to delete job document from R2", document.storageKey, error); }
+    }));
+  }
+  await prisma.evidenceDocument.deleteMany({ where: { contextType: "JOB", contextId: job.id } });
+  await prisma.job.delete({ where: { id: job.id } });
+
+  revalidatePath("/employer/dashboard");
+  redirect("/employer/dashboard");
 }
 
 export async function reopenJob(formData: FormData) {
