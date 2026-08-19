@@ -17,18 +17,6 @@ export default async function Jobs({
 
   const { track: trackFilter = "", q = "" } = await searchParams;
 
-  const student = await prisma.student.findUniqueOrThrow({
-    where: { id: ctx.student.id },
-    include: {
-      skills: { include: { skill: true } },
-      certifications: { include: { certification: true } },
-      experiences: true,
-      projects: true,
-      applications: true,
-      bookmarks: true,
-    },
-  });
-
   const where: Prisma.JobWhereInput = {
     status: "open",
     employer: { verificationStatus: "APPROVED" },
@@ -43,7 +31,20 @@ export default async function Jobs({
       : {}),
   };
 
-  const [jobs, tracks, offerings] = await Promise.all([
+  // Only the student's id is needed to build these, so the profile load runs
+  // alongside them rather than in front of them.
+  const [student, jobs, tracks, offerings] = await Promise.all([
+    prisma.student.findUniqueOrThrow({
+      where: { id: ctx.student.id },
+      include: {
+        skills: { include: { skill: true } },
+        certifications: { include: { certification: true } },
+        experiences: true,
+        projects: true,
+        applications: true,
+        bookmarks: true,
+      },
+    }),
     prisma.job.findMany({
       where,
       include: { employer: true, requiredSkills: { include: { skill: true } }, requiredCerts: { include: { certification: true } } },

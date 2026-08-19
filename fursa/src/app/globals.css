@@ -1837,3 +1837,19 @@ body:has(.pjob-footer) .preference-controls{bottom:calc(clamp(12px,2vw,24px) + 8
 .job-delete-dialog form>footer button[disabled]{opacity:.55;cursor:not-allowed}
 .job-delete-dialog form>footer button.button.danger{border-color:#fecdd3;background:#fff1f2;color:#be123c}
 .job-delete-dialog form>footer button.button.danger:not([disabled]):hover{background:#be123c;color:#fff;border-color:#be123c}
+
+/* Route loading skeletons. Shown as the Suspense fallback while a page's data
+   resolves, so navigation paints immediately instead of waiting on the server. */
+.route-skeleton{width:min(1120px,calc(100% - 36px));margin:0 auto;padding:44px 0 80px;flex:1}
+.route-skeleton>*+*{margin-top:16px}
+.skeleton-block{border-radius:14px;background:linear-gradient(100deg,#eef2f0 30%,#f7faf9 50%,#eef2f0 70%);background-size:220% 100%;animation:skeletonSheen 1.3s ease-in-out infinite}
+.skeleton-title{height:44px;width:min(360px,70%);border-radius:10px}
+.skeleton-line{height:14px;border-radius:7px}
+.skeleton-line.short{width:45%}
+.skeleton-card{height:150px}
+.skeleton-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px}
+@keyframes skeletonSheen{from{background-position:180% 0}to{background-position:-40% 0}}
+@media(prefers-reduced-motion:reduce){.skeleton-block{animation:none}}
+/* Navbar returns nothing for administrators, so the space held for it while the
+   header streams in would otherwise collapse and shift the page. */
+body:has(.admin-portal) [data-navbar-placeholder]{display:none}

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { cache } from "react";
 import { prisma } from "@/lib/db";
 import type {
     MarketIntelligenceResult,
@@ -10,7 +11,10 @@ import {
     round,
 } from "./scoring";
 
-export async function getMarketIntelligence(): Promise<MarketIntelligenceResult> {
+// Scans every open role and its skill requirements. The student, employer,
+// university and ecosystem views all sit on top of it, and several of them are
+// rendered together, so the scan is memoized for the length of a request.
+export const getMarketIntelligence = cache(async (): Promise<MarketIntelligenceResult> => {
     const jobs = await prisma.job.findMany({
         where: {
             status: "open",
@@ -121,7 +125,7 @@ export async function getMarketIntelligence(): Promise<MarketIntelligenceResult>
         ),
         skills,
     };
-}
+});
 
 export async function getTopDemandedSkills(
     limit = 10

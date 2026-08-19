@@ -25,16 +25,19 @@ export default async function RoadmapPage() {
   const ctx = await getCurrentStudent();
   if (!ctx) redirect("/login");
 
-  const student = await prisma.student.findUniqueOrThrow({ where: { id: ctx.student.id } });
-  if (student.targetCareer === "undecided") redirect("/student/interests?setup=career");
-
-  const [items, intelligence] = await Promise.all([
+  // All three only need the student's id, so they are issued together instead
+  // of one after another. The "undecided" redirect is checked once the profile
+  // arrives; it is the uncommon path, so it is not worth serialising for.
+  const [student, items, intelligence] = await Promise.all([
+    prisma.student.findUniqueOrThrow({ where: { id: ctx.student.id } }),
     prisma.roadmapItem.findMany({
       where: { studentId: ctx.student.id },
       orderBy: [{ status: "asc" }, { recommendationScore: "desc" }, { createdAt: "desc" }],
     }),
     getStudentIntelligence(ctx.student.id),
   ]);
+
+  if (student.targetCareer === "undecided") redirect("/student/interests?setup=career");
 
   const readiness = intelligence.readiness;
   const trackLabel = readiness?.careerTrackLabel ?? student.targetCareer;

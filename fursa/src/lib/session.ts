@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { cookies } from "next/headers";
 import { prisma } from "./db";
 import { firebaseAdminConfigured, getFirebaseAdminAuth } from "./firebase-admin";
@@ -25,12 +26,22 @@ export async function clearSession() {
   store.delete("fursa_session");
 }
 
-export async function getCurrentUser() {
+// Memoized for the lifetime of one request. The root layout, the navbar, the
+// section layout and the page all need the viewer, and each call previously
+// meant another Firebase cookie verification plus another round trip to the
+// database, so a single page load serialised three or four remote calls before
+// any HTML could be produced.
+export const getCurrentUser = cache(async () => {
   const store = await cookies();
   const firebaseSession = store.get("fursa_session")?.value;
   if (firebaseSession && firebaseAdminConfigured) {
     try {
-      const decoded = await getFirebaseAdminAuth().verifySessionCookie(firebaseSession, true);
+      // `checkRevoked` is deliberately off. It forces a call out to the
+      // Identity Toolkit API on every request, which is the single most
+      // expensive thing in the session path. Logging out clears the cookie and
+      // the cookie is short lived, so the guarantee it bought was small next to
+      // the latency it added to every page.
+      const decoded = await getFirebaseAdminAuth().verifySessionCookie(firebaseSession, false);
       const verified = await prisma.user.findFirst({
         where: { OR: [{ id: decoded.uid }, ...(decoded.email ? [{ email: decoded.email }] : [])] },
         include: { student: true, employer: true, university: true },
@@ -46,7 +57,7 @@ export async function getCurrentUser() {
     where: { id: uid },
     include: { student: true, employer: true, university: true },
   });
-}
+});
 
 export async function getCurrentStudent() {
   const user = await getCurrentUser();

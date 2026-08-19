@@ -1,10 +1,11 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/session";
 import { getFirebaseAdminDb, firebaseAdminConfigured } from "@/lib/firebase-admin";
 import { slugify } from "@/lib/careerTracks";
+import { CAREER_TRACKS_TAG } from "@/lib/careerTracks.server";
 
 export async function reviewCertification(formData: FormData) {
   const ctx = await getCurrentAdmin();
@@ -131,6 +132,9 @@ export async function createCareerTrack(formData: FormData) {
   }
 
   revalidatePath("/admin/career-tracks");
+  // The taxonomy is cached across requests for every portal that reads it, so
+  // an edit here has to drop that cache as well as this page.
+  updateTag(CAREER_TRACKS_TAG);
 }
 
 export async function updateCareerTrackSkillWeight(formData: FormData) {
@@ -141,6 +145,9 @@ export async function updateCareerTrackSkillWeight(formData: FormData) {
   if (!trackSkillId) return;
   await prisma.careerTrackSkill.update({ where: { id: trackSkillId }, data: { weight } });
   revalidatePath("/admin/career-tracks");
+  // The taxonomy is cached across requests for every portal that reads it, so
+  // an edit here has to drop that cache as well as this page.
+  updateTag(CAREER_TRACKS_TAG);
 }
 
 export async function removeCareerTrackSkill(formData: FormData) {
@@ -150,6 +157,9 @@ export async function removeCareerTrackSkill(formData: FormData) {
   if (!trackSkillId) return;
   await prisma.careerTrackSkill.delete({ where: { id: trackSkillId } });
   revalidatePath("/admin/career-tracks");
+  // The taxonomy is cached across requests for every portal that reads it, so
+  // an edit here has to drop that cache as well as this page.
+  updateTag(CAREER_TRACKS_TAG);
 }
 
 export async function addCareerTrackSkill(formData: FormData) {
@@ -168,4 +178,7 @@ export async function addCareerTrackSkill(formData: FormData) {
     create: { careerTrackId, skillId: skill.id, weight, category },
   });
   revalidatePath("/admin/career-tracks");
+  // The taxonomy is cached across requests for every portal that reads it, so
+  // an edit here has to drop that cache as well as this page.
+  updateTag(CAREER_TRACKS_TAG);
 }
