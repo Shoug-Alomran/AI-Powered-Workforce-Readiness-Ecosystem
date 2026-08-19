@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUniversity } from "@/lib/session";
 import { getUniversityIntelligence } from "@/lib/intelligence";
 import { MIN_COHORT } from "@/lib/cohort";
+import FursahAssistant from "@/components/FursahAssistant";
 
 /** Renders a figure the database can support, or an explicit unknown state. */
 function value(input: number | string | null, suffix = "") {
@@ -434,6 +435,20 @@ export default async function UniversityDashboard() {
               </footer>
             </section>
           </aside>
+        </div>
+
+        <div style={{ marginTop: 22 }}>
+          <FursahAssistant
+            eyebrow="FURSAH ASSISTANT"
+            heading="Ask about curriculum alignment"
+            intro="Ask about employer demand, curriculum coverage, and where your cohort stands. All student figures are aggregate and suppressed below the minimum cohort size; individual records are never available here."
+            suggestions={[
+              "What skill gap should we prioritise?",
+              "Why is that skill being recommended?",
+              "Which offerings currently cover employer demand?",
+              "What action would address the largest gap?",
+            ]}
+          />
         </div>
       </div>
     </main>

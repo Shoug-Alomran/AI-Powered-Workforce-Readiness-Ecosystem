@@ -27,27 +27,79 @@ type EvidenceAnalysis = {
 
   /*
    * Employer / job evidence
+   *
+   * The Worker returns required/preferred skills as structured skill objects,
+   * but older extractions used plain strings. Both shapes are accepted so a
+   * previously stored analysis keeps rendering.
    */
   jobTitle?: string | null;
   summary?: string | null;
   responsibilities?: string[] | null;
-  requiredSkills?: string[] | null;
-  preferredSkills?: string[] | null;
+  requiredSkills?: ExtractedSkill[] | string[] | null;
+  preferredSkills?: ExtractedSkill[] | string[] | null;
+  requiredCertifications?: string[] | null;
+  preferredCertifications?: string[] | null;
+  minimumExperience?: string | null;
+  educationRequirements?: string[] | null;
   location?: string | null;
+  remoteStatus?: string | null;
   employmentType?: string | null;
+  potentialRequirementIssues?: Array<{
+    issue?: string | null;
+    evidence?: string | null;
+    severity?: string | null;
+  }> | null;
+
+  /*
+   * Student project evidence
+   */
+  projectTitle?: string | null;
+  projectType?: string | null;
+  technologies?: string[] | null;
+  role?: string | null;
+  organization?: string | null;
+  completionDate?: string | null;
+  evidenceSummary?: string | null;
+
+  /*
+   * Student experience evidence
+   */
+  roleTitle?: string | null;
+  experienceType?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  duration?: string | null;
 
   /*
    * University / course evidence
+   *
+   * The Worker names the long-form field "courseDescription"; "description" is
+   * kept as a fallback for extractions stored under the earlier name.
    */
   courseTitle?: string | null;
   courseCode?: string | null;
   institution?: string | null;
   department?: string | null;
   description?: string | null;
+  courseDescription?: string | null;
   learningOutcomes?: string[] | null;
   topics?: string[] | null;
   prerequisites?: string[] | null;
+  assessmentMethods?: string[] | null;
   creditHours?: string | number | null;
+  contactHours?: string | number | null;
+  certificationAlignment?: string[] | null;
+
+  /*
+   * University curriculum action evidence
+   */
+  initiativeTitle?: string | null;
+  implementationEvidence?: string[] | null;
+  affectedCourses?: string[] | null;
+  targetSkills?: ExtractedSkill[] | string[] | null;
+  outcomes?: string[] | null;
+  dates?: string[] | null;
+  supportingDocuments?: string[] | null;
 };
 
 function getEvidenceAnalysis(
@@ -103,11 +155,48 @@ function isUniversityCourseContext(contextType: string) {
   const type = normalizeContextType(contextType);
 
   return (
+    // "OFFERING" is the contextType the university upload action actually
+    // writes (src/actions/university.ts) for an approved syllabus or course
+    // specification. Without it this branch never matched a real document and
+    // syllabi fell through to the generic certificate-shaped view.
+    type === "OFFERING" ||
     type === "COURSE" ||
     type === "UNIVERSITY_COURSE" ||
     type === "COURSE_SPECIFICATION" ||
     type === "SYLLABUS" ||
     type === "APPROVED_SYLLABUS"
+  );
+}
+
+function isProjectContext(contextType: string) {
+  const type = normalizeContextType(contextType);
+
+  return (
+    type === "PROJECT" ||
+    type === "STUDENT_PROJECT" ||
+    type === "PORTFOLIO" ||
+    type === "PORTFOLIO_PROJECT"
+  );
+}
+
+function isExperienceContext(contextType: string) {
+  const type = normalizeContextType(contextType);
+
+  return (
+    type === "EXPERIENCE" ||
+    type === "STUDENT_EXPERIENCE" ||
+    type === "WORK_EXPERIENCE" ||
+    type === "INTERNSHIP"
+  );
+}
+
+function isCurriculumActionContext(contextType: string) {
+  const type = normalizeContextType(contextType);
+
+  return (
+    type === "CURRICULUM_ACTION" ||
+    type === "CURRICULUM_INITIATIVE" ||
+    type === "CURRICULUM"
   );
 }
 
@@ -130,6 +219,36 @@ function getStringArray(
         typeof item === "string"
     )
     .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Accepts either a list of structured skill objects (what the Worker returns)
+ * or a list of plain strings (earlier extractions), and returns display names.
+ * Without this, structured skill objects were silently dropped by the
+ * string-only reader and rendered as nothing.
+ */
+function getSkillNames(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      if (typeof item === "string") {
+        return item.trim();
+      }
+
+      if (
+        item &&
+        typeof item === "object" &&
+        typeof (item as ExtractedSkill).name === "string"
+      ) {
+        return (item as ExtractedSkill).name!.trim();
+      }
+
+      return "";
+    })
     .filter(Boolean);
 }
 
@@ -318,6 +437,21 @@ export default async function EvidencePage() {
                 document.contextType
               );
 
+            const project =
+              isProjectContext(
+                document.contextType
+              );
+
+            const experience =
+              isExperienceContext(
+                document.contextType
+              );
+
+            const curriculumAction =
+              isCurriculumActionContext(
+                document.contextType
+              );
+
             const recipientName =
               analysis?.recipientName?.trim() ||
               null;
@@ -326,15 +460,16 @@ export default async function EvidencePage() {
               document.owner.name.trim();
 
             /*
-             * Identity comparison only makes sense
-             * for evidence that is supposed to belong
-             * to an individual.
+             * Identity comparison only makes sense for evidence that is
+             * supposed to belong to an individual: a personal certificate, or
+             * an experience letter naming the person who held the role.
              *
-             * It must NOT run for job descriptions
-             * or university syllabi/course specs.
+             * It must NOT run for job descriptions, university syllabi/course
+             * specifications, or curriculum-action evidence, which are
+             * institutional documents and legitimately carry no personal name.
              */
             const shouldCheckIdentity =
-              certification;
+              certification || experience;
 
             const identityMismatch =
               shouldCheckIdentity &&
@@ -372,13 +507,73 @@ export default async function EvidencePage() {
               );
 
             const requiredSkills =
-              getStringArray(
+              getSkillNames(
                 analysis?.requiredSkills
               );
 
             const preferredSkills =
-              getStringArray(
+              getSkillNames(
                 analysis?.preferredSkills
+              );
+
+            const requiredCertifications =
+              getStringArray(
+                analysis?.requiredCertifications
+              );
+
+            const preferredCertifications =
+              getStringArray(
+                analysis?.preferredCertifications
+              );
+
+            const educationRequirements =
+              getStringArray(
+                analysis?.educationRequirements
+              );
+
+            const technologies =
+              getStringArray(
+                analysis?.technologies
+              );
+
+            const assessmentMethods =
+              getStringArray(
+                analysis?.assessmentMethods
+              );
+
+            const certificationAlignment =
+              getStringArray(
+                analysis?.certificationAlignment
+              );
+
+            const implementationEvidence =
+              getStringArray(
+                analysis?.implementationEvidence
+              );
+
+            const affectedCourses =
+              getStringArray(
+                analysis?.affectedCourses
+              );
+
+            const outcomes =
+              getStringArray(
+                analysis?.outcomes
+              );
+
+            const dates =
+              getStringArray(
+                analysis?.dates
+              );
+
+            const supportingDocuments =
+              getStringArray(
+                analysis?.supportingDocuments
+              );
+
+            const targetSkills =
+              getSkillNames(
+                analysis?.targetSkills
               );
 
             const learningOutcomes =
@@ -737,6 +932,69 @@ export default async function EvidencePage() {
                             }
                           />
 
+                          <Field
+                            label="Remote status"
+                            value={
+                              analysis.remoteStatus
+                            }
+                          />
+
+                          <Field
+                            label="Minimum experience"
+                            value={
+                              analysis.minimumExperience
+                            }
+                          />
+
+                          <ListField
+                            label="Required certifications"
+                            values={
+                              requiredCertifications
+                            }
+                          />
+
+                          <ListField
+                            label="Preferred certifications"
+                            values={
+                              preferredCertifications
+                            }
+                          />
+
+                          <ListField
+                            label="Education requirements"
+                            values={
+                              educationRequirements
+                            }
+                          />
+
+                          {Array.isArray(
+                            analysis.potentialRequirementIssues
+                          ) &&
+                            analysis
+                              .potentialRequirementIssues
+                              .length > 0 && (
+                              <ListField
+                                label="Potential requirement issues (advisory)"
+                                values={analysis.potentialRequirementIssues
+                                  .map(
+                                    (entry) =>
+                                      [
+                                        entry?.severity,
+                                        entry?.issue,
+                                      ]
+                                        .filter(
+                                          Boolean
+                                        )
+                                        .join(
+                                          ": "
+                                        )
+                                  )
+                                  .filter(
+                                    Boolean
+                                  )}
+                              />
+                            )}
+
                           {validSkills.length >
                             0 &&
                             requiredSkills.length ===
@@ -808,6 +1066,7 @@ export default async function EvidencePage() {
                           <Field
                             label="Course description"
                             value={
+                              analysis.courseDescription ??
                               analysis.description
                             }
                           />
@@ -816,6 +1075,13 @@ export default async function EvidencePage() {
                             label="Credit hours"
                             value={
                               analysis.creditHours
+                            }
+                          />
+
+                          <Field
+                            label="Contact hours"
+                            value={
+                              analysis.contactHours
                             }
                           />
 
@@ -837,6 +1103,20 @@ export default async function EvidencePage() {
                             label="Prerequisites"
                             values={
                               prerequisites
+                            }
+                          />
+
+                          <ListField
+                            label="Assessment methods"
+                            values={
+                              assessmentMethods
+                            }
+                          />
+
+                          <ListField
+                            label="Certification alignment"
+                            values={
+                              certificationAlignment
                             }
                           />
 
@@ -873,6 +1153,363 @@ export default async function EvidencePage() {
 
                       {/*
                        * ============================
+                       * STUDENT PROJECT EVIDENCE
+                       * ============================
+                       */}
+                      {project && (
+                        <>
+                          <Field
+                            label="Project title"
+                            value={
+                              analysis.projectTitle ??
+                              analysis.title
+                            }
+                          />
+
+                          <Field
+                            label="Project type"
+                            value={
+                              analysis.projectType
+                            }
+                          />
+
+                          <Field
+                            label="Role"
+                            value={
+                              analysis.role
+                            }
+                          />
+
+                          <Field
+                            label="Organization"
+                            value={
+                              analysis.organization ??
+                              analysis.issuer
+                            }
+                          />
+
+                          <Field
+                            label="Completion date"
+                            value={
+                              analysis.completionDate
+                            }
+                          />
+
+                          <Field
+                            label="Evidence summary"
+                            value={
+                              analysis.evidenceSummary ??
+                              analysis.summary
+                            }
+                          />
+
+                          <ListField
+                            label="Technologies"
+                            values={
+                              technologies
+                            }
+                          />
+
+                          {validSkills.length >
+                          0 ? (
+                            <span>
+                              <strong>
+                                Supported
+                                skills:
+                              </strong>{" "}
+                              {validSkills
+                                .map(
+                                  (
+                                    skill
+                                  ) =>
+                                    skill.name
+                                )
+                                .filter(
+                                  Boolean
+                                )
+                                .join(", ")}
+                            </span>
+                          ) : (
+                            <span>
+                              <strong>
+                                Supported
+                                skills:
+                              </strong>{" "}
+                              None detected
+                            </span>
+                          )}
+                        </>
+                      )}
+
+                      {/*
+                       * ============================
+                       * STUDENT EXPERIENCE EVIDENCE
+                       * ============================
+                       *
+                       * An experience letter normally
+                       * names the person who held the
+                       * role, so the same conservative
+                       * identity check used for personal
+                       * certificates applies here. A
+                       * missing name is NOT treated as a
+                       * problem: many valid experience
+                       * documents carry no personal name.
+                       */}
+                      {experience && (
+                        <>
+                          <Field
+                            label="Role title"
+                            value={
+                              analysis.roleTitle ??
+                              analysis.title
+                            }
+                          />
+
+                          <Field
+                            label="Organization"
+                            value={
+                              analysis.organization ??
+                              analysis.issuer
+                            }
+                          />
+
+                          <Field
+                            label="Experience type"
+                            value={
+                              analysis.experienceType
+                            }
+                          />
+
+                          {recipientName && (
+                            <>
+                              <Field
+                                label="Named individual"
+                                value={
+                                  recipientName
+                                }
+                              />
+
+                              <Field
+                                label="Account holder"
+                                value={
+                                  accountName
+                                }
+                              />
+                            </>
+                          )}
+
+                          {identityMatch && (
+                            <div
+                              style={{
+                                marginTop: 6,
+                                padding:
+                                  "10px 12px",
+                                border:
+                                  "1px solid rgba(31, 122, 87, 0.25)",
+                                borderRadius: 10,
+                                background:
+                                  "rgba(31, 122, 87, 0.08)",
+                              }}
+                            >
+                              <strong>
+                                Identity names
+                                match
+                              </strong>
+
+                              <div>
+                                The individual
+                                named on this
+                                experience
+                                evidence matches
+                                the Fursah
+                                account holder.
+                              </div>
+                            </div>
+                          )}
+
+                          {identityMismatch && (
+                            <div
+                              style={{
+                                marginTop: 6,
+                                padding:
+                                  "10px 12px",
+                                border:
+                                  "1px solid rgba(180, 50, 50, 0.30)",
+                                borderRadius: 10,
+                                background:
+                                  "rgba(180, 50, 50, 0.08)",
+                              }}
+                            >
+                              <strong>
+                                Identity
+                                mismatch
+                                detected
+                              </strong>
+
+                              <div>
+                                The evidence
+                                names{" "}
+                                <strong>
+                                  {
+                                    recipientName
+                                  }
+                                </strong>
+                                , while the
+                                Fursah account
+                                belongs to{" "}
+                                <strong>
+                                  {
+                                    accountName
+                                  }
+                                </strong>
+                                . Human review
+                                is required.
+                              </div>
+                            </div>
+                          )}
+
+                          <Field
+                            label="Start date"
+                            value={
+                              analysis.startDate
+                            }
+                          />
+
+                          <Field
+                            label="End date"
+                            value={
+                              analysis.endDate
+                            }
+                          />
+
+                          <Field
+                            label="Duration"
+                            value={
+                              analysis.duration
+                            }
+                          />
+
+                          <ListField
+                            label="Responsibilities"
+                            values={
+                              responsibilities
+                            }
+                          />
+
+                          {validSkills.length >
+                          0 ? (
+                            <span>
+                              <strong>
+                                Supported
+                                skills:
+                              </strong>{" "}
+                              {validSkills
+                                .map(
+                                  (
+                                    skill
+                                  ) =>
+                                    skill.name
+                                )
+                                .filter(
+                                  Boolean
+                                )
+                                .join(", ")}
+                            </span>
+                          ) : (
+                            <span>
+                              <strong>
+                                Supported
+                                skills:
+                              </strong>{" "}
+                              None detected
+                            </span>
+                          )}
+                        </>
+                      )}
+
+                      {/*
+                       * ============================
+                       * UNIVERSITY CURRICULUM ACTION
+                       * ============================
+                       *
+                       * Institutional evidence. Personal
+                       * identity matching is never
+                       * applied here.
+                       */}
+                      {curriculumAction && (
+                        <>
+                          <Field
+                            label="Initiative title"
+                            value={
+                              analysis.initiativeTitle ??
+                              analysis.title
+                            }
+                          />
+
+                          <Field
+                            label="Institution"
+                            value={
+                              analysis.institution ??
+                              analysis.issuer
+                            }
+                          />
+
+                          <ListField
+                            label="Implementation evidence"
+                            values={
+                              implementationEvidence
+                            }
+                          />
+
+                          <ListField
+                            label="Affected courses"
+                            values={
+                              affectedCourses
+                            }
+                          />
+
+                          <ListField
+                            label="Target skills"
+                            values={
+                              targetSkills.length
+                                ? targetSkills
+                                : validSkills
+                                    .map(
+                                      (
+                                        skill
+                                      ) =>
+                                        skill.name ??
+                                        ""
+                                    )
+                                    .filter(
+                                      Boolean
+                                    )
+                            }
+                          />
+
+                          <ListField
+                            label="Outcomes"
+                            values={
+                              outcomes
+                            }
+                          />
+
+                          <ListField
+                            label="Dates"
+                            values={dates}
+                          />
+
+                          <ListField
+                            label="Supporting documents"
+                            values={
+                              supportingDocuments
+                            }
+                          />
+                        </>
+                      )}
+
+                      {/*
+                       * ============================
                        * GENERIC / FUTURE CONTEXT
                        * ============================
                        *
@@ -882,7 +1519,10 @@ export default async function EvidencePage() {
                        */}
                       {!certification &&
                         !job &&
-                        !universityCourse && (
+                        !universityCourse &&
+                        !project &&
+                        !experience &&
+                        !curriculumAction && (
                           <>
                             <Field
                               label="Title"

@@ -253,30 +253,32 @@ Models are continuously evaluated for:
 
 ## Ecosystem Architecture
 
-                     ┌──────────────────────┐
-                     │       STUDENTS       │
-                     └──────────┬───────────┘
-                                │
-                                ▼
-                     ┌──────────────────────┐
-                     │    AI INTELLIGENCE   │
-                     │                      │
-                     │ • Career Pathways    │
-                     │ • Skills Analysis    │
-                     │ • Readiness Scoring  │
-                     │ • Opportunity Match  │
-                     └──────────┬───────────┘
-                                │
-                    ┌───────────┴───────────┐
-                    ▼                       ▼
-          ┌──────────────────┐    ┌──────────────────┐
-          │    EMPLOYERS     │    │   UNIVERSITIES   │
-          │                  │    │                  │
-          │ Talent Matching  │    │ Workforce        │
-          │ Skill Demand     │    │ Intelligence     │
-          └────────┬─────────┘    └─────────▲────────┘
-                   │                        │
-                   └──── Workforce Data ────┘
+```text
+           ┌──────────────────────┐
+           │       STUDENTS       │
+           └──────────┬───────────┘
+                      │
+                      ▼
+           ┌──────────────────────┐
+           │    AI INTELLIGENCE   │
+           │                      │
+           │ • Career Pathways    │
+           │ • Skills Analysis    │
+           │ • Readiness Scoring  │
+           │ • Opportunity Match  │
+           └──────────┬───────────┘
+                      │
+          ┌───────────┴───────────┐
+          ▼                       ▼
+┌──────────────────┐    ┌──────────────────┐
+│    EMPLOYERS     │    │   UNIVERSITIES   │
+│                  │    │                  │
+│ Talent Matching  │    │ Workforce        │
+│ Skill Demand     │    │ Intelligence     │
+└────────┬─────────┘    └─────────▲────────┘
+         │                        │
+         └──── Workforce Data ────┘
+```
 
 The result is a **continuous AI-driven feedback loop between education and employment**.
 
@@ -318,6 +320,59 @@ The platform transforms education and employment from two separate stages into a
 **Learn → Develop → Measure → Match → Employ → Evaluate → Improve**
 
 Ultimately, the goal is not simply to help students **find jobs**, but to help them understand **how to become genuinely ready for them**.
+
+---
+
+## Running the Prototype
+
+**Fursah** is the working prototype of this ecosystem, located in [`fursa/`](fursa/). It is a Next.js 16 app (React 19, TypeScript, Tailwind CSS 4) with Prisma over libSQL.
+
+### Quick start
+
+```bash
+cd fursa
+npm install          # runs `prisma generate` automatically
+npx tsx prisma/seed.ts
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) and choose **Explore Prototype** to sign in as one of the seeded student, employer, university, or admin profiles.
+
+The bundled SQLite file (`prisma/dev.db`) is used by default, so the demo runs offline with no credentials. Hosted deployments point `DATABASE_URL` at Turso and supply `TURSO_AUTH_TOKEN`.
+
+### Scripts
+
+| Command | Purpose |
+|---|---|
+| `npm run dev` | Start the local development server |
+| `npm run build` | Apply production migrations, then build |
+| `npm start` | Serve the production build |
+| `npm run lint` | Run ESLint |
+| `npm run create-admin` | Create an `ADMIN` account from `ADMIN_*` env vars |
+
+### Environment
+
+Create `fursa/.env.local` with the variables your setup needs. Readiness scoring, skill-gap analysis, and opportunity matching run on deterministic local logic, so no model API key is required to run the prototype.
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL` | Prisma/libSQL connection string (defaults to the bundled `file:./prisma/dev.db`) |
+| `TURSO_AUTH_TOKEN` | Auth token for hosted Turso databases |
+| `NEXT_PUBLIC_FIREBASE_*` | Public Firebase web configuration for client authentication |
+| `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | Firebase Admin SDK service-account credentials for session cookies |
+| `R2_ACCOUNT_ID`, `R2_BUCKET_NAME`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | Cloudflare R2 storage for evidence documents and avatars |
+| `EVIDENCE_AI_URL`, `EVIDENCE_AI_SECRET` | Endpoint and shared secret for the evidence-analysis service |
+| `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Seed credentials used by `npm run create-admin` |
+
+### Authentication and evidence review
+
+Accounts use Firebase Authentication with server-side session cookies; enable Email/Password sign-in in the Firebase console before using real accounts.
+
+Certificate claims require a JPG, PNG, or WebP evidence image (maximum 5 MB). Uploads are stored privately in Cloudflare R2, enter the queue as `PENDING`, and only affect readiness scoring and matching once an `ADMIN` approves them.
+
+### Architecture notes
+
+Data access is server-only and isolated in `src/lib` and server actions, so the persistence layer can be swapped without touching the UI.
 
 ---
 

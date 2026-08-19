@@ -5,6 +5,7 @@ import { getCurrentEmployer } from "@/lib/session";
 import { computeJobMatch } from "@/lib/ai";
 import { getEmployerIntelligence } from "@/lib/intelligence";
 import EmployerHeader from "@/components/EmployerHeader";
+import FursahAssistant from "@/components/FursahAssistant";
 
 type IconName="briefcase"|"users"|"sparkle"|"calendar"|"mail"|"trend"|"medal"|"warning"|"chart"|"check"|"send";
 function Icon({name}:{name:IconName}){const paths:Record<IconName,React.ReactNode>={
@@ -54,6 +55,19 @@ export default async function EmployerDashboard({searchParams}:{searchParams:Pro
         {intelligenceByJob.get(priorityJob.id)&&<><small>HIRING DIFFICULTY</small><p>ⓘ　 {priorityJob.title}: {intelligenceByJob.get(priorityJob.id)!.hiringDifficulty.toLowerCase()} — {intelligenceByJob.get(priorityJob.id)!.strongCandidateCount} profile(s) score 80% or above.</p></>}
         {intelligence.recurringGaps.length>0&&<><small>RECURRING CANDIDATE GAPS</small>{intelligence.recurringGaps.slice(0,3).map(gap=><p key={gap.skillName}>ⓘ　 {gap.skillName}: unevidenced by {gap.applicantCount} applicant(s) ({gap.sharePct}%).</p>)}</>}
         <small>DECISION SUPPORT ONLY</small><p>ⓘ　 Rankings are explainable and evidence-based. Fursah does not make hiring decisions; every outcome is recorded against a human reviewer.</p></>:<div className="erd-empty"><h3>Not enough data yet</h3><p>Post a role and map its required skills to receive hiring intelligence.</p></div>}</div></section><section className="erd-activity"><h2>Recent Activity</h2>{activity.length?activity.map((item,i)=><article key={item.id}><i className={`a${i}`}>{item.kind==="application"?"＋":"▣"}</i><div><p>{item.text}</p><small>{item.date.toLocaleDateString("en-SA",{month:"short",day:"numeric",year:"numeric"})}</small></div></article>):<div className="erd-empty"><h3>No activity yet</h3><p>New roles and applications will appear here.</p></div>}</section></aside></div>
+      <div style={{marginTop:20}}>
+        <FursahAssistant
+          eyebrow="FURSAH ASSISTANT"
+          heading="Ask about your roles and pipeline"
+          intro="Ask about your own postings and the candidates who applied to them. The assistant explains the evidence behind a match; it never makes or recommends a hiring decision."
+          suggestions={[
+            "Why is this job difficult to fill?",
+            "Which requirement is shrinking my candidate pool?",
+            "What skills are applicants commonly missing?",
+            "Why does my top applicant match this role?",
+          ]}
+        />
+      </div>
     </div>
   </main>;
 }

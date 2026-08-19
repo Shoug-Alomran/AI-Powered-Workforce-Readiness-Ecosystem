@@ -1824,3 +1824,16 @@ form[aria-busy="true"] .input,form[aria-busy="true"] .document-upload{opacity:.6
 body:has(.pjob-footer) .preference-controls{bottom:calc(clamp(12px,2vw,24px) + 88px)}
 .pjob-footer button[disabled]{opacity:.72;cursor:progress}
 .pjob-footer button .submit-spinner{margin-right:8px;vertical-align:-2px}
+
+.job-delete-dialog>header{color:#be123c}
+.job-delete-dialog h2{margin-top:20px}
+.job-delete-dialog>p{margin:0;font-size:14px}
+.job-delete-confirm{display:block;margin-top:22px;font-size:13px;font-weight:650;color:var(--color-text,#0f172a)}
+.job-delete-confirm strong{font-weight:800}
+.job-delete-confirm .input{width:100%;margin-top:8px}
+.job-delete-dialog .auth-error{margin-top:14px}
+.job-delete-dialog form>footer{display:flex;justify-content:flex-end;gap:10px;margin-top:24px;padding-top:18px;border-top:1px solid #e2e8f0}
+.job-delete-dialog form>footer button{padding:10px 16px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;color:#334155;font-weight:700;cursor:pointer}
+.job-delete-dialog form>footer button[disabled]{opacity:.55;cursor:not-allowed}
+.job-delete-dialog form>footer button.button.danger{border-color:#fecdd3;background:#fff1f2;color:#be123c}
+.job-delete-dialog form>footer button.button.danger:not([disabled]):hover{background:#be123c;color:#fff;border-color:#be123c}

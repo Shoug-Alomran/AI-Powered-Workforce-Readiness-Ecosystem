@@ -7,6 +7,7 @@ import { getCareerTrackAsync } from "@/lib/careerTracks.server";
 import { getStudentIntelligence } from "@/lib/intelligence";
 import { dismissCareerSuggestion, exploreSuggestedCareer } from "@/actions/student";
 import PageToc from "@/components/PageToc";
+import FursahAssistant from "@/components/FursahAssistant";
 
 export default async function StudentDashboard() {
   const ctx = await getCurrentStudent();
@@ -355,6 +356,10 @@ export default async function StudentDashboard() {
           {
             id: "career-intelligence",
             label: "Career intelligence",
+          },
+          {
+            id: "fursah-assistant",
+            label: "Ask the assistant",
           },
           {
             id: "feedback",
@@ -822,6 +827,22 @@ export default async function StudentDashboard() {
             ))}
         </section>
       )}
+
+      <div style={{ marginTop: 18 }}>
+        <FursahAssistant
+          eyebrow="FURSAH ASSISTANT"
+          heading="Ask about your readiness and next steps"
+          intro="Ask anything about your own profile. Every figure comes from the same calculation behind this dashboard, so the assistant and your score can never disagree."
+          suggestions={[
+            "Why is my readiness score what it is?",
+            "What should I work on next?",
+            "Which job am I closest to qualifying for?",
+            ...(directionSuggestion.shouldSuggestChange
+              ? ["Why does Fursah think my interests may be changing?"]
+              : ["Which career track fits my evidence best?"]),
+          ]}
+        />
+      </div>
 
       <section
         className="card student-feedback-section"

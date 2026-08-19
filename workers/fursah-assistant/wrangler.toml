@@ -1,0 +1,16 @@
+name = "fursah-assistant"
+main = "src/index.js"
+compatibility_date = "2026-08-01"
+
+# Workers AI binding. Free plan includes 10,000 neurons per day.
+[ai]
+binding = "AI"
+
+[vars]
+# Any model on the Workers AI catalogue that is NOT one of the paid-only
+# models. Leave unset to use the free default in src/index.js
+# (@cf/meta/llama-3.1-8b-instruct-fast).
+# ASSISTANT_AI_MODEL = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+
+# ASSISTANT_AI_SECRET is a secret, not a var:
+#   npx wrangler secret put ASSISTANT_AI_SECRET

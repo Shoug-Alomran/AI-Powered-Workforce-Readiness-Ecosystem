@@ -5,6 +5,7 @@ import { getCurrentEmployer } from "@/lib/session";
 import { computeJobMatch } from "@/lib/ai";
 import { getEmployerIntelligence } from "@/lib/intelligence";
 import { closeJob, reopenJob } from "@/actions/employer";
+import JobDeleteControl from "@/components/JobDeleteControl";
 import PageToc from "@/components/PageToc";
 import EmployerHeader from "@/components/EmployerHeader";
 
@@ -78,6 +79,7 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
           ) : (
             <form action={reopenJob}><input type="hidden" name="jobId" value={job.id} /><button className="button secondary">Reopen role</button></form>
           )}
+          <JobDeleteControl jobId={job.id} jobTitle={job.title} applicantCount={job.applications.length} />
         </div>
       </div>
       <p className="muted">{job.description}</p>

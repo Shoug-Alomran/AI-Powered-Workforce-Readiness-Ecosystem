@@ -218,16 +218,31 @@ export function computeJobMatch(
       missingCerts.push(c.certification.name);
     }
   }
-  const certTotal = job.requiredCerts.length || 1;
-  const certScore = (matchedCerts.length / certTotal) * 100;
+  // A job that requires no certification has nothing to satisfy, so the
+  // certification component is dropped and its weight is redistributed across
+  // the components that do apply. Previously it scored 0/1 = 0%, silently
+  // capping every candidate at 75% and making `strongCandidateCount` (>= 80)
+  // permanently zero for such roles.
+  const certRequired = job.requiredCerts.length > 0;
+  const certScore = certRequired
+    ? (matchedCerts.length / job.requiredCerts.length) * 100
+    : 0;
 
   const experienceGapMonths = Math.max(0, job.minExperience - totalMonths);
   const expScore = job.minExperience === 0
     ? 100
     : Math.min(100, (totalMonths / job.minExperience) * 100);
 
+  const components = [
+    { value: skillScore, weight: 0.55, applicable: true },
+    { value: certScore, weight: 0.25, applicable: certRequired },
+    { value: expScore, weight: 0.2, applicable: true },
+  ].filter((component) => component.applicable);
+
+  const totalWeight = components.reduce((sum, component) => sum + component.weight, 0);
+
   const overall = Math.round(
-    skillScore * 0.55 + certScore * 0.25 + expScore * 0.2
+    components.reduce((sum, component) => sum + component.value * component.weight, 0) / totalWeight
   );
 
   const parts: string[] = [];
