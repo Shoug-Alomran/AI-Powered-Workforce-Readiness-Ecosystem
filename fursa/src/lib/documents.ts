@@ -3,7 +3,10 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { prisma } from "@/lib/db";
 import { uploadPrivateDocument } from "@/lib/r2";
-import { analyzeEvidence } from "@/lib/evidence-ai";
+import {
+  analyzeEvidence,
+  type EvidenceContextType,
+} from "@/lib/evidence-ai";
 
 export const DOCUMENT_ACCEPT =
   ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt,.rtf,.odt,.ods,.odp,.jpg,.jpeg,.png,.webp,.gif,.mp4,.mov,.webm,.mp3,.wav,.m4a,.zip";
@@ -39,6 +42,15 @@ const allowedExtensions = new Set(
   DOCUMENT_ACCEPT.split(",").map((value) => value.slice(1))
 );
 
+const AI_SUPPORTED_CONTEXTS = new Set<EvidenceContextType>([
+  "CERTIFICATION",
+  "PROJECT",
+  "EXPERIENCE",
+  "JOB",
+  "OFFERING",
+  "CURRICULUM_ACTION",
+]);
+
 function safeName(name: string) {
   return (
     name
@@ -47,6 +59,20 @@ function safeName(name: string) {
       .replace(/\s+/g, " ")
       .slice(0, 180) || "document"
   );
+}
+
+function getEvidenceContextType(
+  contextType: string
+): EvidenceContextType | null {
+  const normalized = contextType
+    .trim()
+    .toUpperCase() as EvidenceContextType;
+
+  if (!AI_SUPPORTED_CONTEXTS.has(normalized)) {
+    return null;
+  }
+
+  return normalized;
 }
 
 export async function storeEvidenceDocuments(input: {
@@ -60,6 +86,9 @@ export async function storeEvidenceDocuments(input: {
     id: string;
     storageKey: string;
   }> = [];
+
+  const aiContextType =
+    getEvidenceContextType(input.contextType);
 
   for (const entry of input.files) {
     if (!(entry instanceof File) || entry.size === 0) {
@@ -95,7 +124,7 @@ export async function storeEvidenceDocuments(input: {
     const mimeType =
       entry.type || "application/octet-stream";
 
-    // 1. Upload original evidence privately to R2
+    // 1. Upload the original evidence privately to R2.
     await uploadPrivateDocument(
       storageKey,
       new Uint8Array(
@@ -104,8 +133,8 @@ export async function storeEvidenceDocuments(input: {
       mimeType
     );
 
-    // 2. Create evidence record immediately.
-    // AI analysis must not be required for the upload to succeed.
+    // 2. Create the database record immediately.
+    // Upload success does not depend on AI success.
     const document =
       await prisma.evidenceDocument.create({
         data: {
@@ -119,7 +148,10 @@ export async function storeEvidenceDocuments(input: {
           mimeType,
           sizeBytes: entry.size,
 
-          aiStatus: "PENDING",
+          aiStatus: aiContextType
+            ? "PENDING"
+            : "NOT_APPLICABLE",
+
           reviewStatus: "PENDING",
         },
       });
@@ -129,17 +161,34 @@ export async function storeEvidenceDocuments(input: {
       storageKey: document.storageKey,
     });
 
-    // 3. Ask the Cloudflare AI Worker to analyze the evidence.
-    // If AI fails, keep the upload and leave it for human review.
+    // 3. Do not call the AI Worker for document contexts
+    // that do not have a supported analysis schema.
+    if (!aiContextType) {
+      console.warn(
+        "Skipping Evidence AI analysis for unsupported context",
+        {
+          documentId: document.id,
+          contextType: input.contextType,
+        }
+      );
+
+      continue;
+    }
+
+    // 4. Send both the R2 file key and its context to the
+    // Cloudflare Evidence AI Worker.
     try {
       const aiResult =
-        await analyzeEvidence(storageKey);
+        await analyzeEvidence(
+          storageKey,
+          aiContextType
+        );
 
       if (
         aiResult?.success &&
         aiResult.extraction
       ) {
-        // 4. Save the real AI extraction
+        // 5. Save the structured AI extraction.
         await prisma.evidenceDocument.update({
           where: {
             id: document.id,
@@ -152,6 +201,8 @@ export async function storeEvidenceDocuments(input: {
           },
         });
       } else {
+        // The document remains available for human review
+        // even when automated analysis fails.
         await prisma.evidenceDocument.update({
           where: {
             id: document.id,
@@ -168,6 +219,7 @@ export async function storeEvidenceDocuments(input: {
         {
           documentId: document.id,
           storageKey,
+          contextType: aiContextType,
           error,
         }
       );

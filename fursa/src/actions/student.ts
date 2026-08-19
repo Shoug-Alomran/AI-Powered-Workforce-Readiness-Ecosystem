@@ -151,6 +151,7 @@ export async function addExperience(formData: FormData) {
 
   revalidatePath("/student/dashboard");
   revalidatePath("/student/profile");
+  revalidatePath("/student/evidence");
 }
 
 export async function removeExperience(formData: FormData) {
@@ -181,6 +182,7 @@ export async function addProject(formData: FormData) {
 
   revalidatePath("/student/dashboard");
   revalidatePath("/student/profile");
+  revalidatePath("/student/evidence");
 }
 
 export async function removeProject(formData: FormData) {

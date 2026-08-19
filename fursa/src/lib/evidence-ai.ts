@@ -1,23 +1,92 @@
 import "server-only";
 
+export type EvidenceContextType =
+  | "CERTIFICATION"
+  | "PROJECT"
+  | "EXPERIENCE"
+  | "JOB"
+  | "OFFERING"
+  | "CURRICULUM_ACTION";
+
+export type EvidenceAISkill = {
+  name: string;
+  confidence: number;
+  evidence: string;
+};
+
 export type EvidenceAIExtraction = {
+  // Shared fields
   documentType: string | null;
   title: string | null;
   issuer: string | null;
   recipientName: string | null;
   issueDate: string | null;
   expiryDate: string | null;
-  skills: Array<{
-    name: string;
-    confidence: number;
-    evidence: string;
-  }>;
+  skills: EvidenceAISkill[];
   overallConfidence: number;
   reviewNote: string;
+
+  // Project evidence
+  projectTitle?: string | null;
+  projectType?: string | null;
+  technologies?: string[];
+  role?: string | null;
+  organization?: string | null;
+  completionDate?: string | null;
+  evidenceSummary?: string | null;
+
+  // Experience evidence
+  roleTitle?: string | null;
+  experienceType?: string | null;
+  startDate?: string | null;
+  endDate?: string | null;
+  duration?: string | null;
+  responsibilities?: string[];
+
+  // Employer job documents
+  jobTitle?: string | null;
+  summary?: string | null;
+  requiredSkills?: EvidenceAISkill[];
+  preferredSkills?: EvidenceAISkill[];
+  requiredCertifications?: string[];
+  preferredCertifications?: string[];
+  minimumExperience?: string | null;
+  educationRequirements?: string[];
+  location?: string | null;
+  remoteStatus?: string | null;
+  employmentType?: string | null;
+  potentialRequirementIssues?: Array<{
+    issue: string;
+    evidence: string;
+    severity: string;
+  }>;
+
+  // University course / syllabus documents
+  courseTitle?: string | null;
+  courseCode?: string | null;
+  institution?: string | null;
+  courseDescription?: string | null;
+  learningOutcomes?: string[];
+  topics?: string[];
+  prerequisites?: string[];
+  assessmentMethods?: string[];
+  creditHours?: string | null;
+  contactHours?: string | null;
+  certificationAlignment?: string[];
+
+  // University curriculum action evidence
+  initiativeTitle?: string | null;
+  implementationEvidence?: string[];
+  affectedCourses?: string[];
+  targetSkills?: EvidenceAISkill[];
+  outcomes?: string[];
+  dates?: string[];
+  supportingDocuments?: string[];
 };
 
-type EvidenceAIResponse = {
+export type EvidenceAIResponse = {
   success: boolean;
+  contextType: EvidenceContextType;
   analysisType: "vision" | "document-text";
   file: {
     fileKey: string;
@@ -29,7 +98,8 @@ type EvidenceAIResponse = {
 };
 
 export async function analyzeEvidence(
-  fileKey: string
+  fileKey: string,
+  contextType: EvidenceContextType
 ): Promise<EvidenceAIResponse | null> {
   const url = process.env.EVIDENCE_AI_URL;
   const secret = process.env.EVIDENCE_AI_SECRET;
@@ -48,6 +118,7 @@ export async function analyzeEvidence(
       },
       body: JSON.stringify({
         fileKey,
+        contextType,
       }),
       cache: "no-store",
     });
@@ -64,9 +135,9 @@ export async function analyzeEvidence(
       return null;
     }
 
-    const result = await response.json();
+    const result = (await response.json()) as EvidenceAIResponse;
 
-    return result as EvidenceAIResponse;
+    return result;
   } catch (error) {
     console.error("Evidence AI analysis failed", error);
     return null;

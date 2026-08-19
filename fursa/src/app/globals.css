@@ -1810,3 +1810,10 @@ body:has(.imp)>header{display:none}
 .policy-nav h2{width:100%;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#94a3b8;margin:0}
 .policy-nav a{color:#087967;font-weight:700;text-decoration:none}
 .policy-nav a:hover{text-decoration:underline}
+
+.submit-status{display:flex;align-items:center;gap:10px;padding:12px 14px;border:1px solid var(--color-border,#e0e7e3);border-radius:10px;background:var(--color-ai-soft,#eef6f4);color:var(--color-ai,#087967);font-size:13px;line-height:1.5;font-weight:650;animation:cardArrival .3s ease both}
+.submit-spinner{width:14px;height:14px;flex:none;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:submitSpin .7s linear infinite}
+.button .submit-spinner{margin-right:8px;vertical-align:-2px}
+form[aria-busy="true"] .input,form[aria-busy="true"] .document-upload{opacity:.6;pointer-events:none}
+@keyframes submitSpin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.submit-spinner{animation-duration:2s}.submit-status{animation:none}}
