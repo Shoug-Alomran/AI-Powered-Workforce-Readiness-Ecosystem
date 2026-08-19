@@ -56,8 +56,8 @@ export const team: TeamMember[] = [
     ],
   }, {
     name: "Renad Alsulaiman",
-      role: "UK",
-      bio: "UK",
+      role: "System Diagrams & Modeling",
+      bio: "I’m a Software Engineering student at Prince Sultan University. I’m interested in technology and software development, and I enjoy learning new things and improving my skills. I like understanding how systems work and finding simple ways to represent ideas clearly. In this project, I worked on the system diagrams and helped show how different parts of the system connect and work together. I’m always looking forward to learning more, gaining new experience, and working on new projects.",
       focus: ["UK"],
     email: "renad.alsulaiman@fursah.org",
     links: [

@@ -50,6 +50,23 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       className="h-full antialiased"
       suppressHydrationWarning
     >
+      <head>
+        {/*
+          Resolves the theme before first paint. PreferencesControls sets the
+          same attribute, but it only runs after hydration — long enough for a
+          dark-mode reader to be shown a full white page first. This is
+          deliberately a blocking inline script: deferring it reintroduces the
+          flash it exists to prevent. It only ever writes one attribute.
+        */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "try{var t=localStorage.getItem('fursah-theme');" +
+              "if(t!=='light'&&t!=='dark'){t=matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}" +
+              "document.documentElement.dataset.theme=t}catch(e){}",
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col"><Suspense fallback={<NavbarPlaceholder />}><Navbar /></Suspense>{children}<Suspense fallback={null}><Walkthrough /></Suspense><Suspense fallback={null}><AccessibleViewControls /></Suspense><PreferencesControls /><Analytics /><SpeedInsights /></body>
     </html>
   );
