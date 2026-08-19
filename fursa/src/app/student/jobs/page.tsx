@@ -1,5 +1,7 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
+import RouteSkeleton from "@/components/RouteSkeleton";
 import { getCurrentStudent } from "@/lib/session";
 import { computeJobMatch } from "@/lib/ai";
 import { applyToJob, toggleBookmark } from "@/actions/student";
@@ -7,7 +9,22 @@ import { getAllCareerTracksAsync } from "@/lib/careerTracks.server";
 import type { Prisma } from "@/generated/prisma/client";
 import DocumentUpload from "@/components/DocumentUpload";
 
-export default async function Jobs({
+// The shell is prerenderable; everything that reads the session or the query
+// string lives inside the boundary below, so the page can be served from the
+// CDN while the personalised half streams in.
+export default function Jobs({
+  searchParams,
+}: {
+  searchParams: Promise<{ track?: string; q?: string }>;
+}) {
+  return (
+    <Suspense fallback={<RouteSkeleton />}>
+      <JobsContent searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function JobsContent({
   searchParams,
 }: {
   searchParams: Promise<{ track?: string; q?: string }>;

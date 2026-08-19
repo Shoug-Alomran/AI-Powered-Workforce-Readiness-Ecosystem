@@ -50,7 +50,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       className="h-full antialiased"
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col"><Suspense fallback={<NavbarPlaceholder />}><Navbar /></Suspense>{children}<Suspense fallback={null}><Walkthrough /></Suspense><AccessibleViewControls /><PreferencesControls /><Analytics /><SpeedInsights /></body>
+      <body className="min-h-full flex flex-col"><Suspense fallback={<NavbarPlaceholder />}><Navbar /></Suspense>{children}<Suspense fallback={null}><Walkthrough /></Suspense><Suspense fallback={null}><AccessibleViewControls /></Suspense><PreferencesControls /><Analytics /><SpeedInsights /></body>
     </html>
   );
 }

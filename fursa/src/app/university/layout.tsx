@@ -1,3 +1,8 @@
+// Every route in this portal renders per-viewer data behind the session
+// cookie, so there is no meaningful shell to prerender. Opt the segment out
+// of prerendering rather than fight it page by page.
+export const instant = false;
+
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUniversity } from "@/lib/session";

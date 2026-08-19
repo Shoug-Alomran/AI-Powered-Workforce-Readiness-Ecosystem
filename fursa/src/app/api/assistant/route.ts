@@ -17,9 +17,10 @@ import {
   type AssistantTurn,
 } from "@/lib/assistant/llm";
 
-export const runtime = "nodejs";
-/** Context is assembled per request from live data; never cache a response. */
-export const dynamic = "force-dynamic";
+// Context is assembled per request from live data and a response is never
+// cached. Under Cache Components that is the default for a route handler —
+// caching is opt-in via "use cache" — so the old `runtime`/`dynamic` segment
+// exports are both redundant and rejected by the compiler.
 
 const MAX_QUESTION_LENGTH = 1000;
 

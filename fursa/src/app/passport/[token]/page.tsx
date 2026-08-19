@@ -1,6 +1,10 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 
+// A share link resolved from an opaque per-passport token, so there is no
+// shell worth prerendering.
+export const instant = false;
+
 export default async function PublicPassport({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   const share = await prisma.passportShare.findUnique({ where: { token }, include: { student: { include: { user: true, skills: { include: { skill: true } }, certifications: { include: { certification: true } }, experiences: true, projects: true } } } });

@@ -1,5 +1,6 @@
 import "server-only";
 
+import { connection } from "next/server";
 import { prisma } from "@/lib/db";
 import { computeCareerReadiness, READINESS_MODEL_VERSION, type ReadinessEvidenceInput } from "./readiness";
 import { getMarketIntelligence } from "./market";
@@ -29,6 +30,11 @@ const SUPPLY_LEVEL = 3;
  * a time series first.
  */
 export async function getEcosystemIntelligence(): Promise<EcosystemIntelligenceResult> {
+    // Stamps the result with `new Date()` below. Declaring the dependency on the
+    // incoming request tells Next this can never be prerendered, rather than it
+    // tripping over the unstable value at build time.
+    await connection();
+
     const [market, students, tracks, offerings, jobs, employerCount, feedbackCount, applications] =
         await Promise.all([
             getMarketIntelligence(),

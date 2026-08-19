@@ -2,6 +2,10 @@ import path from "path";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Partial prerendering: the static shell of every route is prerendered and
+  // served from the CDN, while anything reading cookies or the database streams
+  // in behind its Suspense boundary.
+  cacheComponents: true,
   experimental: { serverActions: { bodySizeLimit: "30mb" } },
   // Firebase Admin's CommonJS JWT verifier must resolve JOSE's Node entrypoint.
   // Bundling these packages can incorrectly select JOSE's ESM-only web build

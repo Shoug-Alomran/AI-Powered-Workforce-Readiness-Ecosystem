@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { getCurrentUser } from "@/lib/session";
@@ -9,9 +10,19 @@ const anchors = [["Solutions", "solutions"], ["How it Works", "how-it-works"], [
  * header stays identical away from `/`. `onHome` keeps the section links as
  * in-page anchors; elsewhere they point back at the matching section on `/`.
  */
-export default async function SiteHeader({ onHome = false }: { onHome?: boolean }) {
+// Only the two account links depend on who is viewing. Keeping them behind
+// their own boundary lets the rest of the header — and therefore the whole
+// marketing page — be prerendered and served from the CDN.
+async function SiteHeaderAccount() {
   const user = await getCurrentUser();
   const dashboard = user?.role === "STUDENT" ? "/student/dashboard" : user?.role === "EMPLOYER" ? "/employer/dashboard" : user?.role === "UNIVERSITY" ? "/university/dashboard" : user?.role === "ADMIN" ? "/admin/dashboard" : "/login";
+  return <>
+    {user ? <Link href={dashboard}>Open Dashboard</Link> : <Link href="/login">Sign In</Link>}
+    <Link className="primary" href={user ? dashboard : "/login/demo"}>{user ? "Continue" : "Explore Prototype"}</Link>
+  </>;
+}
+
+export default function SiteHeader({ onHome = false }: { onHome?: boolean }) {
   const anchor = (id: string) => onHome ? `#${id}` : `/#${id}`;
   return <header className="home-nav">
     <Link href="/" className="home-logo"><span className="brand-mark"><Image src="/logo.png" alt="" width={353} height={512} priority /></span><b>FURSAH</b></Link>
@@ -22,8 +33,11 @@ export default async function SiteHeader({ onHome = false }: { onHome?: boolean 
       <a href={anchor("metrics")}>Prototype</a>
     </nav>
     <div>
-      {user ? <Link href={dashboard}>Open Dashboard</Link> : <Link href="/login">Sign In</Link>}
-      <Link className="primary" href={user ? dashboard : "/login/demo"}>{user ? "Continue" : "Explore Prototype"}</Link>
+      {/* min-height holds the row's height so the streamed-in links do not
+          shift the header when they arrive. */}
+      <Suspense fallback={<span aria-hidden style={{ display: "inline-block", minHeight: 40 }} />}>
+        <SiteHeaderAccount />
+      </Suspense>
     </div>
   </header>;
 }

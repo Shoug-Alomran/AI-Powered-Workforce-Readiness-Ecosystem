@@ -1,6 +1,11 @@
 import PageToc from "@/components/PageToc";
 import { getEcosystemIntelligence, MIN_ECOSYSTEM_SAMPLE } from "@/lib/intelligence";
 
+// Reports live ecosystem figures stamped with a generation time, so there is
+// nothing stable to prerender. The loading.tsx skeleton still covers
+// navigation, but the route itself blocks.
+export const instant = false;
+
 export default async function Intelligence() {
   const ecosystem = await getEcosystemIntelligence();
 
