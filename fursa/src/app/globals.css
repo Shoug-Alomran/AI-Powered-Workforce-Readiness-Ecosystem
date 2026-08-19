@@ -1940,19 +1940,69 @@ body:has(.pjob-footer) .preference-controls{bottom:calc(clamp(12px,2vw,24px) + 8
    header streams in would otherwise collapse and shift the page. */
 body:has(.admin-portal) [data-navbar-placeholder]{display:none}
 
-.pipeline-figure{margin:var(--space-m) 0 0;padding:0;overflow-x:auto}
-.pipeline-figure figcaption{margin-top:var(--space-s);color:var(--color-muted);font-size:var(--step--1);line-height:1.65;max-width:var(--width-prose)}
-.pipeline-svg{display:block;width:100%;height:auto;min-width:980px}
-.pipeline-box{fill:var(--color-surface);stroke:var(--color-border);stroke-width:1.5}
-.tone-model .pipeline-box{stroke:var(--color-accent);stroke-width:2}
-.tone-human .pipeline-box{stroke:var(--color-ai);stroke-width:2}
-.pipeline-id{fill:var(--color-subtle);font-size:10px;font-weight:800;letter-spacing:.12em}
-.pipeline-label{fill:var(--color-text);font-size:14px;font-weight:750}
-.pipeline-detail{fill:var(--color-muted);font-size:10.5px}
-.pipeline-governs{fill:var(--color-subtle);font-size:10px;font-style:italic}
-.pipeline-connector{stroke:var(--color-border);stroke-width:1.5}
-.pipeline-arrowhead{fill:var(--color-border)}
-.pipeline-override{stroke:var(--color-ai);stroke-width:1.5;stroke-dasharray:5 4}
-.pipeline-override-label{fill:var(--color-ai);font-size:10px;font-weight:700}
-.pipeline-heading{fill:var(--color-text);font-size:13px;font-weight:750}
-.pipeline-subheading{fill:var(--color-subtle);font-size:11px}
+/* ---------------------------------------------------------------------------
+   Pipeline figure.
+   Breaks out of the policy column's prose width to use the screen it has: a
+   diagram is not prose and should not be capped at 72ch. Falls back to the
+   container width on small screens, where the row reflows into a grid rather
+   than scrolling — RTL made a scrolling container start at the wrong end,
+   hiding the first two stages entirely.
+   --------------------------------------------------------------------------- */
+.pipeline{
+  --pipe-width:min(var(--width-content), calc(100vw - 2 * var(--gutter)));
+  width:var(--pipe-width);
+  margin:var(--space-l) 0 0;
+  margin-inline:calc((100% - var(--pipe-width)) / 2);
+  padding:0;
+}
+.pipeline-kicker{margin:0;font-size:var(--step--1);font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--color-subtle)}
+.pipeline-sub{margin:var(--space-3xs) 0 var(--space-m);font-size:var(--step--1);color:var(--color-muted)}
+
+.pipeline-row{
+  list-style:none;margin:0;padding:0;
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(clamp(9.5rem,13vw,12rem),1fr));
+  gap:var(--space-s);
+  align-items:start;
+}
+.pipeline-node{display:flex;flex-direction:column;gap:var(--space-2xs);min-width:0;position:relative}
+.pipeline-card{
+  flex:1;
+  display:flex;flex-direction:column;gap:var(--space-3xs);
+  padding:var(--space-s);
+  background:var(--color-surface);
+  border:1.5px solid var(--color-border);
+  border-radius:var(--radius-lg);
+}
+.tone-model .pipeline-card{border-color:var(--color-accent);border-width:2px}
+.tone-human .pipeline-card{border-color:var(--color-ai);border-width:2px}
+.pipeline-id{font-size:var(--step--1);font-weight:800;letter-spacing:.12em;color:var(--color-subtle)}
+.pipeline-label{margin:0;font-size:var(--step-0);font-weight:750;color:var(--color-text);text-wrap:balance}
+.pipeline-detail{margin:0;font-size:var(--step--1);line-height:1.5;color:var(--color-muted)}
+.pipeline-governs{margin:0;padding-inline:var(--space-3xs);font-size:var(--step--1);font-style:italic;line-height:1.45;color:var(--color-subtle);text-align:center}
+
+/* Connectors only once the row is genuinely a single line; when the grid wraps
+   an arrow between stacked cards would point at nothing. */
+@media (min-width:1100px){
+  .pipeline-node:not(:last-child) .pipeline-card::after{
+    content:"";position:absolute;top:calc(var(--space-s) + 0.55em);
+    inset-inline-end:calc(var(--space-s) / -2 - 3px);
+    width:7px;height:7px;
+    border-top:1.5px solid var(--color-border);
+    border-inline-end:1.5px solid var(--color-border);
+    transform:rotate(45deg);
+  }
+  .pipeline-node:not(:last-child) .pipeline-card:dir(rtl)::after{transform:rotate(225deg)}
+}
+
+.pipeline-override{
+  margin:var(--space-m) 0 0;padding:var(--space-xs) var(--space-s);
+  border-inline-start:3px solid var(--color-ai);
+  border-radius:var(--radius-sm);
+  background:color-mix(in srgb,var(--color-ai) 8%,transparent);
+  color:var(--color-text);font-size:var(--step--1);font-weight:650;
+}
+.pipeline figcaption{
+  margin-top:var(--space-s);max-width:var(--measure);
+  color:var(--color-muted);font-size:var(--step--1);line-height:1.65;
+}
