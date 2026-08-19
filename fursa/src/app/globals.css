@@ -1853,3 +1853,21 @@ body:has(.pjob-footer) .preference-controls{bottom:calc(clamp(12px,2vw,24px) + 8
 /* Navbar returns nothing for administrators, so the space held for it while the
    header streams in would otherwise collapse and shift the page. */
 body:has(.admin-portal) [data-navbar-placeholder]{display:none}
+
+.pipeline-figure{margin:26px 0 0;padding:0}
+.pipeline-figure figcaption{margin-top:14px;color:var(--color-muted,#687872);font-size:13px;line-height:1.65}
+.pipeline-svg{display:block;width:100%;height:auto;min-width:980px}
+.pipeline-figure{overflow-x:auto}
+.pipeline-box{fill:var(--color-surface,#fff);stroke:var(--color-border,#e0e7e3);stroke-width:1.5}
+.tone-model .pipeline-box{stroke:var(--color-accent,#2563eb);stroke-width:2}
+.tone-human .pipeline-box{stroke:var(--color-ai,#6d5dfb);stroke-width:2}
+.pipeline-id{fill:var(--color-subtle,#94a3b8);font-size:10px;font-weight:800;letter-spacing:.12em}
+.pipeline-label{fill:var(--color-text,#14241f);font-size:14px;font-weight:750}
+.pipeline-detail{fill:var(--color-muted,#687872);font-size:10.5px}
+.pipeline-governs{fill:var(--color-subtle,#94a3b8);font-size:10px;font-style:italic}
+.pipeline-connector{stroke:var(--color-border,#cbd5e1);stroke-width:1.5}
+.pipeline-arrowhead{fill:var(--color-border,#cbd5e1)}
+.pipeline-override{stroke:var(--color-ai,#6d5dfb);stroke-width:1.5;stroke-dasharray:5 4}
+.pipeline-override-label{fill:var(--color-ai,#6d5dfb);font-size:10px;font-weight:700}
+.pipeline-heading{fill:var(--color-text,#14241f);font-size:13px;font-weight:750}
+.pipeline-subheading{fill:var(--color-subtle,#94a3b8);font-size:11px}

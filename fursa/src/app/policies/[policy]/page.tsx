@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import PipelineDiagram from "@/components/PipelineDiagram";
 import { POLICIES, POLICY_SLUGS } from "@/lib/policies";
 
 export function generateStaticParams() {
@@ -24,6 +25,7 @@ export default async function PolicyPage({ params }: { params: Promise<{ policy:
     <h1 className="page-title">{content.title}</h1>
     <p className="muted">Version {content.version} · Effective {content.effective} · Last updated {content.updated}</p>
     <div className="notice" style={{ marginTop: 24 }}>{content.summary}</div>
+    {policy === "responsible-ai" && <PipelineDiagram />}
 
     {content.clauses.map(clause => <section className="card policy-clause" style={{ marginTop: 18 }} key={clause.heading}>
       <h2>{clause.heading}</h2>

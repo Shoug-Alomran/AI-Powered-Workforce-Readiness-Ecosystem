@@ -12,6 +12,10 @@
 //   - appeal subjects          -> Appeal.subjectType in prisma/schema.prisma
 //   - upload limits and types  -> DOCUMENT_ACCEPT / MAX_BYTES in src/lib/documents.ts
 //   - session lifetime         -> setSessionUserId in src/lib/session.ts
+//   - LLM provider and model   -> DEFAULT_ASSISTANT_MODEL in src/lib/assistant/llm.ts
+//   - assistant history depth  -> MAX_HISTORY_TURNS in src/lib/assistant/llm.ts
+//   - extraction fields sent   -> EvidenceAIExtraction in src/lib/evidence-ai.ts
+//   - role scoping guarantee   -> scripts/verify-assistant.ts
 //
 // If you change any of those, change the matching clause here in the same
 // commit. A policy that no longer describes the system is worse than none:
@@ -114,8 +118,27 @@ const PRIVACY: PolicyDocument = {
         "To an employer, when you apply to their opportunity: your profile, your match score, and the explanation behind it. Supporting evidence is included only if you have granted the employer-evidence consent.",
         "To a holder of a sharing link you created yourself. Passport links are time-limited, carry an expiry date you set, and can be revoked by you at any moment, which invalidates the link immediately.",
         "To your university, only in aggregate form and subject to the suppression rule in clause 7. A university does not receive named student records or per-student scores through institutional reporting.",
-        "To service providers who process data on our instructions under written agreement: Google Firebase Authentication for sign-in, Cloudflare R2 for encrypted storage of evidence files, and Vercel for application hosting. They may not use your data for their own purposes.",
+        "To service providers who process data on our instructions under written agreement: Google Firebase Authentication for sign-in, Cloudflare R2 for encrypted storage of evidence files, Cloudflare Workers AI for the language-model processing described in clause 6a, and Vercel for application hosting. They may not use your data for their own purposes.",
         "To a competent authority where we are legally required to disclose, and to the extent required.",
+      ],
+    },
+    {
+      heading: "6a. Language-model processing",
+      paragraphs: [
+        "Two features send personal data to a language model, and we describe them specifically rather than under a general reference to “AI processing”.",
+      ],
+      bullets: [
+        "Evidence extraction: when you upload a certificate, project, or experience document, its contents are sent for structured extraction — document type, title, issuer, the name the document was issued to, dates, and the skills it evidences, each with a confidence value and the text supporting it. The result is a proposal for a human reviewer, never an automatic approval.",
+        "The in-platform assistant: when you ask it a question, it receives a prepared set of facts scoped to your own role, together with your question and up to six previous turns of that conversation.",
+      ],
+    },
+    {
+      heading: "6b. Limits on that processing",
+      paragraphs: [
+        "The model does not compute your readiness score or your match score. Those remain deterministic and rule-based, exactly as published in the Responsible AI Policy, so that every number affecting you stays reconstructible. The model extracts, summarises, and explains; it does not rank people.",
+        "The facts supplied to the assistant are scoped by role before they leave our systems. A university's assistant receives only aggregate, suppression-filtered data and cannot be given an individual student's record, and this boundary is enforced by an automated check that runs against the context builder rather than by instruction to the model alone.",
+        "We use Cloudflare Workers AI. Your data is processed to answer your request and is not used by us or by the provider to train models.",
+        "Language models can be wrong. Extracted details are a proposal you and a human reviewer can correct, and assistant answers are explanatory rather than authoritative. Where an extraction is wrong, correcting it is a data-correction right under clause 11, not a support request.",
       ],
     },
     {
@@ -137,6 +160,7 @@ const PRIVACY: PolicyDocument = {
       paragraphs: [
         "Fursah is designed to be operated from a hosting region inside the Kingdom, consistent with national data-classification and cloud-hosting rules and with the Regulations on Personal Data Transfers outside the Kingdom.",
         "We state plainly that the current prototype deployment uses infrastructure providers whose storage and hosting regions are not yet pinned to the Kingdom. This is a known limitation of the prototype and is disclosed here rather than omitted. Before the platform processes real student records at any scale, hosting and storage will be bound to a compliant in-Kingdom region, and any residual transfer will be assessed and documented as the Regulations require.",
+        "The same applies, and applies most sharply, to the language-model processing in clause 6a: inference runs on the provider's distributed network rather than in a region we currently pin. Evidence documents are the most sensitive data the platform holds, so this is the first transfer we will bring inside the Kingdom. Until it is, the extraction feature can be disabled for any institution that requires it, and the platform continues to function without it — evidence is then reviewed by a human without a machine-generated proposal.",
       ],
     },
     {
@@ -220,9 +244,21 @@ const RESPONSIBLE_AI: PolicyDocument = {
     {
       heading: "2. What the system actually is",
       paragraphs: [
-        "Honesty about the mechanism is part of explainability, so we state it plainly: Fursah's readiness and matching engine is a deterministic, rule-based scoring system with published weights. It is not a machine-learning model trained on historical hiring decisions.",
+        "Honesty about the mechanism is part of explainability, so we state it plainly. Fursah has two distinct components, and the boundary between them is the most important design decision in the platform.",
+        "Everything that produces a number about a person — the Career Readiness Score, the gap analysis, and the candidate–role match — is a deterministic, rule-based scoring system with published weights. It is not a machine-learning model trained on historical hiring decisions.",
         "This is a deliberate architectural choice. A model trained on past hiring outcomes learns past hiring preference, including its inequities. A weighted rule engine cannot silently acquire a bias from history, because it has no history to learn from; its inputs are the skills, certifications, experience, and projects a candidate can evidence, and its weights are visible, versioned, and auditable.",
-        "The trade-off is that the engine cannot discover patterns nobody encoded. We accept that limitation in exchange for a system whose every output can be reconstructed and challenged. Any future introduction of a learned component would require bias auditing and a published impact assessment before deployment.",
+        "The trade-off is that the engine cannot discover patterns nobody encoded. We accept that limitation in exchange for a system whose every output can be reconstructed and challenged.",
+      ],
+    },
+    {
+      heading: "2a. Where the language model sits, and where it does not",
+      paragraphs: [
+        "The platform also uses a general-purpose language model, and we are specific about its role because a vague claim of “AI-powered” would obscure exactly what a reader of this policy needs to know.",
+        "The model does two things: it extracts structured details from evidence documents you upload, and it answers questions in the in-platform assistant. It does not compute any score, does not rank candidates, and does not decide whether evidence is accepted.",
+        "Both uses are grounded. The model is given facts already produced by the deterministic engine and is instructed to answer only from them; it is not asked to reason about a person from raw data. Its extraction output is a proposal carrying a confidence value and the supporting text, submitted to a human reviewer who accepts or rejects it.",
+        "This division is deliberate. Language models are well suited to reading a document and explaining a result, and poorly suited to being the reason a person did or did not get an opportunity. Placing the model on the explanatory side of the boundary keeps every consequential number reconstructible, which is the property the rest of this policy depends on.",
+        "The assistant's access to data is scoped by role before any request leaves our systems, and that boundary is enforced by an automated verification run against the context builder — including an assertion that a university's assistant can never be supplied with an individual student's record. We test the boundary rather than trusting the instruction.",
+        "Any future introduction of a learned component into scoring itself would require bias auditing and a published impact assessment before deployment.",
       ],
     },
     {
