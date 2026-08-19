@@ -4,6 +4,7 @@ export type EvidenceAIExtraction = {
   documentType: string | null;
   title: string | null;
   issuer: string | null;
+  recipientName: string | null;
   issueDate: string | null;
   expiryDate: string | null;
   skills: Array<{

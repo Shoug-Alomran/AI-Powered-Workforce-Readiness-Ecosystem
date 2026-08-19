@@ -9,6 +9,7 @@ type EvidenceAnalysis = {
   documentType?: string | null;
   title?: string | null;
   issuer?: string | null;
+  recipientName?: string | null;
   issueDate?: string | null;
   expiryDate?: string | null;
   skills?: Array<{
@@ -20,12 +21,25 @@ type EvidenceAnalysis = {
   reviewNote?: string | null;
 };
 
-function getEvidenceAnalysis(value: unknown): EvidenceAnalysis | null {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
+function getEvidenceAnalysis(
+  value: unknown
+): EvidenceAnalysis | null {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    Array.isArray(value)
+  ) {
     return null;
   }
 
   return value as EvidenceAnalysis;
+}
+
+function normalizePersonName(name: string) {
+  return name
+    .toLowerCase()
+    .normalize("NFKC")
+    .replace(/[^a-z0-9\u0600-\u06ff]/g, "");
 }
 
 export default async function EvidencePage() {
@@ -35,7 +49,11 @@ export default async function EvidencePage() {
     redirect("/login");
   }
 
-  const [projects, experiences, documents] = await Promise.all([
+  const [
+    projects,
+    experiences,
+    documents,
+  ] = await Promise.all([
     prisma.project.findMany({
       where: {
         verificationStatus: "PENDING",
@@ -114,37 +132,72 @@ export default async function EvidencePage() {
 
       <section
         className="card"
-        style={{ marginTop: 26 }}
+        style={{
+          marginTop: 26,
+        }}
       >
         <h2>Private document review</h2>
 
         {documents.length ? (
           documents.map((document) => {
             const analysis =
-              getEvidenceAnalysis(document.aiAnalysis);
+              getEvidenceAnalysis(
+                (
+                  document as typeof document & {
+                    aiAnalysis?: unknown;
+                  }
+                ).aiAnalysis
+              );
+
+            const recipientName =
+              analysis?.recipientName?.trim() || null;
+
+            const accountName =
+              document.owner.name.trim();
+
+            const identityMismatch =
+              recipientName !== null &&
+              normalizePersonName(
+                recipientName
+              ) !==
+                normalizePersonName(
+                  accountName
+                );
+
+            const identityMatch =
+              recipientName !== null &&
+              !identityMismatch;
 
             const skills =
-              Array.isArray(analysis?.skills)
+              Array.isArray(
+                analysis?.skills
+              )
                 ? analysis.skills
                 : [];
 
             const confidence =
-              typeof analysis?.overallConfidence === "number"
+              typeof analysis?.overallConfidence ===
+              "number"
                 ? Math.round(
-                    analysis.overallConfidence * 100
+                    analysis.overallConfidence *
+                      100
                   )
                 : null;
 
             const statusClass =
-              document.aiStatus === "FAILED"
+              document.aiStatus ===
+              "FAILED"
                 ? "rejected"
-                : document.aiStatus === "COMPLETED"
+                : document.aiStatus ===
+                    "COMPLETED"
                   ? "approved"
                   : "pending";
 
             return (
               <form
-                action={reviewEvidenceDocument}
+                action={
+                  reviewEvidenceDocument
+                }
                 className="data-row document-review-row"
                 key={document.id}
               >
@@ -161,7 +214,10 @@ export default async function EvidencePage() {
                     AI{" "}
                     {document.aiStatus
                       .toLowerCase()
-                      .replaceAll("_", " ")}
+                      .replaceAll(
+                        "_",
+                        " "
+                      )}
                   </span>
 
                   <strong>
@@ -176,22 +232,27 @@ export default async function EvidencePage() {
                       " "
                     )}
                     {" · "}
-                    {(document.sizeBytes / 1024).toFixed(
-                      1
-                    )}{" "}
+                    {(
+                      document.sizeBytes /
+                      1024
+                    ).toFixed(1)}{" "}
                     KB
                   </span>
 
-                  {document.aiStatus === "PENDING" && (
+                  {document.aiStatus ===
+                    "PENDING" && (
                     <span className="muted">
-                      AI analysis is pending.
+                      AI analysis is
+                      pending.
                     </span>
                   )}
 
-                  {document.aiStatus === "FAILED" && (
+                  {document.aiStatus ===
+                    "FAILED" && (
                     <span className="muted">
-                      AI analysis failed. Human review is
-                      still required.
+                      AI analysis failed.
+                      Human review is still
+                      required.
                     </span>
                   )}
 
@@ -201,7 +262,7 @@ export default async function EvidencePage() {
                       style={{
                         marginTop: 10,
                         display: "grid",
-                        gap: 4,
+                        gap: 6,
                       }}
                     >
                       {analysis.documentType && (
@@ -209,30 +270,149 @@ export default async function EvidencePage() {
                           <strong>
                             Document type:
                           </strong>{" "}
-                          {analysis.documentType}
+                          {
+                            analysis.documentType
+                          }
                         </span>
                       )}
 
                       {analysis.title && (
                         <span>
-                          <strong>Title:</strong>{" "}
+                          <strong>
+                            Title:
+                          </strong>{" "}
                           {analysis.title}
                         </span>
                       )}
 
                       {analysis.issuer && (
                         <span>
-                          <strong>Issuer:</strong>{" "}
+                          <strong>
+                            Issuer:
+                          </strong>{" "}
                           {analysis.issuer}
                         </span>
                       )}
+
+                      {recipientName && (
+                        <span>
+                          <strong>
+                            Certificate
+                            holder:
+                          </strong>{" "}
+                          {recipientName}
+                        </span>
+                      )}
+
+                      <span>
+                        <strong>
+                          Account holder:
+                        </strong>{" "}
+                        {accountName}
+                      </span>
+
+                      {identityMatch && (
+                        <div
+                          style={{
+                            marginTop: 6,
+                            padding:
+                              "10px 12px",
+                            border:
+                              "1px solid rgba(31, 122, 87, 0.25)",
+                            borderRadius: 10,
+                            background:
+                              "rgba(31, 122, 87, 0.08)",
+                          }}
+                        >
+                          <strong>
+                            Identity names
+                            match
+                          </strong>
+
+                          <div>
+                            The recipient name
+                            on the evidence
+                            matches the Fursah
+                            account holder.
+                          </div>
+                        </div>
+                      )}
+
+                      {identityMismatch && (
+                        <div
+                          style={{
+                            marginTop: 6,
+                            padding:
+                              "10px 12px",
+                            border:
+                              "1px solid rgba(180, 50, 50, 0.30)",
+                            borderRadius: 10,
+                            background:
+                              "rgba(180, 50, 50, 0.08)",
+                          }}
+                        >
+                          <strong>
+                            Identity mismatch
+                            detected
+                          </strong>
+
+                          <div>
+                            The evidence names{" "}
+                            <strong>
+                              {
+                                recipientName
+                              }
+                            </strong>{" "}
+                            as the recipient,
+                            while the Fursah
+                            account belongs to{" "}
+                            <strong>
+                              {accountName}
+                            </strong>
+                            . Human review is
+                            required.
+                          </div>
+                        </div>
+                      )}
+
+                      {!recipientName &&
+                        document.aiStatus ===
+                          "COMPLETED" && (
+                          <div
+                            style={{
+                              marginTop: 6,
+                              padding:
+                                "10px 12px",
+                              border:
+                                "1px solid rgba(180, 120, 30, 0.30)",
+                              borderRadius: 10,
+                              background:
+                                "rgba(180, 120, 30, 0.08)",
+                            }}
+                          >
+                            <strong>
+                              Recipient name
+                              not identified
+                            </strong>
+
+                            <div>
+                              AI could not
+                              confirm who the
+                              evidence belongs
+                              to. Human review
+                              is required.
+                            </div>
+                          </div>
+                        )}
 
                       {analysis.issueDate && (
                         <span>
                           <strong>
                             Issue date:
                           </strong>{" "}
-                          {analysis.issueDate}
+                          {
+                            analysis.issueDate
+                          }
                         </span>
                       )}
 
@@ -241,20 +421,23 @@ export default async function EvidencePage() {
                           <strong>
                             Expiry date:
                           </strong>{" "}
-                          {analysis.expiryDate}
+                          {
+                            analysis.expiryDate
+                          }
                         </span>
                       )}
 
                       {confidence !== null && (
                         <span>
                           <strong>
-                            AI confidence:
+                            Extraction
+                            confidence:
                           </strong>{" "}
                           {confidence}%
                         </span>
                       )}
 
-                      {skills.length > 0 && (
+                      {skills.length > 0 ? (
                         <span>
                           <strong>
                             Supported skills:
@@ -267,6 +450,13 @@ export default async function EvidencePage() {
                             .filter(Boolean)
                             .join(", ")}
                         </span>
+                      ) : (
+                        <span>
+                          <strong>
+                            Supported skills:
+                          </strong>{" "}
+                          None detected
+                        </span>
                       )}
 
                       {analysis.reviewNote && (
@@ -274,7 +464,9 @@ export default async function EvidencePage() {
                           <strong>
                             AI review note:
                           </strong>{" "}
-                          {analysis.reviewNote}
+                          {
+                            analysis.reviewNote
+                          }
                         </span>
                       )}
                     </div>
@@ -284,7 +476,8 @@ export default async function EvidencePage() {
                     className="link"
                     href={`/api/documents/${document.id}`}
                   >
-                    Download private document
+                    Download private
+                    document
                   </a>
                 </div>
 
@@ -331,14 +524,20 @@ export default async function EvidencePage() {
 
       <section
         className="card"
-        style={{ marginTop: 18 }}
+        style={{
+          marginTop: 18,
+        }}
       >
-        <h2>Submitted evidence links</h2>
+        <h2>
+          Submitted evidence links
+        </h2>
 
         {items.length ? (
           items.map((item) => (
             <form
-              action={reviewPortfolioEvidence}
+              action={
+                reviewPortfolioEvidence
+              }
               className="data-row"
               key={`${item.entityType}-${item.id}`}
             >
@@ -354,7 +553,11 @@ export default async function EvidencePage() {
                 value={item.id}
               />
 
-              <div style={{ flex: 1 }}>
+              <div
+                style={{
+                  flex: 1,
+                }}
+              >
                 <span className="pill">
                   {item.entityType}
                 </span>
@@ -369,17 +572,23 @@ export default async function EvidencePage() {
                 </strong>
 
                 <div className="muted">
-                  {item.student.user.name}
+                  {
+                    item.student.user
+                      .name
+                  }
                 </div>
 
                 {item.evidenceUrl && (
                   <a
                     className="link"
-                    href={item.evidenceUrl}
+                    href={
+                      item.evidenceUrl
+                    }
                     target="_blank"
                     rel="noreferrer"
                   >
-                    Open submitted evidence
+                    Open submitted
+                    evidence
                   </a>
                 )}
 
