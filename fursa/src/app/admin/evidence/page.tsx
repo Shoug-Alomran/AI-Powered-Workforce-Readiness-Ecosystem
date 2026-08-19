@@ -5,9 +5,417 @@ import { reviewPortfolioEvidence } from "@/actions/governance";
 import { reviewEvidenceDocument } from "@/actions/documents";
 import EmptyState from "@/components/EmptyState";
 
+type EvidenceAnalysis = {
+  documentType?: string | null;
+  title?: string | null;
+  issuer?: string | null;
+  issueDate?: string | null;
+  expiryDate?: string | null;
+  skills?: Array<{
+    name?: string;
+    confidence?: number;
+    evidence?: string;
+  }>;
+  overallConfidence?: number | null;
+  reviewNote?: string | null;
+};
+
+function getEvidenceAnalysis(value: unknown): EvidenceAnalysis | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+
+  return value as EvidenceAnalysis;
+}
+
 export default async function EvidencePage() {
-  const ctx = await getCurrentAdmin(); if (!ctx) redirect("/login");
-  const [projects, experiences, documents] = await Promise.all([prisma.project.findMany({ where: { verificationStatus: "PENDING" }, include: { student: { include: { user: true } } } }), prisma.experience.findMany({ where: { verificationStatus: "PENDING" }, include: { student: { include: { user: true } } } }),prisma.evidenceDocument.findMany({where:{reviewStatus:"PENDING"},include:{owner:true},orderBy:{createdAt:"asc"}}).catch(error=>{console.error("Unable to load private evidence documents",error);return [];})]);
-  const items = [...projects.map(x => ({ ...x, entityType: "PROJECT" })), ...experiences.map(x => ({ ...x, entityType: "EXPERIENCE" }))];
-  return <main className="page-shell"><span className="eyebrow">Evidence integrity</span><h1 className="page-title">Document and link verification</h1><p className="muted">Automated checks organize and flag evidence. A human administrator must inspect every document before it can become verified.</p><section className="card" style={{ marginTop: 26 }}><h2>Private document review</h2>{documents.length?documents.map(document=><form action={reviewEvidenceDocument} className="data-row document-review-row" key={document.id}><input type="hidden" name="documentId" value={document.id}/><div><span className={`pill status-${document.aiStatus==="FLAGGED"?"rejected":"pending"}`}>AI {document.aiStatus.toLowerCase()}</span><strong>{document.originalName}</strong><span className="muted">{document.owner.name} · {document.contextType.replaceAll("_"," ")} · {(document.sizeBytes/1024).toFixed(1)} KB</span><span className="muted">{document.aiNote}</span><a className="link" href={`/api/documents/${document.id}`}>Download private document</a></div><label>Human review note<textarea className="input" name="reviewNote" required placeholder="Record what you inspected and why it is acceptable, or explain what must be replaced."/></label><div className="actions"><button className="button primary" name="decision" value="APPROVED">Approve</button><button className="button danger" name="decision" value="REJECTED">Reject</button></div></form>):<EmptyState tone="clear" icon="✓" title="No documents awaiting review" body="When a student attaches a certificate, CV or project file, the automated check runs first and the document then waits here for your decision." />}</section><section className="card" style={{ marginTop: 18 }}><h2>Submitted evidence links</h2>{items.length ? items.map(item => <form action={reviewPortfolioEvidence} className="data-row" key={`${item.entityType}-${item.id}`}><input type="hidden" name="entityType" value={item.entityType}/><input type="hidden" name="entityId" value={item.id}/><div style={{ flex: 1 }}><span className="pill">{item.entityType}</span><strong style={{ display: "block", marginTop: 8 }}>{item.title}</strong><div className="muted">{item.student.user.name}</div>{item.evidenceUrl && <a className="link" href={item.evidenceUrl} target="_blank" rel="noreferrer">Open submitted evidence</a>}<textarea className="input" name="note" placeholder="Review note; required when rejecting"/></div><button className="button primary" name="decision" value="APPROVED">Approve</button><button className="button danger" name="decision" value="REJECTED">Reject</button></form>) : <EmptyState tone="clear" icon="✓" title="No links awaiting review" body="Public evidence links submitted with projects and experience are checked separately, because their contents can change after submission." />}</section></main>;
+  const ctx = await getCurrentAdmin();
+
+  if (!ctx) {
+    redirect("/login");
+  }
+
+  const [projects, experiences, documents] = await Promise.all([
+    prisma.project.findMany({
+      where: {
+        verificationStatus: "PENDING",
+      },
+      include: {
+        student: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    }),
+
+    prisma.experience.findMany({
+      where: {
+        verificationStatus: "PENDING",
+      },
+      include: {
+        student: {
+          include: {
+            user: true,
+          },
+        },
+      },
+    }),
+
+    prisma.evidenceDocument
+      .findMany({
+        where: {
+          reviewStatus: "PENDING",
+        },
+        include: {
+          owner: true,
+        },
+        orderBy: {
+          createdAt: "asc",
+        },
+      })
+      .catch((error) => {
+        console.error(
+          "Unable to load private evidence documents",
+          error
+        );
+
+        return [];
+      }),
+  ]);
+
+  const items = [
+    ...projects.map((x) => ({
+      ...x,
+      entityType: "PROJECT" as const,
+    })),
+
+    ...experiences.map((x) => ({
+      ...x,
+      entityType: "EXPERIENCE" as const,
+    })),
+  ];
+
+  return (
+    <main className="page-shell">
+      <span className="eyebrow">
+        Evidence integrity
+      </span>
+
+      <h1 className="page-title">
+        Document and link verification
+      </h1>
+
+      <p className="muted">
+        AI analysis organizes evidence and extracts supported
+        information. A human administrator must inspect every
+        document before it can become verified.
+      </p>
+
+      <section
+        className="card"
+        style={{ marginTop: 26 }}
+      >
+        <h2>Private document review</h2>
+
+        {documents.length ? (
+          documents.map((document) => {
+            const analysis =
+              getEvidenceAnalysis(document.aiAnalysis);
+
+            const skills =
+              Array.isArray(analysis?.skills)
+                ? analysis.skills
+                : [];
+
+            const confidence =
+              typeof analysis?.overallConfidence === "number"
+                ? Math.round(
+                    analysis.overallConfidence * 100
+                  )
+                : null;
+
+            const statusClass =
+              document.aiStatus === "FAILED"
+                ? "rejected"
+                : document.aiStatus === "COMPLETED"
+                  ? "approved"
+                  : "pending";
+
+            return (
+              <form
+                action={reviewEvidenceDocument}
+                className="data-row document-review-row"
+                key={document.id}
+              >
+                <input
+                  type="hidden"
+                  name="documentId"
+                  value={document.id}
+                />
+
+                <div>
+                  <span
+                    className={`pill status-${statusClass}`}
+                  >
+                    AI{" "}
+                    {document.aiStatus
+                      .toLowerCase()
+                      .replaceAll("_", " ")}
+                  </span>
+
+                  <strong>
+                    {document.originalName}
+                  </strong>
+
+                  <span className="muted">
+                    {document.owner.name}
+                    {" · "}
+                    {document.contextType.replaceAll(
+                      "_",
+                      " "
+                    )}
+                    {" · "}
+                    {(document.sizeBytes / 1024).toFixed(
+                      1
+                    )}{" "}
+                    KB
+                  </span>
+
+                  {document.aiStatus === "PENDING" && (
+                    <span className="muted">
+                      AI analysis is pending.
+                    </span>
+                  )}
+
+                  {document.aiStatus === "FAILED" && (
+                    <span className="muted">
+                      AI analysis failed. Human review is
+                      still required.
+                    </span>
+                  )}
+
+                  {analysis && (
+                    <div
+                      className="muted"
+                      style={{
+                        marginTop: 10,
+                        display: "grid",
+                        gap: 4,
+                      }}
+                    >
+                      {analysis.documentType && (
+                        <span>
+                          <strong>
+                            Document type:
+                          </strong>{" "}
+                          {analysis.documentType}
+                        </span>
+                      )}
+
+                      {analysis.title && (
+                        <span>
+                          <strong>Title:</strong>{" "}
+                          {analysis.title}
+                        </span>
+                      )}
+
+                      {analysis.issuer && (
+                        <span>
+                          <strong>Issuer:</strong>{" "}
+                          {analysis.issuer}
+                        </span>
+                      )}
+
+                      {analysis.issueDate && (
+                        <span>
+                          <strong>
+                            Issue date:
+                          </strong>{" "}
+                          {analysis.issueDate}
+                        </span>
+                      )}
+
+                      {analysis.expiryDate && (
+                        <span>
+                          <strong>
+                            Expiry date:
+                          </strong>{" "}
+                          {analysis.expiryDate}
+                        </span>
+                      )}
+
+                      {confidence !== null && (
+                        <span>
+                          <strong>
+                            AI confidence:
+                          </strong>{" "}
+                          {confidence}%
+                        </span>
+                      )}
+
+                      {skills.length > 0 && (
+                        <span>
+                          <strong>
+                            Supported skills:
+                          </strong>{" "}
+                          {skills
+                            .map(
+                              (skill) =>
+                                skill.name
+                            )
+                            .filter(Boolean)
+                            .join(", ")}
+                        </span>
+                      )}
+
+                      {analysis.reviewNote && (
+                        <span>
+                          <strong>
+                            AI review note:
+                          </strong>{" "}
+                          {analysis.reviewNote}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  <a
+                    className="link"
+                    href={`/api/documents/${document.id}`}
+                  >
+                    Download private document
+                  </a>
+                </div>
+
+                <label>
+                  Human review note
+
+                  <textarea
+                    className="input"
+                    name="reviewNote"
+                    required
+                    placeholder="Record what you inspected and why it is acceptable, or explain what must be replaced."
+                  />
+                </label>
+
+                <div className="actions">
+                  <button
+                    className="button primary"
+                    name="decision"
+                    value="APPROVED"
+                  >
+                    Approve
+                  </button>
+
+                  <button
+                    className="button danger"
+                    name="decision"
+                    value="REJECTED"
+                  >
+                    Reject
+                  </button>
+                </div>
+              </form>
+            );
+          })
+        ) : (
+          <EmptyState
+            tone="clear"
+            icon="✓"
+            title="No documents awaiting review"
+            body="When a student attaches a certificate, CV or project file, AI analysis runs first and the document then waits here for your decision."
+          />
+        )}
+      </section>
+
+      <section
+        className="card"
+        style={{ marginTop: 18 }}
+      >
+        <h2>Submitted evidence links</h2>
+
+        {items.length ? (
+          items.map((item) => (
+            <form
+              action={reviewPortfolioEvidence}
+              className="data-row"
+              key={`${item.entityType}-${item.id}`}
+            >
+              <input
+                type="hidden"
+                name="entityType"
+                value={item.entityType}
+              />
+
+              <input
+                type="hidden"
+                name="entityId"
+                value={item.id}
+              />
+
+              <div style={{ flex: 1 }}>
+                <span className="pill">
+                  {item.entityType}
+                </span>
+
+                <strong
+                  style={{
+                    display: "block",
+                    marginTop: 8,
+                  }}
+                >
+                  {item.title}
+                </strong>
+
+                <div className="muted">
+                  {item.student.user.name}
+                </div>
+
+                {item.evidenceUrl && (
+                  <a
+                    className="link"
+                    href={item.evidenceUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Open submitted evidence
+                  </a>
+                )}
+
+                <textarea
+                  className="input"
+                  name="note"
+                  placeholder="Review note; required when rejecting"
+                />
+              </div>
+
+              <button
+                className="button primary"
+                name="decision"
+                value="APPROVED"
+              >
+                Approve
+              </button>
+
+              <button
+                className="button danger"
+                name="decision"
+                value="REJECTED"
+              >
+                Reject
+              </button>
+            </form>
+          ))
+        ) : (
+          <EmptyState
+            tone="clear"
+            icon="✓"
+            title="No links awaiting review"
+            body="Public evidence links submitted with projects and experience are checked separately, because their contents can change after submission."
+          />
+        )}
+      </section>
+    </main>
+  );
 }
