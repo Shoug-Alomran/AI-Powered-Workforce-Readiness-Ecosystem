@@ -56,19 +56,19 @@ export const team: TeamMember[] = [
     ],
   }, {
     name: "Renad Alsulaiman",
-      role: "?",
-      bio: "?",
-      focus: ["?"],
+      role: "UK",
+      bio: "UK",
+      focus: ["UK"],
     email: "renad.alsulaiman@fursah.org",
     links: [
-      { label: "GitHub", href: "https://github.com/Renad-Alsulaiman" },
-      { label: "LinkedIn", href: "https://www.linkedin.com/in/renad-alsulaiman/" },
+      { label: "GitHub", href: "https://github.com/Rentech228" },
+      { label: "LinkedIn", href: "https://www.linkedin.com/in/renad-al-sulaiman-81a98a31a/" },
     ],
   }, {
     name: "Taleen Bin Nader",
-    role: "?",
-    bio: "?",
-    focus: ["?"],
+    role: "UK",
+    bio: "UK",
+    focus: ["UK"],
     email: "taleen.binnader@fursah.org",
     links: [
       { label: "GitHub", href: "https://github.com/Taleen-Bin-Nader" },

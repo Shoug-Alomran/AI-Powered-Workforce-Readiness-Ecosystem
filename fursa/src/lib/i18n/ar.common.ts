@@ -31,6 +31,7 @@ export const common: Record<string, string> = {
   "Responsible AI": "ذكاء اصطناعي مسؤول",
   "Accessibility": "إمكانية الوصول",
   "AI Readiness Report (PDF)": "تقرير الجاهزية للذكاء الاصطناعي (PDF)",
+  "Business Analysis (PDF)": "تحليل الأعمال (PDF)",
   "Workforce Intelligence": "ذكاء سوق العمل",
   "Workforce feedback loop": "حلقة التغذية الراجعة لسوق العمل",
   "Riyadh, Saudi Arabia": "الرياض، المملكة العربية السعودية",
