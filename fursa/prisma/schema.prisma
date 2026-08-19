@@ -24,37 +24,48 @@ model User {
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
 
-  student       Student?
-  employer      Employer?
-  university    University?
-  auditEvents   AuditEvent[]
-  notifications Notification[]
+  student        Student?
+  employer       Employer?
+  university     University?
+  auditEvents    AuditEvent[]
+  notifications  Notification[]
   supportTickets SupportTicket[]
-  documents     EvidenceDocument[]
+  documents      EvidenceDocument[]
 }
 
 model EvidenceDocument {
-  id             String   @id @default(cuid())
-  ownerUserId    String
-  owner          User     @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
-  contextType    String   // CERTIFICATION | PROJECT | EXPERIENCE | APPLICATION | JOB | CURRICULUM_ACTION | OFFERING
-  contextId      String
-  purpose        String
-  storageKey     String   @unique
-  originalName   String
-  mimeType       String
-  sizeBytes      Int
-  aiStatus       String   @default("PASSED") // PASSED | FLAGGED
-  aiNote         String?
-  reviewStatus   String   @default("PENDING") // PENDING | APPROVED | REJECTED
-  reviewNote     String?
-  reviewedBy     String?
-  reviewedAt     DateTime?
-  createdAt      DateTime @default(now())
+  id          String @id @default(cuid())
+  ownerUserId String
+  owner        User   @relation(fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  // What this evidence belongs to
+  contextType String // CERTIFICATION | PROJECT | EXPERIENCE | APPLICATION | JOB | CURRICULUM_ACTION | OFFERING
+  contextId   String
+  purpose     String
+
+  // Private R2 storage
+  storageKey   String @unique
+  originalName String
+  mimeType     String
+  sizeBytes    Int
+
+  // AI-assisted evidence analysis
+  aiStatus     String    @default("PENDING") // PENDING | COMPLETED | FAILED
+  aiAnalysis   Json?
+  aiAnalyzedAt DateTime?
+
+  // Human verification
+  reviewStatus String @default("PENDING") // PENDING | APPROVED | REJECTED
+  reviewNote   String?
+  reviewedBy   String?
+  reviewedAt   DateTime?
+
+  createdAt DateTime @default(now())
 
   @@index([contextType, contextId])
   @@index([reviewStatus, createdAt])
   @@index([ownerUserId, createdAt])
+  @@index([aiStatus, createdAt])
 }
 
 model University {
@@ -70,9 +81,9 @@ model University {
 }
 
 model Student {
-  id           String  @id @default(cuid())
-  userId       String  @unique
-  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String @id @default(cuid())
+  userId       String @unique
+  user         User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   targetCareer String
   degree       String?
   university   String?
@@ -120,8 +131,8 @@ model StudentSkill {
 }
 
 model Certification {
-  id   String  @id @default(cuid())
-  name String  @unique
+  id   String @id @default(cuid())
+  name String @unique
   org  String?
 
   studentCerts     StudentCertification[]
@@ -135,6 +146,7 @@ model Certification {
 // once rows exist here they become the source of truth for readiness
 // scoring, roadmaps, and the career-track pickers across the app.
 // -----------------------------------------------------------------------
+
 model CareerTrack {
   id                          String   @id // stable slug, e.g. "software-engineer"
   label                       String
@@ -187,39 +199,39 @@ model StudentCertification {
 }
 
 model Experience {
-  id        String   @id @default(cuid())
-  studentId String
-  student   Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  type      String // internship | research | volunteer | competition | hackathon | workshop
-  title     String
-  org       String?
-  months    Int      @default(1)
-  evidenceUrl String?
-  verificationStatus String @default("SELF_REPORTED") // SELF_REPORTED | PENDING | APPROVED | REJECTED
-  reviewNote String?
-  reviewedAt DateTime?
-  reviewedBy String?
-  createdAt DateTime @default(now())
+  id                 String   @id @default(cuid())
+  studentId          String
+  student            Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  type               String // internship | research | volunteer | competition | hackathon | workshop
+  title              String
+  org                String?
+  months             Int      @default(1)
+  evidenceUrl        String?
+  verificationStatus String   @default("SELF_REPORTED") // SELF_REPORTED | PENDING | APPROVED | REJECTED
+  reviewNote         String?
+  reviewedAt         DateTime?
+  reviewedBy         String?
+  createdAt          DateTime @default(now())
 }
 
 model Project {
-  id          String   @id @default(cuid())
-  studentId   String
-  student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  title       String
-  description String?
-  evidenceUrl String?
-  verificationStatus String @default("SELF_REPORTED") // SELF_REPORTED | PENDING | APPROVED | REJECTED
-  reviewNote String?
-  reviewedAt DateTime?
-  reviewedBy String?
-  createdAt   DateTime @default(now())
+  id                 String   @id @default(cuid())
+  studentId          String
+  student            Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  title              String
+  description        String?
+  evidenceUrl        String?
+  verificationStatus String   @default("SELF_REPORTED") // SELF_REPORTED | PENDING | APPROVED | REJECTED
+  reviewNote         String?
+  reviewedAt         DateTime?
+  reviewedBy         String?
+  createdAt          DateTime @default(now())
 }
 
 model Employer {
-  id       String  @id @default(cuid())
-  userId   String  @unique
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   company  String
   industry String?
 
@@ -292,6 +304,7 @@ model Application {
 
 // A persisted learning plan lets the prototype demonstrate adaptation over
 // time rather than recalculating a stateless list on every page load.
+
 model RoadmapItem {
   id               String    @id @default(cuid())
   studentId        String
@@ -334,30 +347,30 @@ model PassportShare {
 }
 
 model DataRequest {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  type       String // ACCESS | DOWNLOAD | CORRECTION | DELETION
+  details    String?
+  status     String   @default("OPEN") // OPEN | PROCESSING | COMPLETED | REJECTED
+  resolution String?
+  reviewedBy String?
+  reviewedAt DateTime?
+  createdAt  DateTime @default(now())
+}
+
+model Appeal {
   id          String   @id @default(cuid())
   studentId   String
   student     Student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  type        String // ACCESS | DOWNLOAD | CORRECTION | DELETION
-  details     String?
-  status      String   @default("OPEN") // OPEN | PROCESSING | COMPLETED | REJECTED
+  subjectType String // READINESS | MATCH | EVIDENCE | DATA
+  subjectId   String?
+  reason      String
+  status      String   @default("OPEN") // OPEN | UNDER_REVIEW | RESOLVED | REJECTED
   resolution  String?
   reviewedBy  String?
   reviewedAt  DateTime?
   createdAt   DateTime @default(now())
-}
-
-model Appeal {
-  id          String    @id @default(cuid())
-  studentId   String
-  student     Student   @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  subjectType String // READINESS | MATCH | EVIDENCE | DATA
-  subjectId   String?
-  reason      String
-  status      String    @default("OPEN") // OPEN | UNDER_REVIEW | RESOLVED | REJECTED
-  resolution  String?
-  reviewedBy  String?
-  reviewedAt  DateTime?
-  createdAt   DateTime  @default(now())
 }
 
 model Notification {
@@ -388,48 +401,48 @@ model AuditEvent {
 }
 
 model GovernanceScenario {
-  id             String    @id @default(cuid())
+  id             String   @id @default(cuid())
   title          String
   scenarioType   String
   description    String
   riskLevel      String
   detectedIssues String
   proposedAction String
-  humanDecision  String    @default("PENDING") // PENDING | APPROVED | OVERRIDDEN
+  humanDecision  String   @default("PENDING") // PENDING | APPROVED | OVERRIDDEN
   decisionNote   String?
   createdBy      String
-  createdAt      DateTime  @default(now())
+  createdAt      DateTime @default(now())
   reviewedAt     DateTime?
 }
 
 model MonitoringSnapshot {
-  id                 String   @id @default(cuid())
-  modelVersion       String
-  sampleSize         Int
-  averageScore       Float
-  outcomeRate        Float
-  scoreDrift         Float
-  outcomeDrift       Float
-  status             String // HEALTHY | WATCH | PAUSED | INSUFFICIENT_DATA
-  notes              String?
-  createdAt          DateTime @default(now())
+  id           String   @id @default(cuid())
+  modelVersion String
+  sampleSize   Int
+  averageScore Float
+  outcomeRate  Float
+  scoreDrift   Float
+  outcomeDrift Float
+  status       String // HEALTHY | WATCH | PAUSED | INSUFFICIENT_DATA
+  notes        String?
+  createdAt    DateTime @default(now())
 }
 
 model SupportTicket {
-  id          String   @id @default(cuid())
-  userId      String?
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  name        String
-  email       String
-  category    String
-  subject     String
-  message     String
-  priority    String   @default("NORMAL")
-  status      String   @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
-  resolution  String?
-  assignedTo  String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  name       String
+  email      String
+  category   String
+  subject    String
+  message    String
+  priority   String   @default("NORMAL")
+  status     String   @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
+  resolution String?
+  assignedTo String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model CurriculumAction {
@@ -459,7 +472,7 @@ model Feedback {
   overall        Int
   notes          String?
   checkpointDays Int      @default(90) // 30 | 90 | 180
-  dueAt           DateTime?
+  dueAt          DateTime?
   createdAt      DateTime @default(now())
 
   @@unique([jobId, studentId, checkpointDays])
@@ -481,6 +494,7 @@ model BookmarkedJob {
 // AI can proactively surface matches and skill-gap recommendations for
 // them, even before a matching job is posted.
 // -----------------------------------------------------------------------
+
 model FavoriteCompany {
   id         String   @id @default(cuid())
   studentId  String
@@ -507,6 +521,7 @@ model FavoriteCareerTrack {
 // a student's skill gaps for their favorite companies/career tracks, so a
 // gap surfaces alongside the specific offering that closes it.
 // -----------------------------------------------------------------------
+
 model Offering {
   id              String         @id @default(cuid())
   universityId    String
