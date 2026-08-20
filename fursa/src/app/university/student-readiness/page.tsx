@@ -5,6 +5,7 @@ import { getCurrentUniversity } from "@/lib/session";
 import { getAllCareerTracksAsync } from "@/lib/careerTracks.server";
 import { computeCohortReadiness, MIN_COHORT } from "@/lib/cohort";
 import PageToc from "@/components/PageToc";
+import SuppressedFigure from "@/components/SuppressedFigure";
 import { getUniversityIntelligence } from "@/lib/intelligence";
 
 export default async function StudentReadiness() {
@@ -30,10 +31,16 @@ export default async function StudentReadiness() {
 
   // Where employers ask for a skill the cohort has not evidenced: the point at
   // which readiness reporting becomes a curriculum decision.
+  // Only rows whose cohort figure survived suppression can be ranked or shown
+  // with a percentage; a withheld figure is null, not zero.
   const demandExceedingReadiness = intelligence.coveredSkills
     .filter((skill) => skill.openRoleCount > 0 && (skill.cohortMissingCount ?? 0) > 0)
     .sort((a, b) => (b.cohortMissingSharePct ?? 0) - (a.cohortMissingSharePct ?? 0))
     .slice(0, 6);
+
+  const withheldDemandRows = intelligence.coveredSkills.filter(
+    (skill) => skill.openRoleCount > 0 && skill.cohortMissingCount === null,
+  ).length;
 
   if (!cohort.reportable) {
     return (
@@ -50,7 +57,7 @@ export default async function StudentReadiness() {
     );
   }
 
-  const peakGap = cohort.gaps[0]?.students ?? 1;
+  const peakGap = cohort.gaps.find((gap) => !gap.suppressed)?.students ?? 1;
 
   return (
     <main className="page-shell student-readiness-page">
@@ -79,8 +86,20 @@ export default async function StudentReadiness() {
         </div>
         <div className="card">
           <span className="muted">Career ready</span>
-          <div className="metric">{cohort.bands.find((b) => b.label === "Career Ready")?.sharePct ?? 0}%</div>
-          <span className="muted">scoring 80 or above</span>
+          {(() => {
+            const ready = cohort.bands.find((b) => b.label === "Career Ready");
+            return ready && !ready.suppressed ? (
+              <>
+                <div className="metric">{ready.sharePct}%</div>
+                <span className="muted">scoring 80 or above</span>
+              </>
+            ) : (
+              <>
+                <div className="metric">—</div>
+                <SuppressedFigure />
+              </>
+            );
+          })()}
         </div>
       </div>
 
@@ -94,12 +113,16 @@ export default async function StudentReadiness() {
           <div key={band.label} style={{ marginTop: 16 }}>
             <div className="data-row">
               <strong>{band.label}</strong>
-              <b>
-                {band.count} student{band.count === 1 ? "" : "s"} · {band.sharePct}%
-              </b>
+              {band.suppressed ? (
+                <SuppressedFigure />
+              ) : (
+                <b>
+                  {band.count} student{band.count === 1 ? "" : "s"} · {band.sharePct}%
+                </b>
+              )}
             </div>
             <div className="bar">
-              <i style={{ width: `${band.sharePct}%` }} />
+              <i style={{ width: `${band.suppressed ? 0 : band.sharePct}%` }} />
             </div>
           </div>
         ))}
@@ -113,14 +136,24 @@ export default async function StudentReadiness() {
             <div>
               <strong>{track.label}</strong>
               <div className="muted">
-                {track.topGap ? `Most common gap: ${track.topGap}` : "No shared gap in this group"}
+                {track.suppressed
+                  ? `Fewer than ${MIN_COHORT} students target this track here, so its figures are withheld.`
+                  : track.topGap
+                    ? `Most common gap: ${track.topGap}`
+                    : "No shared gap in this group"}
               </div>
             </div>
             <div className="actions">
-              <span className="pill">
-                {track.students} student{track.students === 1 ? "" : "s"}
-              </span>
-              <span className="pill">{track.averageScore}/100 avg</span>
+              {track.suppressed ? (
+                <SuppressedFigure />
+              ) : (
+                <>
+                  <span className="pill">
+                    {track.students} student{track.students === 1 ? "" : "s"}
+                  </span>
+                  <span className="pill">{track.averageScore}/100 avg</span>
+                </>
+              )}
             </div>
           </div>
         ))}
@@ -138,12 +171,16 @@ export default async function StudentReadiness() {
             <div key={gap.name} style={{ marginTop: 16 }}>
               <div className="data-row">
                 <strong>{gap.name}</strong>
-                <b>
-                  {gap.students} student{gap.students === 1 ? "" : "s"} · {gap.sharePct}%
-                </b>
+                {gap.suppressed ? (
+                  <SuppressedFigure />
+                ) : (
+                  <b>
+                    {gap.students} student{gap.students === 1 ? "" : "s"} · {gap.sharePct}%
+                  </b>
+                )}
               </div>
               <div className="bar">
-                <i style={{ width: `${Math.round((gap.students / peakGap) * 100)}%` }} />
+                <i style={{ width: `${gap.suppressed ? 0 : Math.round(((gap.students ?? 0) / peakGap) * 100)}%` }} />
               </div>
             </div>
           ))
@@ -157,18 +194,22 @@ export default async function StudentReadiness() {
             {cohort.certificationGaps.slice(0, 5).map((gap) => (
               <div className="data-row" key={gap.name}>
                 <span>{gap.name}</span>
-                <b>
-                  {gap.students} student{gap.students === 1 ? "" : "s"} · {gap.sharePct}%
-                </b>
+                {gap.suppressed ? (
+                  <SuppressedFigure />
+                ) : (
+                  <b>
+                    {gap.students} student{gap.students === 1 ? "" : "s"} · {gap.sharePct}%
+                  </b>
+                )}
               </div>
             ))}
           </>
         )}
 
-        {cohort.gaps[0] && (
+        {cohort.gaps.find((gap) => !gap.suppressed) && (
           <div className="notice" style={{ marginTop: 18 }}>
-            <strong>Turn this into an initiative.</strong> {cohort.gaps[0].name} is missing for{" "}
-            {cohort.gaps[0].sharePct}% of the cohort.{" "}
+            <strong>Turn this into an initiative.</strong> {cohort.gaps.find((gap) => !gap.suppressed)!.name} is missing for{" "}
+            {cohort.gaps.find((gap) => !gap.suppressed)!.sharePct}% of the cohort.{" "}
             <Link className="link" href="/university/offerings">
               Add an offering that teaches it
             </Link>{" "}
@@ -208,10 +249,23 @@ export default async function StudentReadiness() {
             No requested skill is currently missing across this cohort, or cohort figures are withheld.
           </div>
         )}
+        {withheldDemandRows > 0 && (
+          <p className="muted" style={{ marginTop: 14, fontSize: 13 }}>
+            <SuppressedFigure label={`${withheldDemandRows} further skill(s) withheld`} /> Fewer than {MIN_COHORT}{" "}
+            students fall in each of those reporting groups, so their cohort figures cannot be shown.
+          </p>
+        )}
       </section>
 
       <p className="muted" style={{ marginTop: 18 }}>
         Reported in aggregate only. No student is named, and no per-person score leaves the student&apos;s own account.
+        Suppression applies to every breakdown on this page, not only the cohort total: any career track, readiness
+        band, skill gap or certification gap containing fewer than {MIN_COHORT} students is withheld and shown as ⊘.
+        Where withholding a single group would let its value be recovered by subtracting the others, a second group is
+        withheld as well.
+        {cohort.suppressedGroupCount > 0
+          ? ` ${cohort.suppressedGroupCount} group(s) are withheld on this page.`
+          : " No group on this page currently falls below the threshold."}
       </p>
     </main>
   );

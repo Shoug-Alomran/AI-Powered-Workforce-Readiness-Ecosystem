@@ -71,6 +71,22 @@ export async function getUniversityIntelligence(
 
     const cohortGapByName = new Map(cohort.gaps.map((gap) => [normalizeSkillName(gap.name), gap]));
 
+    /**
+     * Reads one statistic off a cohort gap, preserving the difference between
+     * "withheld" (null) and "none" (0). A gap group below MIN_COHORT is
+     * suppressed inside computeCohortReadiness and carries null statistics.
+     */
+    function cohortMissingStat(
+        reportable: boolean,
+        gap: { students: number | null; sharePct: number | null; suppressed: boolean } | null,
+        field: "students" | "sharePct",
+    ): number | null {
+        if (!reportable) return null;
+        if (!gap) return 0;
+        if (gap.suppressed) return null;
+        return gap[field];
+    }
+
     // ---- Coverage ----------------------------------------------------------
 
     const offeringsBySkillId = new Map<string, Array<{ id: string; title: string }>>();
@@ -105,8 +121,13 @@ export async function getUniversityIntelligence(
             offeringIds: offerings.map((offering) => offering.id),
             offeringTitles: offerings.map((offering) => offering.title),
             studentsWithSkill: demand.studentsWithSkill,
-            cohortMissingCount: cohort.reportable ? cohortGap?.students ?? 0 : null,
-            cohortMissingSharePct: cohort.reportable ? cohortGap?.sharePct ?? 0 : null,
+            // Three distinct states, and collapsing any two of them would
+            // misreport: null means withheld (either the whole cohort is below
+            // the floor, or this particular gap group is), while 0 means the
+            // figure is reportable and genuinely nobody has this gap. The old
+            // `?? 0` turned a withheld group into a confident zero.
+            cohortMissingCount: cohortMissingStat(cohort.reportable, cohortGap, "students"),
+            cohortMissingSharePct: cohortMissingStat(cohort.reportable, cohortGap, "sharePct"),
         };
     });
 
@@ -165,9 +186,9 @@ export async function getUniversityIntelligence(
                 `${gap.skillName} appears in ${gap.openRoleCount} open role(s) and is not mapped to any offering in this catalogue` +
                 (gap.cohortMissingSharePct !== null && gap.cohortMissingSharePct > 0
                     ? `, while ${gap.cohortMissingSharePct}% of this institution's reported cohort has not evidenced it.`
-                    : cohort.reportable
+                    : gap.cohortMissingSharePct === 0
                         ? ", and no cohort member currently records it as a gap for their target career."
-                        : `. Cohort figures are withheld below ${MIN_COHORT} students, so student-side impact could not be measured.`) +
+                        : `. The cohort figure is withheld: fewer than ${MIN_COHORT} students fall in that reporting group, so student-side impact cannot be reported without identifying them.`) +
                 (alreadyPlanned ? " A curriculum initiative already references this skill." : ""),
         });
     }
