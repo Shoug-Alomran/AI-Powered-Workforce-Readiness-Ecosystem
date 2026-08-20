@@ -50,6 +50,11 @@ const RULES: Rule[] = [
     return month === m[2] ? m[0] : `${m[1]} ${month} ${m[3]}`;
   }],
 
+  // Workforce intelligence (app/workforce-intelligence)
+  [/^Across (\d+) scored profiles$/, (m) => `عبر ${m[1]} ملفاً مُقيَّماً`],
+  [/^Withheld below (\d+) scored profiles$/, (m) => `محجوبة دون ${m[1]} ملفات مُقيَّمة`],
+  [/^taught by (.+)$/, (m, t) => `تُدرَّس لدى ${list(m[1], t)}`],
+
   // Counted section headings, e.g. "Skills (6)", "Active (18)"
   [/^(.+) \((\d+)\)$/, (m, t) => {
     const label = t(m[1]);

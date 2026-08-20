@@ -385,4 +385,14 @@ export const standards: Record<string, string> = {
   "ECC-1:2018 · CCC-1:2020": "ECC-1:2018 · CCC-1:2020",
   "· published in Arabic and English": "· منشورة بالعربية والإنجليزية",
   "· published in Arabic": "· منشورة بالعربية",
+
+  // Standard designations stay in Latin script; only the surrounding words are
+  // translated, so a reader can still find the Recommendation in the ITU
+  // catalogue under the identifier printed on it.
+  "ITU-T Y.3172 · clause 8.1": "ITU-T Y.3172 · البند 8.1",
+  "Recommendation ITU-T Y.3172 (06/2019)": "التوصية ITU-T Y.3172 (06/2019)",
+  "Recommendation ITU-T Y.3181 (2022)": "التوصية ITU-T Y.3181 (2022)",
+  "Recommendation ITU-T Y.3176 (2020)": "التوصية ITU-T Y.3176 (2020)",
+  "ITU-T Y.3172 (06/2019), Architectural framework for machine learning in future networks including IMT-2020, clause 8.1":
+    "التوصية ITU-T Y.3172 (06/2019)، الإطار المعماري لتعلُّم الآلة في الشبكات المستقبلية بما فيها IMT-2020، البند 8.1",
 };

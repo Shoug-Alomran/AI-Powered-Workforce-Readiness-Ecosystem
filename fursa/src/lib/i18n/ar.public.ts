@@ -70,9 +70,6 @@ export const publicSite: Record<string, string> = {
   // Landing: ethics band
   "Explainable AI: The Foundation of Trust": "الذكاء الاصطناعي القابل للتفسير: أساس الثقة",
   "Unlike traditional algorithms, Fursah provides “Reasoning Cards” for every recommendation. AI should be a tool for empowerment, not a black box for exclusion.": "بخلاف الخوارزميات التقليدية، تقدّم فرصة «بطاقات تفسير» لكل توصية. الذكاء الاصطناعي أداة للتمكين لا صندوق أسود للإقصاء.",
-  "✓ Mitigated bias through audited datasets": "✓ الحد من التحيّز عبر بيانات مدققة",
-  "✓ Human-readable decision logs": "✓ سجلات قرارات مقروءة للبشر",
-  "✓ Continuous fairness auditing": "✓ تدقيق مستمر للعدالة",
   "▤ Read the AI Readiness Report (PDF)": "▤ اقرأ تقرير الجاهزية للذكاء الاصطناعي (PDF)",
   "AI RECOMMENDATION LOGIC": "منطق توصية الذكاء الاصطناعي",
   "Confidence: 94%": "الثقة: 94%",
@@ -349,4 +346,65 @@ export const publicSite: Record<string, string> = {
   "Related policies": "سياسات ذات صلة",
   "I’m a curious and driven Software Engineering and Cybersecurity student at Prince Sultan University with a deep passion for technology, data security, and innovation. I thrive on having a full plate; balancing projects, research, and creative pursuits keeps me learning and growing every day. I love tackling complex challenges, finding smart solutions, and turning ideas into impact, all while constantly pushing myself to do more and do it better.": "أنا طالبة هندسة برمجيات وأمن سيبراني في جامعة الأمير سلطان، شغوفة بالتقنية وأمن البيانات والابتكار. أزدهر حين تكون مهامي متعددة؛ فالموازنة بين المشاريع والبحث والمساعي الإبداعية تبقيني في تعلّم ونمو كل يوم. أحب خوض التحديات المعقدة وإيجاد حلول ذكية وتحويل الأفكار إلى أثر ملموس، مع دفع نفسي باستمرار لأقدّم أكثر وأفضل.",
   "I’m passionate about Artificial Intelligence, technology, and the possibilities they create for solving real-world problems. My interests span AI, machine learning, software development, and building intelligent solutions that are both practical and impactful. I enjoy turning ideas into working solutions, exploring new technologies, and continuously strengthening my technical and problem- solving skills.I’m especially interested in opportunities that challenge me to think creatively, collaborate with others, and apply what I know in meaningful ways. Driven by curiosity and a desire to keep evolving, I’m always looking to take on new challenges, contribute to impactful projects, and connect with people who are shaping the future of technology.": "أنا شغوفة بالذكاء الاصطناعي والتقنية وما يتيحانه من إمكانات لحل مشكلات واقعية. وتمتد اهتماماتي إلى الذكاء الاصطناعي وتعلّم الآلة وتطوير البرمجيات وبناء حلول ذكية عملية ومؤثرة في آن. أستمتع بتحويل الأفكار إلى حلول عاملة، واستكشاف تقنيات جديدة، وتقوية مهاراتي التقنية ومهارات حل المشكلات باستمرار. وتستهويني تحديداً الفرص التي تدفعني للتفكير بإبداع والتعاون مع الآخرين وتوظيف ما أعرفه بطرق ذات معنى. وبدافع الفضول والرغبة في التطور المستمر، أبحث دائماً عن تحديات جديدة وإسهام في مشاريع مؤثرة وتواصل مع من يصنعون مستقبل التقنية.",
+
+  // --- Landing: workflow and Explainable AI bullets ------------------------
+  "Upload & Extract": "الرفع والاستخراج",
+  "Students upload certificates, projects, and experience. Fursah reads each document and proposes the skills it evidences, with the supporting text and a confidence level, for a human to confirm.":
+    "يرفع الطلاب الشهادات والمشاريع والخبرات. تقرأ فرصة كل مستند وتقترح المهارات التي يثبتها، مع النص الداعم ودرجة الثقة، ليؤكدها إنسان.",
+  "✓ No gender, nationality, age or GPA is collected — so none can affect a score":
+    "✓ لا يُجمع الجنس ولا الجنسية ولا العمر ولا المعدل التراكمي — فلا يمكن لأيٍّ منها التأثير في أي درجة",
+  "✓ Published scoring weights, not a trained black box":
+    "✓ أوزان تقييم منشورة، لا صندوق أسود مُدرَّب",
+  "✓ Every decision logged with its ruleset version and reasoning":
+    "✓ كل قرار مُسجَّل مع إصدار مجموعة قواعده وتعليله",
+  "Skills in Taxonomy": "مهارة في التصنيف",
+
+  // --- Workforce intelligence: headings ------------------------------------
+  "The shared signal layer behind Fursah. Every figure below is a count over records that exist right now: published roles, evidenced student skills, university offerings, and recorded outcomes. Nothing is projected.":
+    "طبقة المؤشرات المشتركة خلف فرصة. وكل رقم أدناه عدٌّ على سجلات قائمة الآن: الوظائف المنشورة، ومهارات الطلاب المُثبَتة، والبرامج الجامعية، والمخرجات المسجَّلة. ولا شيء منها متوقَّع.",
+  "Computed": "حُسبت",
+  "Talent supply": "عرض المواهب",
+  "University coverage": "التغطية الجامعية",
+  "Where supply is thinnest": "حيث يقلّ العرض",
+  "Skills that fewer students evidence at working level than there are roles requesting them.":
+    "مهارات يثبتها عند مستوى العمل عددٌ من الطلاب أقل من عدد الوظائف التي تطلبها.",
+  "Roles the current pool cannot fill": "وظائف لا يستطيع المخزون الحالي شغلها",
+  "Taught": "تُدرَّس",
+  "Demand and readiness by career direction": "الطلب والجاهزية حسب التوجّه المهني",
+  "Readiness withheld": "الجاهزية محجوبة",
+  "Recorded outcomes": "المخرجات المسجَّلة",
+  "Employer feedback records": "سجلات ملاحظات أصحاب العمل",
+  "Certification demand": "الطلب على الشهادات",
+  "Credentials employers ask for": "الشهادات التي يطلبها أصحاب العمل",
+  "No invented trends": "لا اتجاهات مُختلَقة",
+  "The platform stores no historical demand snapshots, so it publishes no growth, decline, or forecast figures.":
+    "لا تخزّن المنصة لقطات تاريخية للطلب، ولذلك لا تنشر أي أرقام نمو أو تراجع أو تنبؤ.",
+
+  // --- Workforce intelligence: sentence fragments --------------------------
+  // These are separate text nodes either side of an interpolated count, so each
+  // half is translated on its own rather than as a whole sentence.
+  "distinct requested skills across": "مهارة مطلوبة متمايزة عبر",
+  "of weighted demand taught by": "من الطلب المرجَّح تُدرَّس عبر",
+  "offering(s)": "برنامج/برامج",
+  "requesting role(s) ·": "وظيفة/وظائف طالبة ·",
+  "requesting role(s)": "وظيفة/وظائف طالبة",
+  "student(s) evidence it ·": "طالب/طلاب يثبتونها ·",
+  "student(s) evidencing ·": "طالب/طلاب يثبتونها ·",
+  "essential requirement(s) ·": "متطلب/متطلبات أساسية ·",
+  "application(s)": "طلب/طلبات",
+  "open role(s) ·": "وظيفة/وظائف متاحة ·",
+  "demand points ·": "نقاط طلب ·",
+  "student(s) targeting it": "طالب/طلاب يستهدفونها",
+  "student(s) hold it with human-verified evidence ·": "طالب/طلاب يحملونها بأدلة موثَّقة بشرياً ·",
+  "granted by a university offering": "يمنحها برنامج جامعي",
+  "not granted by any offering": "لا يمنحها أي برنامج",
+  "role(s)": "وظيفة/وظائف",
+
+  // --- Team: contribution labels and bio -----------------------------------
+  "Next.js & Prisma": "Next.js وPrisma",
+  "System Diagrams & Modeling": "مخططات النظام والنمذجة",
+  "I\u2019m a Software Engineering student at Prince Sultan University. I\u2019m interested in technology and software development, and I enjoy learning new things and improving my skills. I like understanding how systems work and finding simple ways to represent ideas clearly. In this project, I worked on the system diagrams and helped show how different parts of the system connect and work together. I\u2019m always looking forward to learning more, gaining new experience, and working on new projects.":
+    "\u0623\u0646\u0627 \u0637\u0627\u0644\u0628\u0629 \u0647\u0646\u062f\u0633\u0629 \u0628\u0631\u0645\u062c\u064a\u0627\u062a \u0641\u064a \u062c\u0627\u0645\u0639\u0629 \u0627\u0644\u0623\u0645\u064a\u0631 \u0633\u0644\u0637\u0627\u0646. \u0623\u0647\u062a\u0645 \u0628\u0627\u0644\u062a\u0642\u0646\u064a\u0629 \u0648\u062a\u0637\u0648\u064a\u0631 \u0627\u0644\u0628\u0631\u0645\u062c\u064a\u0627\u062a\u060c \u0648\u0623\u0633\u062a\u0645\u062a\u0639 \u0628\u062a\u0639\u0644\u0645 \u0623\u0634\u064a\u0627\u0621 \u062c\u062f\u064a\u062f\u0629 \u0648\u062a\u0637\u0648\u064a\u0631 \u0645\u0647\u0627\u0631\u0627\u062a\u064a. \u064a\u0639\u062c\u0628\u0646\u064a \u0641\u0647\u0645 \u0637\u0631\u064a\u0642\u0629 \u0639\u0645\u0644 \u0627\u0644\u0623\u0646\u0638\u0645\u0629 \u0648\u0625\u064a\u062c\u0627\u062f \u0637\u0631\u0642 \u0628\u0633\u064a\u0637\u0629 \u0644\u062a\u0645\u062b\u064a\u0644 \u0627\u0644\u0623\u0641\u0643\u0627\u0631 \u0628\u0648\u0636\u0648\u062d. \u0648\u0641\u064a \u0647\u0630\u0627 \u0627\u0644\u0645\u0634\u0631\u0648\u0639 \u0639\u0645\u0644\u062a \u0639\u0644\u0649 \u0645\u062e\u0637\u0637\u0627\u062a \u0627\u0644\u0646\u0638\u0627\u0645 \u0648\u0633\u0627\u0639\u062f\u062a \u0641\u064a \u0625\u0638\u0647\u0627\u0631 \u0643\u064a\u0641 \u062a\u0631\u062a\u0628\u0637 \u0623\u062c\u0632\u0627\u0621 \u0627\u0644\u0646\u0638\u0627\u0645 \u0627\u0644\u0645\u062e\u062a\u0644\u0641\u0629 \u0648\u062a\u0639\u0645\u0644 \u0645\u0639\u0627\u064b. \u0648\u0623\u062a\u0637\u0644\u0639 \u062f\u0627\u0626\u0645\u0627\u064b \u0625\u0644\u0649 \u0627\u0644\u0645\u0632\u064a\u062f \u0645\u0646 \u0627\u0644\u062a\u0639\u0644\u0645 \u0648\u0627\u0643\u062a\u0633\u0627\u0628 \u062e\u0628\u0631\u0627\u062a \u062c\u062f\u064a\u062f\u0629 \u0648\u0627\u0644\u0639\u0645\u0644 \u0639\u0644\u0649 \u0645\u0634\u0627\u0631\u064a\u0639 \u062c\u062f\u064a\u062f\u0629.",
+  "Every readiness and match score includes a visible category breakdown, produced by one shared calculation (":
+    "كل درجة جاهزية ومطابقة تتضمّن تفصيلاً مرئياً حسب الفئة، من حساب واحد مشترك (",
 };
