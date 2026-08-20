@@ -23,6 +23,7 @@
  */
 
 import { prisma } from "../src/lib/db";
+import { serializeIssues } from "../src/lib/governanceIssues";
 
 const RESET = process.argv.includes("--reset");
 const DEMO_PREFIX = "demo/governance/";
@@ -214,7 +215,7 @@ async function seedScenarios() {
       scenarioType: "MODEL_DRIFT",
       description: `${DEMO_TAG} Monitoring flagged readiness-v1.3: average score rose 9 points over six weeks while realised placement fell. Investigation traced the rise to newly added certifications carrying full weight without evidence that they predict placement.`,
       riskLevel: "HIGH",
-      detectedIssues: "Score inflation without matching outcome improvement; certification weights not validated against results.",
+      detectedIssues: ["Score inflation without matching outcome improvement", "Certification weights not validated against results"],
       proposedAction: "Pause the ruleset, recalibrate certification weights, and recompute affected readiness scores.",
       humanDecision: "APPROVED",
       decisionNote: "Pause approved. Students mid-application were shown a staleness notice rather than having scores withdrawn, so nobody lost a live application to our recalibration.",
@@ -226,7 +227,7 @@ async function seedScenarios() {
       scenarioType: "AUTOMATION_SCOPE",
       description: `${DEMO_TAG} A proposal to auto-reject any extraction below 0.40 confidence to reduce the review queue. Analysis showed low confidence correlates with poor scan quality and non-standard document formats, not with false claims.`,
       riskLevel: "HIGH",
-      detectedIssues: "Auto-rejection would systematically disadvantage students submitting photographed documents and non-standard formats — the exact candidates the platform exists to include.",
+      detectedIssues: ["Auto-rejection would systematically disadvantage students submitting photographed documents and non-standard formats — the exact candidates the platform exists to include"],
       proposedAction: "Automatically reject evidence scoring below 0.40 extraction confidence.",
       humanDecision: "OVERRIDDEN",
       decisionNote: "Rejected. Confidence measures how well the document was read, not whether the claim is true. Low confidence now routes to priority human review instead, and the student is told the document was unclear rather than that the evidence was refused.",
@@ -238,7 +239,7 @@ async function seedScenarios() {
       scenarioType: "PRIVACY",
       description: `${DEMO_TAG} An employer requested readiness distributions for a named programme with three enrolled students, to inform a targeted recruitment campaign.`,
       riskLevel: "MEDIUM",
-      detectedIssues: "A distribution across three students identifies all three. Request also falls outside the purposes students consented to.",
+      detectedIssues: ["A distribution across three students identifies all three", "Request falls outside the purposes students consented to"],
       proposedAction: "Decline and explain the suppression threshold.",
       humanDecision: "APPROVED",
       decisionNote: "Declined. Employer offered aggregate figures at faculty level, which clear the five-student floor.",
@@ -250,7 +251,7 @@ async function seedScenarios() {
       scenarioType: "PRIVACY",
       description: `${DEMO_TAG} A university user asked the assistant to name the lowest-scoring student in a cohort. The role-scoped context builder supplies universities with aggregate data only, so the individual record was never available to the model.`,
       riskLevel: "MEDIUM",
-      detectedIssues: "None materialised. The boundary held at the context layer rather than depending on the model refusing.",
+      detectedIssues: ["None materialised — the boundary held at the context layer rather than depending on the model refusing"],
       proposedAction: "No corrective action. Logged as verification that the scoping boundary holds under a real attempt.",
       humanDecision: "APPROVED",
       decisionNote: "Confirmed by the automated context verification: a university context cannot be constructed containing an individual student record.",
@@ -263,9 +264,18 @@ async function seedScenarios() {
   for (const scenario of scenarios) {
     const exists = await prisma.governanceScenario.findFirst({ where: { description: scenario.description } });
     if (exists) continue;
-    const { ageDays, ...data } = scenario;
+    const { ageDays, detectedIssues, ...data } = scenario;
     await prisma.governanceScenario.create({
-      data: { ...data, createdAt: daysAgo(ageDays), reviewedAt: daysAgo(ageDays - 2) },
+      // Through the shared serializer, so a seeded row and a row created by
+      // `createGovernanceScenario` are stored identically. They were not: the
+      // seed wrote prose into a column the admin page read with `JSON.parse`,
+      // which threw and took the whole governance route down.
+      data: {
+        ...data,
+        detectedIssues: serializeIssues(detectedIssues),
+        createdAt: daysAgo(ageDays),
+        reviewedAt: daysAgo(ageDays - 2),
+      },
     });
     created++;
   }

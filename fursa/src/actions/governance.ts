@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
+import { serializeIssues } from "@/lib/governanceIssues";
 import { getCurrentAdmin } from "@/lib/session";
 
 function analyzeScenario(type: string, description: string) {
@@ -32,7 +33,7 @@ export async function createGovernanceScenario(formData: FormData) {
   const description = String(formData.get("description") ?? "").trim();
   if (!title || !description) throw new Error("Title and scenario description are required");
   const result = analyzeScenario(scenarioType, description);
-  const scenario = await prisma.governanceScenario.create({ data: { title, scenarioType, description, riskLevel: result.risk, detectedIssues: JSON.stringify(result.issues), proposedAction: result.action, createdBy: ctx.user.id } });
+  const scenario = await prisma.governanceScenario.create({ data: { title, scenarioType, description, riskLevel: result.risk, detectedIssues: serializeIssues(result.issues), proposedAction: result.action, createdBy: ctx.user.id } });
   await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: "SCENARIO_ANALYZED", entityType: "GOVERNANCE_SCENARIO", entityId: scenario.id, modelVersion: "scenario-rules-v1", explanation: `${result.risk} risk; ${result.issues.length} checks raised` } });
   revalidatePath("/admin/governance");
 }
