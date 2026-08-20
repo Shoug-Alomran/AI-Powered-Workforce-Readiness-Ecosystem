@@ -1,7 +1,16 @@
+import { Y3172_NODES } from "@/lib/standards";
+
 /**
- * Fursah ML pipeline, drawn as the seven nodes used in the AI Readiness
- * mapping (SRC, C, PP, M, P, D, SINK), with the governing document attached
- * to each one.
+ * Fursah ML pipeline, drawn as the seven nodes defined in ITU-T Y.3172
+ * clause 8.1: SRC, C, PP, M, P, D and SINK.
+ *
+ * The node list lives in `@/lib/standards` because the admin governance page
+ * renders the same mapping and the two copies had already drifted — this one
+ * had renamed C, P and D to describe Fursah's implementation rather than the
+ * standard's function, so the figure claimed a node vocabulary it was not
+ * using. The standard's name is the `label`; what Fursah runs there is
+ * `fursah`. `/standards` carries the same seven nodes at greater length, with
+ * the implementing source file for each.
  *
  * Built from HTML rather than SVG. The earlier SVG version wrapped its labels
  * by splitting each string across several <text> elements, which meant the
@@ -14,50 +23,32 @@
  * grounded language model are separate concerns because that boundary is the
  * platform's central design claim (see clause 2a of the Responsible AI Policy).
  */
-
-type Node = {
-  id: string;
-  label: string;
-  detail: string;
-  governs: string;
-  tone: "data" | "model" | "human";
-};
-
-const NODES: Node[] = [
-  { id: "SRC", label: "Sources", detail: "Evidence documents, employer role requirements, university offerings", governs: "PDPL · NDMO data classification", tone: "data" },
-  { id: "C", label: "Connectivity", detail: "APIs, identity federation, institutional integration", governs: "NCA ECC & CCC · DGA interoperability", tone: "data" },
-  { id: "PP", label: "Pre-processing", detail: "Extraction, normalisation to the skill taxonomy, consent enforcement", governs: "PDPL data minimisation · DPIA", tone: "data" },
-  { id: "M", label: "Models", detail: "Deterministic scoring engine + grounded language model", governs: "SDAIA AI Ethics · ISO/IEC 42001 & 23894", tone: "model" },
-  { id: "P", label: "People", detail: "Advisor and employer review, appeals, override logging", governs: "SDAIA human oversight · PDPL rights", tone: "human" },
-  { id: "D", label: "Data platform", detail: "Aggregate workforce intelligence, suppressed below 5 students", governs: "National Data Governance · cloud hosting rules", tone: "data" },
-  { id: "SINK", label: "Interfaces", detail: "Student, employer, university and policy views", governs: "DGA accessibility (WCAG 2.1 AA) · Arabic-first", tone: "data" },
-];
-
 export default function PipelineDiagram() {
   return (
     <figure className="pipeline">
-      <p className="pipeline-kicker">Pipeline stage</p>
-      <p className="pipeline-sub">Governing documents shown beneath each stage</p>
+      <p className="pipeline-kicker">ITU-T Y.3172 clause 8.1 · pipeline node</p>
+      <p className="pipeline-sub">Governing documents shown beneath each node</p>
 
       <ol className="pipeline-row">
-        {NODES.map(node => (
+        {Y3172_NODES.map(node => (
           <li key={node.id} className={`pipeline-node tone-${node.tone}`}>
             <div className="pipeline-card">
               <span className="pipeline-id">{node.id}</span>
               <h3 className="pipeline-label">{node.label}</h3>
-              <p className="pipeline-detail">{node.detail}</p>
+              <p className="pipeline-detail">{node.fursah}</p>
             </div>
             <p className="pipeline-governs">{node.governs}</p>
           </li>
         ))}
       </ol>
 
-      <p className="pipeline-override">Human review at stage P overrides any output of stage M, and the override is logged.</p>
+      <p className="pipeline-override">Human review carried by the P node overrides any output of the M node, and the override is logged.</p>
 
       <figcaption>
-        Every stage carries the policy that governs it. The models stage is split: the
-        deterministic engine produces every score that affects a person, and the language
-        model only reads documents and explains results — it never ranks anyone.
+        Node names and their order are those defined in ITU-T Y.3172 clause 8.1; the text beneath
+        each names what Fursah runs at that node and the policy governing it. The M node is split:
+        the deterministic engine produces every score that affects a person, and the language model
+        only reads documents and explains results — it never ranks anyone.
       </figcaption>
     </figure>
   );

@@ -1,13 +1,30 @@
+import { cacheLife } from "next/cache";
 import PageToc from "@/components/PageToc";
 import { getEcosystemIntelligence, MIN_ECOSYSTEM_SAMPLE } from "@/lib/intelligence";
 
-// Reports live ecosystem figures stamped with a generation time, so there is
-// nothing stable to prerender. The loading.tsx skeleton still covers
-// navigation, but the route itself blocks.
-export const instant = false;
+// These are counts over the whole ecosystem, and every one of them requires a
+// full scan: demand per skill, evidencing students per skill, coverage per
+// offering. Recomputing that on each visit made this the slowest route on the
+// site — around five seconds cold — for figures that move when an employer
+// posts a role or a student adds evidence, not continuously.
+//
+// Caching it lets the route prerender and serve from the CDN. The tradeoff is
+// that the numbers are as of the last computation rather than this instant,
+// which is why `generatedAt` is now printed on the page: a stale figure that
+// says when it was taken is honest, a stale figure presented as live is not.
+async function getEcosystem() {
+  "use cache";
+  cacheLife("minutes");
+  return getEcosystemIntelligence();
+}
+
+/** UTC so the prerendered stamp does not depend on the rendering machine. */
+function generatedAtLabel(value: Date) {
+  return `${value.toISOString().slice(0, 16).replace("T", " ")} UTC`;
+}
 
 export default async function Intelligence() {
-  const ecosystem = await getEcosystemIntelligence();
+  const ecosystem = await getEcosystem();
 
   const topSkills = ecosystem.skills.slice(0, 6);
   const peakDemand = topSkills[0]?.demandPoints ?? 1;
@@ -19,6 +36,9 @@ export default async function Intelligence() {
       <p className="muted">
         The shared signal layer behind Fursah. Every figure below is a count over records that exist right now:
         published roles, evidenced student skills, university offerings, and recorded outcomes. Nothing is projected.
+      </p>
+      <p className="muted" style={{ fontSize: 13 }}>
+        Computed {generatedAtLabel(ecosystem.generatedAt)} · {ecosystem.modelVersion}
       </p>
 
       <PageToc

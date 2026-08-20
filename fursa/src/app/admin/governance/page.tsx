@@ -7,9 +7,15 @@ import { STUDENT_INTELLIGENCE_MODEL_VERSION } from "@/lib/intelligence/student";
 import { EMPLOYER_INTELLIGENCE_MODEL_VERSION } from "@/lib/intelligence/employer";
 import { UNIVERSITY_INTELLIGENCE_MODEL_VERSION } from "@/lib/intelligence/university";
 import { ECOSYSTEM_INTELLIGENCE_MODEL_VERSION } from "@/lib/intelligence/ecosystem";
+import { Y3172_EXTENSIONS, Y3172_NODES } from "@/lib/standards";
 
-const PIPELINE = [
-  ["Source", "Profiles, jobs, offerings and outcomes", "ACTIVE"], ["Collector", "Validated role-based inputs", "ACTIVE"], ["Preprocessor", "Normalization and data minimization", "ACTIVE"], ["Model", "Readiness, matching and recommendation rules", "ACTIVE"], ["Policy", "Consent, review thresholds and safeguards", "ACTIVE"], ["Distributor", "Role-authorized recommendations", "ACTIVE"], ["Inference target", "Student, employer and university workflows", "ACTIVE"], ["Sandbox", "Scenario evaluation before activation", "PROTOTYPE"], ["Orchestrator", "Version, approval, audit and rollback controls", "PROTOTYPE"], ["Sink", "Dashboards, notifications and exports", "ACTIVE"],
+// The seven clause 8.1 nodes come from the shared registry so this page and
+// the public figure on the Responsible AI policy page cannot describe the
+// pipeline differently. The two entries after them are extensions from
+// Y.3181 and Y.3176 rather than clause 8.1 nodes, and are labelled as such.
+const PIPELINE: Array<[string, string, string]> = [
+  ...Y3172_NODES.map((node): [string, string, string] => [`${node.id} · ${node.label}`, node.fursah, "ACTIVE"]),
+  ...Y3172_EXTENSIONS.map((extension): [string, string, string] => [extension.label, `${extension.reference} — ${extension.fursah}`, extension.status === "Prototype" ? "PROTOTYPE" : "ACTIVE"]),
 ];
 
 export default async function GovernancePage() {

@@ -21,6 +21,18 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.8,
     },
+    // The two submission-facing pages: the Y.3172 / AI Readiness conformance
+    // argument and the register of public documents behind it.
+    {
+      url: `${SITE_URL}/standards`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    {
+      url: `${SITE_URL}/knowledge-base`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
     {
       url: `${SITE_URL}/team`,
       changeFrequency: "monthly",

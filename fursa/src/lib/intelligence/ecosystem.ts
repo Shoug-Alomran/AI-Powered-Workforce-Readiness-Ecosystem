@@ -1,6 +1,5 @@
 import "server-only";
 
-import { connection } from "next/server";
 import { prisma } from "@/lib/db";
 import { computeCareerReadiness, READINESS_MODEL_VERSION, type ReadinessEvidenceInput } from "./readiness";
 import { getMarketIntelligence } from "./market";
@@ -30,10 +29,16 @@ const SUPPLY_LEVEL = 3;
  * a time series first.
  */
 export async function getEcosystemIntelligence(): Promise<EcosystemIntelligenceResult> {
-    // Stamps the result with `new Date()` below. Declaring the dependency on the
-    // incoming request tells Next this can never be prerendered, rather than it
-    // tripping over the unstable value at build time.
-    await connection();
+    // This stamps the result with `new Date()` below. It used to call
+    // `connection()` here so the unstable value could never be reached during a
+    // prerender, but that made the function unusable inside `use cache` — and
+    // the workforce-intelligence page needs exactly that, because recomputing
+    // these ecosystem-wide counts per request was the slowest route on the site.
+    //
+    // The stamp is now the caller's concern. Every other caller reads the
+    // session first, which already makes it dynamic; the cached caller wants
+    // the stamp to be the cache build time, which is what it now gets and what
+    // that page prints.
 
     const [market, students, tracks, offerings, jobs, employerCount, feedbackCount, applications] =
         await Promise.all([

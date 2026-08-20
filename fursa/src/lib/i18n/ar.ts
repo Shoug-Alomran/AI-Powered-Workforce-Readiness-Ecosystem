@@ -9,6 +9,7 @@ import { employer } from "./ar.employer";
 import { university } from "./ar.university";
 import { admin } from "./ar.admin";
 import { policies } from "./ar.policies";
+import { standards } from "./ar.standards";
 import { walkthrough } from "./ar.walkthrough";
 
 export const ar: Record<string, string> = {
@@ -19,5 +20,6 @@ export const ar: Record<string, string> = {
   ...university,
   ...admin,
   ...policies,
+  ...standards,
   ...walkthrough,
 };

@@ -1784,6 +1784,64 @@ body:has(.imp)>header{display:none}
 .imp-end a{justify-content:center}
 }
 
+/* ---------- Standards conformance and knowledge base ---------- */
+/* Both pages extend the /impact layout (.imp), so only the pieces those two
+   pages add are defined here: the Y.3172 node rows, the dimension list, the
+   policy-gap cards and the knowledge-base entries. */
+.std-node{align-items:start}
+.std-node-head{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.std-id{flex:none;display:inline-grid;place-items:center;min-width:52px;height:28px;padding:0 10px;border-radius:8px;background:color-mix(in srgb,var(--imp-blue) 12%,transparent);color:var(--imp-blue);font-size:12px;font-weight:800;letter-spacing:.08em}
+.std-node h3{margin:0;font-size:17px;letter-spacing:-.01em}
+.std-governs{margin-top:10px;font-style:italic}
+.std-files{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.std-files code{display:inline-block;padding:3px 8px;border:1px solid var(--line);border-radius:7px;background:var(--surface-soft,#f1f5f9);font-size:11.5px;color:var(--subtle);word-break:break-all}
+
+.std-dims{display:grid;gap:14px}
+.std-dim{padding:20px 22px;border:1px solid var(--line);border-inline-start:4px solid var(--line);border-radius:16px;background:var(--surface)}
+.std-dim.cov-addressed{border-inline-start-color:var(--imp-blue)}
+.std-dim.cov-partial{border-inline-start-color:var(--imp-violet)}
+.std-dim.cov-out-of-scope{border-inline-start-color:var(--line)}
+.std-dim-head{display:flex;align-items:flex-start;gap:14px}
+.std-dim-num{flex:none;display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--surface-soft,#f1f5f9);font-size:14px;font-weight:800;color:var(--subtle)}
+.std-dim.cov-addressed .std-dim-num{background:var(--imp-blue);color:#fff}
+.std-dim-head>div{flex:1;min-width:0}
+.std-dim-head b{display:block;font-size:15.5px;letter-spacing:-.01em}
+.std-dim-head small{display:block;margin-top:5px;font-size:12.5px;line-height:1.5;color:var(--subtle)}
+.std-cov{flex:none;padding:5px 10px;border-radius:999px;background:var(--surface-soft,#f1f5f9);font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--subtle);white-space:nowrap}
+.cov-addressed .std-cov{background:color-mix(in srgb,var(--imp-blue) 13%,transparent);color:var(--imp-blue)}
+.cov-partial .std-cov{background:color-mix(in srgb,var(--imp-violet) 13%,transparent);color:var(--imp-violet)}
+.std-dim>p{margin:14px 0 0;font-size:14px;line-height:1.62}
+.std-dim>.imp-foot{margin-top:10px}
+
+.std-gap-group{margin-top:26px}
+.std-gap-cat{margin:0 0 14px;font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--subtle)}
+.std-gap{padding:22px;margin-bottom:14px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
+.std-gap.blocking{border-color:color-mix(in srgb,#d94a3d 45%,var(--line))}
+.std-gap-head{display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.std-gap-head b{font-size:16px;line-height:1.35;letter-spacing:-.01em;text-wrap:balance}
+.std-blocking{flex:none;padding:4px 10px;border-radius:999px;background:color-mix(in srgb,#d94a3d 12%,transparent);color:#b23a2f;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.std-gap-body{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;margin-top:16px}
+.std-gap-body p{margin:8px 0 0;font-size:13.5px;line-height:1.6;color:var(--subtle)}
+
+.kb-list{display:grid;gap:14px}
+.kb-entry{padding:22px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
+.kb-head{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}
+.kb-head h3{margin:0;font-size:16.5px;line-height:1.35;letter-spacing:-.015em;text-wrap:balance}
+.kb-meta{margin:6px 0 0;font-size:12.5px;line-height:1.5;color:var(--subtle)}
+.kb-head a{flex:none;font-size:13px;font-weight:700;color:var(--imp-blue);text-decoration:none;white-space:nowrap}
+.kb-body{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:16px}
+.kb-body p{margin:8px 0 0;font-size:13.5px;line-height:1.6;color:var(--subtle)}
+
+@media(max-width:900px){
+.std-gap-body,.kb-body{grid-template-columns:1fr;gap:14px}
+}
+@media(max-width:620px){
+.std-node-head{flex-wrap:wrap}
+.kb-head{flex-direction:column;gap:10px}
+.std-dim-head{flex-wrap:wrap}
+.std-cov{order:-1}
+}
+
 /* ---------- Landing page: phone sizing ---------- */
 @media(max-width:900px){
 .home-nav{justify-content:space-between;gap:12px}

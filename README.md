@@ -281,6 +281,39 @@ Stated here rather than discovered later:
 
 ---
 
+## Standards conformance and the knowledge base
+
+Two published pages carry the assessment material directly, so it can be read
+without running the prototype:
+
+- **[Standards conformance](https://fursah.org/standards)** — the platform
+  mapped onto **ITU-T Y.3172 clause 8.1** node by node (SRC, C, PP, M, P, D,
+  SINK), each with the source file implementing it; the two components Fursah
+  runs that clause 8.1 does not define, attributed to Y.3181 and Y.3176; a
+  self-assessment against the **13 dimensions of the ITU AI Ready Report 2.0**;
+  and the **policy gaps** this project identified, structured on the report's
+  own chapter 4 gap taxonomy.
+- **[Knowledge base](https://fursah.org/knowledge-base)** — every authentic
+  public document the platform depends on, linked to the original publication
+  and to the file in this repository that depends on it: the ITU
+  Recommendations and reports, the PDPL, SDAIA AI Ethics Principles, NDMO and
+  NCA controls, DGA accessibility standards, Vision 2030, GASTAT, the Council
+  of Universities Affairs, UNESCO, and ISO/IEC 42001 and 23894.
+
+The seven clause 8.1 node names live in one place
+([`src/lib/standards.ts`](fursa/src/lib/standards.ts)) and are rendered by both
+the public pipeline figure and the admin governance page, so the two surfaces
+cannot describe the pipeline differently.
+
+Six policy gaps are stated. The one marked blocking is cross-border inference
+(DPIA risk R5). The most interesting is the fairness paradox: because Fursah
+deliberately collects no protected attribute, it cannot disaggregate outcomes
+to test for disparate impact — data minimisation and demonstrable
+non-discrimination pull against each other, and no instrument we found resolves
+which takes precedence for an employment-adjacent system.
+
+---
+
 ## Ecosystem Architecture
 
 ```text

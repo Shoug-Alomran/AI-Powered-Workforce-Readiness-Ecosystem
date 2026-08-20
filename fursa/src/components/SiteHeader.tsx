@@ -29,6 +29,7 @@ export default function SiteHeader({ onHome = false }: { onHome?: boolean }) {
     <nav>
       {anchors.map(([label, id]) => <a key={id} href={anchor(id)}>{label}</a>)}
       <Link href="/impact">National Impact</Link>
+      <Link href="/standards">Standards</Link>
       <Link href="/team">Team</Link>
       <a href={anchor("metrics")}>Prototype</a>
     </nav>
