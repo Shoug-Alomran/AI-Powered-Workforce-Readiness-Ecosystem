@@ -35,7 +35,7 @@ export default function JudgeDemoPage() {
         <span className="imp-eyebrow">Official-criteria walkthrough</span>
         <h1 className="imp-title">Judge Fursah in three minutes.</h1>
         <p className="imp-lead">This page separates implemented proof from future claims and routes each published evaluation criterion to evidence a reviewer can inspect. Demo accounts use synthetic data; production deployment remains subject to the blocking hosting control documented in the DPIA.</p>
-        <div className="judge-actions"><Link href="/login/demo">Start live prototype</Link><Link href="/standards" className="secondary">Inspect conformance</Link><a href="/fursah-ai-readiness-judge-submission.pdf" target="_blank" rel="noopener noreferrer" className="secondary">Read judge report</a></div>
+        <div className="judge-actions"><Link href="/login/demo">Start live prototype</Link><Link href="/standards" className="secondary">Inspect conformance</Link><a href="/fursah-ai-readiness-hackathon-submission.pdf" target="_blank" rel="noopener noreferrer" className="secondary">Read final submission</a></div>
         <div className="imp-strip">
           <article><b>{Y3172_NODES.length}/7</b><small>Y.3172 clause 8.1 nodes mapped</small></article>
           <article><b>{addressed}+{partial}</b><small>Dimensions addressed or partially addressed; one is explicitly out of scope</small></article>

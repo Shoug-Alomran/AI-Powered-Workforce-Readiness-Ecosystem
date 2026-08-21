@@ -561,7 +561,7 @@ export const POLICIES: Record<string, PolicyDocument> = {
     attachment: {
       label: "AI Readiness Report (PDF)",
       body: "The full technical and governance report behind this policy. It maps every stage of the Fursah pipeline (sources, connectivity, pre-processing, models, human oversight, analytics, and interfaces) to SDAIA's Principles and Controls of AI Ethics, the PDPL, national data-governance standards, and the Human Capability Development Programme, and works through the scenarios in which the system could be contested.",
-      href: "/fursah-ai-readiness-judge-submission.pdf",
+      href: "/fursah-ai-readiness-hackathon-submission.pdf",
     },
   },
   accessibility: ACCESSIBILITY,
