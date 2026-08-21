@@ -1,0 +1,11 @@
+{
+  "name": "node-domexception",
+  "version": "1.0.1-native",
+  "private": true,
+  "type": "module",
+  "main": "./index.js",
+  "exports": "./index.js",
+  "engines": {
+    "node": ">=18"
+  }
+}

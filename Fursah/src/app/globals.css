@@ -2127,3 +2127,119 @@ body:has(.admin-portal) [data-navbar-placeholder]{display:none}
   margin-top:var(--space-s);max-width:var(--measure);
   color:var(--color-muted);font-size:var(--step--1);line-height:1.65;
 }
+
+/* --------------------------------------------------------------------------
+   Theme hardening
+
+   The portal designs predate the shared theme tokens and several components
+   still carry literal white/slate backgrounds. These final, deliberately
+   scoped rules ensure that every shared shell and raised control follows the
+   selected palette without flattening semantic success/warning/AI accents.
+   -------------------------------------------------------------------------- */
+:root[data-theme="light"]{
+  color-scheme:light;
+  --theme-canvas:#f8fafc;
+  --theme-surface:#ffffff;
+  --theme-raised:#f1f5f9;
+  --theme-border:#e2e8f0;
+  --theme-text:#0f172a;
+  --theme-muted:#64748b;
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --theme-canvas:#070b14;
+  --theme-surface:#111827;
+  --theme-raised:#172033;
+  --theme-border:#334155;
+  --theme-text:#f8fafc;
+  --theme-muted:#b6c2d2;
+}
+:root[data-theme="dark"] body,
+:root[data-theme="dark"] .student-portal,
+:root[data-theme="dark"] .admin-portal,
+:root[data-theme="dark"] .admin-page-content,
+:root[data-theme="dark"] .uni-shell,
+:root[data-theme="dark"] .employer-dashboard{
+  background:var(--theme-canvas);
+  color:var(--theme-text);
+}
+:root[data-theme="dark"] .student-template-topnav,
+:root[data-theme="dark"] .student-topbar,
+:root[data-theme="dark"] .admin-header,
+:root[data-theme="dark"] .admin-header-main,
+:root[data-theme="dark"] .admin-page-menu,
+:root[data-theme="dark"] .uni-only-header,
+:root[data-theme="dark"] .uni-only-main,
+:root[data-theme="dark"] .erd-top,
+:root[data-theme="dark"] .employer-shared-header{
+  background:var(--theme-surface)!important;
+  border-color:var(--theme-border)!important;
+  color:var(--theme-text)!important;
+}
+:root[data-theme="dark"] .student-template-topbrand,
+:root[data-theme="dark"] .student-template-topuser>a,
+:root[data-theme="dark"] .uni-only-brand,
+:root[data-theme="dark"] .erd-brand,
+:root[data-theme="dark"] .admin-header-brand{
+  color:var(--theme-text)!important;
+}
+:root[data-theme="dark"] :is(.card,.feature,.empty-state,.toc,.document-upload,.walkthrough-panel,.account-card,.passport-section){
+  background:var(--theme-surface)!important;
+  border-color:var(--theme-border)!important;
+  color:var(--theme-text);
+}
+:root[data-theme="dark"] :is(.input,input,select,textarea):not([type="checkbox"]):not([type="radio"]){
+  background-color:var(--theme-surface)!important;
+  border-color:var(--theme-border)!important;
+  color:var(--theme-text)!important;
+}
+:root[data-theme="dark"] :is(.input,input,textarea)::placeholder{color:#7f8da1!important}
+:root[data-theme="dark"] :is(.button.secondary,.button.danger){
+  background:var(--theme-raised)!important;
+  border-color:var(--theme-border)!important;
+  color:var(--theme-text)!important;
+}
+:root[data-theme="dark"] :is(.data-row,.document-review-row,.passport-list>*,table th,table td){border-color:var(--theme-border)!important}
+:root[data-theme="dark"] :is(.muted,.data-row .muted,.card p,.empty-state p){color:var(--theme-muted)}
+:root[data-theme="dark"] .pill:not(.status-approved):not(.status-rejected):not(.status-pending){background:#1e293b;color:#cbd5e1}
+:root[data-theme="dark"] .status-approved{background:#123c32!important;color:#6ee7b7!important}
+:root[data-theme="dark"] .status-pending{background:#422f16!important;color:#fcd34d!important}
+:root[data-theme="dark"] .status-rejected{background:#451f28!important;color:#fda4af!important}
+:root[data-theme="dark"] .home-ethics>article>header span{background:#172554;color:#93c5fd}
+
+/* Employer portal: remove light metric, ranking, status, and intelligence tiles. */
+:root[data-theme="dark"] .erd-metrics article>i,
+:root[data-theme="dark"] .erd-ranking article>i,
+:root[data-theme="dark"] .erd-intel article,
+:root[data-theme="dark"] .erd-ranking article>span a,
+:root[data-theme="dark"] .erd-positions .match{
+  background:var(--theme-raised)!important;
+  border-color:var(--theme-border)!important;
+  color:var(--theme-text)!important;
+}
+:root[data-theme="dark"] .erd-metrics article>i svg{color:#93c5fd}
+:root[data-theme="dark"] .erd-metrics article:nth-child(3)>i svg{color:#c4b5fd}
+:root[data-theme="dark"] .erd-positions label{background:#123c32!important;color:#6ee7b7!important}
+:root[data-theme="dark"] .erd-intel{background:#282044!important;border-color:#6d5dfb!important;color:#eeeaff!important}
+:root[data-theme="dark"] .erd-intel>header{background:#33285a!important;border-color:#7565bc!important}
+:root[data-theme="dark"] .erd-intel article{background:#211a39!important;border-color:#54467f!important;color:#f5f3ff!important}
+:root[data-theme="dark"] .erd-tags span{background:#352b56!important;border-color:#7565bc!important;color:#ddd6fe!important}
+:root[data-theme="dark"] .erd-ranking article>span a:first-child{background:#172554!important;color:#93c5fd!important}
+
+/* University and admin portals: keep filters, tables, tiles, and menus dark. */
+:root[data-theme="dark"] :is(.uni-metric,.uni-filterbar,.uni-panel,.ud-card,.ud-metric,.cc-card,.cc-panel,.cap-card,.cap-analytics,.wdi-card,.wdi-panel,.uo-card,.admin-sidebar,.admin-topbar){
+  background:var(--theme-surface)!important;
+  border-color:var(--theme-border)!important;
+  color:var(--theme-text)!important;
+}
+:root[data-theme="dark"] :is(.uni-chip,.cc-tabs button,.cap-awaiting,.cap-verified,.az-strip a,.filter-bar){background:var(--theme-raised);border-color:var(--theme-border);color:#cbd5e1}
+
+/* Floating controls should belong to the active theme, not look pasted on. */
+:root[data-theme="dark"] :is(.preference-controls,.walkthrough-launcher,.accessible-view-controls){
+  background:var(--theme-surface)!important;
+  border-color:var(--theme-border)!important;
+  color:var(--theme-text)!important;
+}
+
+/* Keep privileged demo access separate and impossible to miss in the account list. */
+.demo-admin-access{margin-top:24px;padding:18px;border:1px solid #c4b5fd;border-radius:14px;background:#f5f3ff}.demo-admin-access>div>span{color:#6d5dfb;font-size:10px;font-weight:800;text-transform:uppercase}.demo-admin-access h2,.demo-workspaces h2{margin:4px 0 14px;font-size:18px}.demo-admin-access .demo-account{border-color:#a78bfa;box-shadow:none}.demo-admin-missing{margin:0;padding:16px;border:1px dashed #a78bfa;border-radius:8px;color:#6b5fa1;font-size:13px}.demo-workspaces{margin-top:30px}.demo-workspaces>.demo-accounts{margin-top:0}:root[data-theme="dark"] .demo-admin-access{background:#211b3d;border-color:#594d91}:root[data-theme="dark"] .demo-admin-access>div>span{color:#c4b5fd}:root[data-theme="dark"] .demo-admin-missing{color:#c4b5d9}
