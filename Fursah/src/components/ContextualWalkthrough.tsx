@@ -103,17 +103,24 @@ export default function ContextualWalkthrough({ role }: { role: PortalRole }) {
   useEffect(() => {
     if (!candidateSteps.length) return;
     let cancelled = false;
-    const resolve = () => {
+    const resolve = (final: boolean) => {
       // Never re-cut the list mid-tour: that would shift the step the user is on.
       if (cancelled || openRef.current) return;
+      const available = candidateSteps.filter(
+        (step) => (!step.selector && !step.heading) || resolveTarget(step),
+      );
+      // Server-rendered sections can stream in after the page title. Publishing a
+      // partial list would auto-open the tour and lock out the second anchor pass.
+      // Open early only when every configured anchor is already present.
+      if (!final && available.length !== candidateSteps.length) return;
       setResolved({
         path: pathname,
-        steps: candidateSteps.filter((step) => (!step.selector && !step.heading) || resolveTarget(step)),
+        steps: available,
       });
     };
     // Client components below the server shell need a frame or two to paint.
-    const first = window.setTimeout(resolve, 120);
-    const second = window.setTimeout(resolve, 600);
+    const first = window.setTimeout(() => resolve(false), 120);
+    const second = window.setTimeout(() => resolve(true), 600);
     return () => {
       cancelled = true;
       window.clearTimeout(first);

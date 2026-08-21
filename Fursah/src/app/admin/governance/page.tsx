@@ -9,6 +9,7 @@ import { UNIVERSITY_INTELLIGENCE_MODEL_VERSION } from "@/lib/intelligence/univer
 import { ECOSYSTEM_INTELLIGENCE_MODEL_VERSION } from "@/lib/intelligence/ecosystem";
 import { Y3172_EXTENSIONS, Y3172_NODES } from "@/lib/standards";
 import { parseIssues } from "@/lib/governanceIssues";
+import AdminAuditTrail from "@/components/AdminAuditTrail";
 
 // The seven clause 8.1 nodes come from the shared registry so this page and
 // the public figure on the Responsible AI policy page cannot describe the
@@ -44,11 +45,20 @@ export default async function GovernancePage() {
     ["University intelligence", UNIVERSITY_INTELLIGENCE_MODEL_VERSION, "Demand coverage, curriculum gaps, and offering recommendations. Cohort figures are aggregate-only and suppressed below the minimum cohort size."],
     ["Ecosystem intelligence", ECOSYSTEM_INTELLIGENCE_MODEL_VERSION, "Shared demand, supply, and coverage signals. Publishes no trend, growth, or forecast figure because no historical series is stored."],
   ];
+  const auditItems = audits.map((audit, index) => ({
+    id: audit.id,
+    action: audit.action,
+    entityType: audit.entityType,
+    explanation: audit.explanation ?? "No additional note",
+    modelVersion: audit.modelVersion,
+    createdAt: audit.createdAt.toISOString(),
+    recent: index < 5,
+  }));
   return <main className="page-shell"><span className="eyebrow">Responsible AI operations</span><h1 className="page-title">Governance and human oversight</h1><p className="muted">Test high-impact situations, review automated recommendations and trace the ITU-T Y.3172-style pipeline.</p>
     <div className="grid-2" id="moderation-queue" style={{ marginTop: 26, alignItems: "start", scrollMarginTop: 90 }}><section className="card"><h2>Scenario simulator</h2><form action={createGovernanceScenario} className="form-grid"><label>Scenario title<input className="input" name="title" required/></label><label>Risk category<select className="input" name="scenarioType"><option value="AUTOMATED_HIRING">Automated hiring decision</option><option value="DATA_SHARING">Data sharing</option><option value="MODEL_DRIFT">Bias or model drift</option><option value="OTHER">Other</option></select></label><label>Description<textarea className="input" name="description" placeholder="Example: Automatically reject every candidate below a 70% match." required/></label><button className="button primary">Run sandbox checks</button></form></section><section className="card"><h2>Human review queue</h2>{appeals.length ? appeals.map(a => <form action={resolveAppeal} className="data-row" key={a.id}><input type="hidden" name="appealId" value={a.id}/><div style={{ flex: 1 }}><strong>{a.student.user.name} · {a.subjectType}</strong><div className="muted">{a.reason}</div><textarea className="input" name="resolution" placeholder="Resolution and corrective action" required/></div><select className="input" name="status"><option value="RESOLVED">Resolve</option><option value="REJECTED">Reject</option><option value="UNDER_REVIEW">Keep reviewing</option></select><button className="button secondary">Record</button></form>) : <div className="notice">No review requests.</div>}</section></div>
-    <section className="card" id="ai-governance" style={{ marginTop: 18, scrollMarginTop: 90 }}><h2>Scenario results</h2>{scenarios.map(s => { const issues = parseIssues(s.detectedIssues); return <form action={decideGovernanceScenario} className="data-row" key={s.id} style={{ alignItems: "end" }}><input type="hidden" name="scenarioId" value={s.id}/><div style={{ flex: 1 }}><div><span className={`pill status-${s.riskLevel === "HIGH" ? "rejected" : "pending"}`}>{s.riskLevel} RISK</span> <span className="pill">{s.humanDecision}</span></div><strong style={{ display: "block", marginTop: 8 }}>{s.title}</strong><div className="muted">{issues.join(" · ")}</div><div className="notice" style={{ marginTop: 8 }}>{s.proposedAction}</div></div><textarea className="input" name="note" placeholder="Required human justification" required/><button className="button secondary" name="decision" value="APPROVED">Approve control</button><button className="button danger" name="decision" value="OVERRIDDEN">Override</button></form>; })}</section>
-    <section className="card" id="intelligence-transparency" style={{ marginTop: 18, scrollMarginTop: 90 }}><span className="eyebrow">Intelligence transparency</span><h2>Calculations currently in use</h2><p className="muted">Every recommendation surface records its model version on the audit trail below. These are the versions running now.</p>
-      {models.map(([name, version, explanation]) => <div className="data-row" key={name}><div style={{ flex: 1 }}><strong>{name}</strong><div className="muted">{explanation}</div></div><span className="pill">{version}</span></div>)}
+    <section className="card admin-scenarios" id="ai-governance" style={{ marginTop: 18, scrollMarginTop: 90 }}><h2>Scenario results</h2>{scenarios.map(s => { const issues = parseIssues(s.detectedIssues); return <form action={decideGovernanceScenario} className="admin-scenario-row" key={s.id}><input type="hidden" name="scenarioId" value={s.id}/><div className="admin-scenario-summary"><div><span className={`pill status-${s.riskLevel === "HIGH" ? "rejected" : "pending"}`}>{s.riskLevel} RISK</span> <span className="pill">{s.humanDecision}</span></div><strong>{s.title}</strong><p>{issues.join(" · ")}</p><div className="notice">{s.proposedAction}</div></div><label className="admin-scenario-note"><span>Human justification</span><textarea className="input" name="note" placeholder="Explain the decision and any corrective action" required/></label><div className="admin-scenario-actions"><button className="button secondary" name="decision" value="APPROVED">Approve control</button><button className="button danger" name="decision" value="OVERRIDDEN">Override</button></div></form>; })}</section>
+    <section className="card admin-models" id="intelligence-transparency" style={{ marginTop: 18, scrollMarginTop: 90 }}><span className="eyebrow">Intelligence transparency</span><h2>Calculations currently in use</h2><p className="muted">The five active calculation services are listed below. Expand one only when you need its scope and safeguards.</p>
+      <div className="admin-model-list">{models.map(([name, version, explanation]) => <details key={name}><summary><span><strong>{name}</strong><small>Active calculation</small></span><span className="pill">{version}</span></summary><p>{explanation}</p></details>)}</div>
       <h3 style={{ marginTop: 20 }}>Evidence: automated analysis versus human verification</h3>
       <div className="grid-3">
         <div><div className="data-row"><strong>AI-analysed documents</strong><b>{aiAnalysed}</b></div><p className="muted" style={{ fontSize: 12 }}>Automated extraction completed. Advisory only; confers no verified status.</p></div>
@@ -62,6 +72,6 @@ export default async function GovernancePage() {
     </section>
 
     <section className="card" style={{ marginTop: 18 }}><span className="eyebrow">ITU-T Y.3172 traceability</span><h2>Operational pipeline map</h2><div className="grid-2">{PIPELINE.map(([name, implementation, status]) => <div className="data-row" key={name}><div><strong>{name}</strong><div className="muted">{implementation}</div></div><span className="pill">{status}</span></div>)}</div></section>
-    <section className="card" id="audit-logs" style={{ marginTop: 18, scrollMarginTop: 90 }}><h2>Decision audit trail</h2>{audits.map(a => <div className="data-row" key={a.id}><div><strong>{a.action}</strong><div className="muted">{a.entityType} · {a.explanation ?? "No additional note"}</div></div><div className="muted">{a.modelVersion ?? "human"}<br/>{a.createdAt.toLocaleString()}</div></div>)}</section>
+    <AdminAuditTrail items={auditItems}/>
   </main>;
 }

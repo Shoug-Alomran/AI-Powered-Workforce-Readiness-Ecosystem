@@ -92,19 +92,32 @@ export async function resolveDataRequest(formData: FormData) {
   revalidatePath("/admin/governance"); revalidatePath("/student/privacy");
 }
 
-export async function captureMonitoringSnapshot() {
+export type MonitoringCaptureResult = {
+  ok: true;
+  snapshotId: string;
+  status: string;
+  sampleSize: number;
+  capturedAt: string;
+};
+
+export async function captureMonitoringSnapshot(): Promise<MonitoringCaptureResult> {
   const ctx = await getCurrentAdmin();
   if (!ctx) throw new Error("Administrator access required");
   const applications = await prisma.application.findMany();
   const previous = await prisma.monitoringSnapshot.findFirst({ orderBy: { createdAt: "desc" } });
-  const sampleSize = applications.length;
-  const averageScore = sampleSize ? applications.reduce((n, a) => n + a.matchScore, 0) / sampleSize : 0;
-  const outcomeRate = sampleSize ? applications.filter(a => ["shortlisted", "hired"].includes(a.status)).length / sampleSize : 0;
+  // Only final employer decisions are outcomes. Counting active applications here
+  // would make the minimum sample threshold look safer than it really is.
+  const eligibleApplications = applications.filter((application) => ["hired", "rejected"].includes(application.status));
+  const sampleSize = eligibleApplications.length;
+  const averageScore = sampleSize ? eligibleApplications.reduce((n, a) => n + a.matchScore, 0) / sampleSize : 0;
+  const outcomeRate = sampleSize ? eligibleApplications.filter(a => a.status === "hired").length / sampleSize : 0;
   const scoreDrift = previous ? averageScore - previous.averageScore : 0;
   const outcomeDrift = previous ? outcomeRate - previous.outcomeRate : 0;
   const status = sampleSize < 20 ? "INSUFFICIENT_DATA" : Math.abs(scoreDrift) >= 10 || Math.abs(outcomeDrift) >= .15 ? "PAUSED" : Math.abs(scoreDrift) >= 5 || Math.abs(outcomeDrift) >= .08 ? "WATCH" : "HEALTHY";
-  await prisma.monitoringSnapshot.create({ data: { modelVersion: "match-rules-v1", sampleSize, averageScore, outcomeRate, scoreDrift, outcomeDrift, status, notes: sampleSize < 20 ? "Metrics suppressed for decision-making until the minimum sample size of 20 is reached." : null } });
+  const snapshot = await prisma.monitoringSnapshot.create({ data: { modelVersion: "match-rules-v1", sampleSize, averageScore, outcomeRate, scoreDrift, outcomeDrift, status, notes: sampleSize < 20 ? "Metrics suppressed for decision-making until the minimum sample size of 20 is reached." : null } });
+  await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: "MONITORING_SNAPSHOT_CAPTURED", entityType: "MONITORING_SNAPSHOT", entityId: snapshot.id, modelVersion: snapshot.modelVersion, explanation: `${status}; ${sampleSize} eligible final outcomes` } });
   revalidatePath("/admin/monitoring");
+  return { ok: true, snapshotId: snapshot.id, status, sampleSize, capturedAt: snapshot.createdAt.toISOString() };
 }
 
 export async function updateSupportTicket(formData: FormData) {
