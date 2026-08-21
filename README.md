@@ -197,7 +197,7 @@ decision in the platform.
 ### Deterministic intelligence — everything that produces a number
 
 The Career Readiness Score, skill-gap analysis, and candidate–role matching are
-computed by a **rule-based engine with published weights** ([`src/lib/ai.ts`](fursa/src/lib/ai.ts)).
+computed by a **rule-based engine with published weights** ([`src/lib/ai.ts`](Fursah/src/lib/ai.ts)).
 No machine-learning model trained on historical hiring data is involved in any
 score that affects a person.
 
@@ -222,10 +222,10 @@ Scores are banded as Career Ready (≥80), Developing (55–79), and Early Stage
 ### Generative AI — reading documents and explaining results
 
 A general-purpose language model (Llama 3.1 8B via Cloudflare Workers AI,
-reached through our own Worker — see [`src/lib/assistant/llm.ts`](fursa/src/lib/assistant/llm.ts))
+reached through our own Worker — see [`src/lib/assistant/llm.ts`](Fursah/src/lib/assistant/llm.ts))
 does exactly two things:
 
-1. **Evidence extraction** ([`src/lib/evidence-ai.ts`](fursa/src/lib/evidence-ai.ts)) — reads an
+1. **Evidence extraction** ([`src/lib/evidence-ai.ts`](Fursah/src/lib/evidence-ai.ts)) — reads an
    uploaded certificate, project, or experience document and proposes the
    skills it evidences, each with a confidence value and the supporting text.
    **Extraction never verifies evidence.** A human reviewer approves or rejects
@@ -246,22 +246,22 @@ Each of these is an implemented mechanism, not an aspiration:
 
 | Commitment | Where it lives |
 |---|---|
-| No protected attributes collected — no gender, nationality, age, or GPA field exists | [`prisma/schema.prisma`](fursa/prisma/schema.prisma) |
-| Cohort aggregates suppressed below 5 students in **every** reporting group — band, career track, skill gap, certification gap — not just the cohort total | `MIN_COHORT` in [`src/lib/cohort.ts`](fursa/src/lib/cohort.ts) |
-| Secondary suppression: withholding one group of a partition would leak it by subtraction, so a second is withheld | `suppressPartition` in [`src/lib/cohort.ts`](fursa/src/lib/cohort.ts) |
-| Suppression is *shown*, not silent — a withheld figure renders as ⊘ with its reason | [`src/components/SuppressedFigure.tsx`](fursa/src/components/SuppressedFigure.tsx) |
+| No protected attributes collected — no gender, nationality, age, or GPA field exists | [`prisma/schema.prisma`](Fursah/prisma/schema.prisma) |
+| Cohort aggregates suppressed below 5 students in **every** reporting group — band, career track, skill gap, certification gap — not just the cohort total | `MIN_COHORT` in [`src/lib/cohort.ts`](Fursah/src/lib/cohort.ts) |
+| Secondary suppression: withholding one group of a partition would leak it by subtraction, so a second is withheld | `suppressPartition` in [`src/lib/cohort.ts`](Fursah/src/lib/cohort.ts) |
+| Suppression is *shown*, not silent — a withheld figure renders as ⊘ with its reason | [`src/components/SuppressedFigure.tsx`](Fursah/src/components/SuppressedFigure.tsx) |
 | Every consequential action logged with its ruleset version and reasoning | `AuditEvent` model |
 | Purpose-specific consent, versioned, independently withdrawable | `ConsentRecord` model |
 | Four PDPL request types: access, portability, correction, deletion | `DataRequest` model |
 | Appeals against readiness, match, evidence, and data decisions | `Appeal` model |
 | Drift monitoring with a `PAUSED` state, so rollback is an available action | `MonitoringSnapshot` model |
 | Governance decisions recorded including where a human **overrode** the proposal | `GovernanceScenario.humanDecision` |
-| Assistant role-scoping verified automatically for all three roles — a university context can never contain an individual student record, an employer context never a non-applicant, a student context never a peer | [`scripts/verify-assistant.ts`](fursa/scripts/verify-assistant.ts) |
-| Cohort suppression verified against live data on every run | [`scripts/verify-privacy.ts`](fursa/scripts/verify-privacy.ts) |
-| Evidence stays advisory until a named human approves it — asserted, not assumed | [`scripts/verify-evidence.ts`](fursa/scripts/verify-evidence.ts) |
-| Session cookies are HMAC-signed, so a user id alone cannot open a session | `signSession` in [`src/lib/session.ts`](fursa/src/lib/session.ts) |
-| The password-free demo shortcut opens prepared demo accounts only, never a real sign-up | [`src/lib/demoAccounts.ts`](fursa/src/lib/demoAccounts.ts) |
-| Assistant rate limits are per authenticated user, so one visitor cannot switch it off for everyone | [`src/app/api/assistant/route.ts`](fursa/src/app/api/assistant/route.ts) |
+| Assistant role-scoping verified automatically for all three roles — a university context can never contain an individual student record, an employer context never a non-applicant, a student context never a peer | [`scripts/verify-assistant.ts`](Fursah/scripts/verify-assistant.ts) |
+| Cohort suppression verified against live data on every run | [`scripts/verify-privacy.ts`](Fursah/scripts/verify-privacy.ts) |
+| Evidence stays advisory until a named human approves it — asserted, not assumed | [`scripts/verify-evidence.ts`](Fursah/scripts/verify-evidence.ts) |
+| Session cookies are HMAC-signed, so a user id alone cannot open a session | `signSession` in [`src/lib/session.ts`](Fursah/src/lib/session.ts) |
+| The password-free demo shortcut opens prepared demo accounts only, never a real sign-up | [`src/lib/demoAccounts.ts`](Fursah/src/lib/demoAccounts.ts) |
+| Assistant rate limits are per authenticated user, so one visitor cannot switch it off for everyone | [`src/app/api/assistant/route.ts`](Fursah/src/app/api/assistant/route.ts) |
 | Employer blind review, withholding identifying detail at screening | `Job.blindReview` |
 
 Published policies: [Privacy](https://fursah.org/policies/privacy) ·
@@ -316,7 +316,7 @@ without running the prototype:
   of Universities Affairs, UNESCO, and ISO/IEC 42001 and 23894.
 
 The seven clause 8.1 node names live in one place
-([`src/lib/standards.ts`](fursa/src/lib/standards.ts)) and are rendered by both
+([`src/lib/standards.ts`](Fursah/src/lib/standards.ts)) and are rendered by both
 the public pipeline figure and the admin governance page, so the two surfaces
 cannot describe the pipeline differently.
 
@@ -403,7 +403,7 @@ Ultimately, the goal is not simply to help students **find jobs**, but to help t
 
 ## Running the Prototype
 
-**Fursah** is the working prototype of this ecosystem, located in [`fursa/`](fursa/). It is a Next.js 16 app (React 19, TypeScript, Tailwind CSS 4) with Prisma over libSQL.
+**Fursah** is the working prototype of this ecosystem, located in [`Fursah/`](Fursah/). It is a Next.js 16 app (React 19, TypeScript, Tailwind CSS 4) with Prisma over libSQL.
 
 ### Quick start
 
@@ -430,7 +430,7 @@ The bundled SQLite file (`prisma/dev.db`) is used by default, so the demo runs o
 
 ### Environment
 
-Create `fursa/.env.local` with the variables your setup needs. Readiness scoring, skill-gap analysis, and opportunity matching run on deterministic local logic, so no model API key is required to run the prototype.
+Create `Fursah/.env.local` with the variables your setup needs. Readiness scoring, skill-gap analysis, and opportunity matching run on deterministic local logic, so no model API key is required to run the prototype.
 
 | Variable | Purpose |
 |---|---|
