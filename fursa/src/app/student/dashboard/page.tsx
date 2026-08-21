@@ -18,7 +18,11 @@ export default async function StudentDashboard() {
     redirect("/login");
   }
 
-  const student = await prisma.student.findUniqueOrThrow({
+  if (ctx.student.targetCareer === "undecided") {
+    redirect("/student/interests?setup=career");
+  }
+
+  const studentPromise = prisma.student.findUniqueOrThrow({
     where: {
       id: ctx.student.id,
     },
@@ -40,11 +44,11 @@ export default async function StudentDashboard() {
     },
   });
 
-  if (student.targetCareer === "undecided") {
-    redirect("/student/interests?setup=career");
-  }
-
-  const [jobs, feedbacks, track, intelligence] = await Promise.all([
+  // None of these reads depends on the expanded student record. Starting all
+  // of them together removes a full remote-database round trip from the page's
+  // critical path (important when Prisma is connected to hosted libSQL).
+  const [student, jobs, feedbacks, track, intelligence] = await Promise.all([
+    studentPromise,
     prisma.job.findMany({
       where: {
         status: "open",
@@ -66,7 +70,7 @@ export default async function StudentDashboard() {
 
     prisma.feedback.findMany({
       where: {
-        studentId: student.id,
+        studentId: ctx.student.id,
       },
       include: {
         job: {
@@ -80,9 +84,9 @@ export default async function StudentDashboard() {
       },
     }),
 
-    getCareerTrackAsync(student.targetCareer),
+    getCareerTrackAsync(ctx.student.targetCareer),
 
-    getStudentIntelligence(student.id),
+    getStudentIntelligence(ctx.student.id),
   ]);
 
   const readiness = intelligence.readiness;
