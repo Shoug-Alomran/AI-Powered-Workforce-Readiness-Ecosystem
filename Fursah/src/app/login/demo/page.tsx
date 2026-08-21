@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { prisma } from "@/lib/db";
 import { loginAsUser } from "@/actions/auth";
 import { isDemoAccountEmail } from "@/lib/demoAccounts";
@@ -23,7 +24,21 @@ const ROLE_LIMIT: Record<(typeof ROLE_ORDER)[number], number> = {
   STUDENT: 12,
 };
 
+const DEMO_ADMIN = {
+  email: "admin@fursah.demo",
+  name: "Fursah Trust & Safety",
+} as const;
+
 async function getDemoUsers() {
+  await connection();
+  // The demo switcher is the recovery path for prototype access. Some hosted
+  // databases are created without the local seed, so restore only the reserved
+  // demo administrator here instead of requiring a destructive full reseed.
+  await prisma.user.upsert({
+    where: { email: DEMO_ADMIN.email },
+    update: { role: "ADMIN", name: DEMO_ADMIN.name, active: true },
+    create: { role: "ADMIN", name: DEMO_ADMIN.name, email: DEMO_ADMIN.email },
+  });
   const users = await prisma.user.findMany({ orderBy: [{ createdAt: "asc" }, { name: "asc" }] });
   // `loginAsUser` refuses anything outside the prepared demo set, so listing a
   // non-demo account here would render a button that throws when pressed.
