@@ -20,7 +20,8 @@ export type KnowledgeArea =
   | "ITU standards and reports"
   | "Saudi regulatory instruments"
   | "National strategy and statistics"
-  | "International frameworks";
+  | "International frameworks"
+  | "Fursah governance documents";
 
 export type KnowledgeEntry = {
   id: string;
@@ -44,6 +45,7 @@ export const KNOWLEDGE_AREAS: KnowledgeArea[] = [
   "Saudi regulatory instruments",
   "National strategy and statistics",
   "International frameworks",
+  "Fursah governance documents",
 ];
 
 export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
@@ -231,6 +233,19 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
     usedFor: "The risk register in the DPIA, including the treatment decision recorded against each risk.",
     appliedIn: ["docs/DPIA.md"],
   },
+  // -------------------------------------------------------------------------
+  {
+    id: "dpia",
+    title: "Data Protection Impact Assessment",
+    publisher: "Fursah AI — Trust & Safety",
+    edition: "Version 1.1 · 21 August 2026 · prototype assessment",
+    url: "https://github.com/Shoug-Alomran/AI-Powered-Workforce-Readiness-Ecosystem/blob/main/docs/DPIA.md",
+    about:
+      "Assessment of the processing this platform performs: evidence uploads and R2 storage, Workers AI inference, the role-scoped assistant, deterministic scoring and matching, university aggregation and cohort suppression, human verification, and appeals and data rights. Opens with a one-page summary and carries an eight-risk register with residual ratings.",
+    usedFor:
+      "The controls it records are the ones implemented in this repository, and the two verification scripts assert them against live data. Cross-border inference is recorded as blocking for production rather than resolved.",
+    appliedIn: ["src/lib/cohort.ts", "scripts/verify-privacy.ts", "scripts/verify-evidence.ts"],
+  },
   {
     id: "sdgs",
     title: "Sustainable Development Goals — targets 4.4, 5.5, 8.5, 8.6 and 10.3",
@@ -268,4 +283,5 @@ const AREA_OF: Record<string, KnowledgeArea> = {
   iso42001: "International frameworks",
   iso23894: "International frameworks",
   sdgs: "International frameworks",
+  dpia: "Fursah governance documents",
 };

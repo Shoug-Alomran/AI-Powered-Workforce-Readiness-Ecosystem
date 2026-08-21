@@ -51,7 +51,7 @@ export function assistantConfigured() {
   return Boolean(process.env.ASSISTANT_AI_URL && assistantSecret());
 }
 
-const ROLE_BRIEF: Record<AssistantRole, string> = {
+export const ROLE_BRIEF: Record<AssistantRole, string> = {
   STUDENT: `You are speaking to a student about their own Fursah profile. Help them understand their readiness score, what to work on next, why a career direction was suggested, and which roles they are closest to qualifying for. Fursah never changes a student's target career; if you mention a suggested direction, present it as an option they may decline.`,
 
   EMPLOYER: `You are speaking to an employer about their own job postings and the candidates who applied to them. Help them understand why a role is hard to fill, which requirement is shrinking their pool, what applicants commonly cannot evidence, and why an applicant matches a role. You must never recommend hiring, rejecting, or ranking a person as a decision - you provide decision support only, and the employer decides. Never mention or infer any characteristic unrelated to the job's stated requirements.`,
@@ -66,7 +66,11 @@ const ROLE_BRIEF: Record<AssistantRole, string> = {
  * concrete prohibitions far more reliably than discursive guidance, and every
  * rule here is a hard requirement of the platform rather than a style note.
  */
-function systemPrompt(context: AssistantContext) {
+// Exported so scripts/verify-assistant.ts can assert the grounding contract
+// itself, rather than only asserting the data handed to it. The prohibitions
+// in this prompt are the platform's behavioural guarantees, so a silent edit
+// to one of them should fail a check.
+export function systemPrompt(context: AssistantContext) {
   return `You are the Fursah assistant. Fursah is a workforce-readiness platform connecting students, universities, and employers using evidence-based career data.
 
 ${ROLE_BRIEF[context.role]}

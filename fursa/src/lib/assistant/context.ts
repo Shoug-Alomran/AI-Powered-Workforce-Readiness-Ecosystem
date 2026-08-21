@@ -360,7 +360,8 @@ export async function buildUniversityContext(universityId: string): Promise<Assi
       privacy: {
         minimumCohortSize: MIN_COHORT,
         cohortReportable: cohort.reportable,
-        note: `All student figures are aggregates. Cohorts below ${MIN_COHORT} students are suppressed entirely. No individual student record is available on this surface.`,
+        note: `All student figures are aggregates. No individual student record is available on this surface. Suppression applies to every reporting group, not only the cohort total: any band, career track, skill gap or certification gap holding fewer than ${MIN_COHORT} students is withheld and appears below as {withheld: true}. A withheld group is not zero — its value is unknown to you. Say it is withheld for privacy; never estimate it.`,
+        suppressedGroupCount: cohort.suppressedGroupCount,
       },
 
       demandCoverage: {
@@ -409,15 +410,44 @@ export async function buildUniversityContext(universityId: string): Promise<Assi
         reason: entry.reason,
       })),
 
+      // Suppressed groups are handed over as an explicit {withheld: true}
+      // marker rather than as nulls. A null in a numeric field reads to a
+      // small model as "zero" or "missing", and both of those are wrong
+      // answers to give about a group the platform is deliberately hiding.
       cohortReadiness: cohort.reportable
         ? {
             students: cohort.students,
             averageScore: cohort.averageScore,
             medianScore: cohort.medianScore,
-            bands: cohort.bands,
-            byCareerTrack: cohort.tracks,
-            mostWidespreadSkillGaps: cohort.gaps.slice(0, 8),
-            certificationGaps: cohort.certificationGaps.slice(0, 5),
+            bands: cohort.bands.map((band) =>
+              band.suppressed
+                ? { label: band.label, withheld: true, reason: `fewer than ${MIN_COHORT} students` }
+                : { label: band.label, students: band.count, sharePct: band.sharePct },
+            ),
+            byCareerTrack: cohort.tracks.map((track) =>
+              track.suppressed
+                ? { careerTrack: track.label, withheld: true, reason: `fewer than ${MIN_COHORT} students` }
+                : {
+                    careerTrack: track.label,
+                    students: track.students,
+                    averageScore: track.averageScore,
+                    mostCommonGap: track.topGap,
+                  },
+            ),
+            mostWidespreadSkillGaps: cohort.gaps
+              .slice(0, 8)
+              .map((gap) =>
+                gap.suppressed
+                  ? { skill: gap.name, withheld: true, reason: `fewer than ${MIN_COHORT} students` }
+                  : { skill: gap.name, students: gap.students, sharePct: gap.sharePct },
+              ),
+            certificationGaps: cohort.certificationGaps
+              .slice(0, 5)
+              .map((gap) =>
+                gap.suppressed
+                  ? { certification: gap.name, withheld: true, reason: `fewer than ${MIN_COHORT} students` }
+                  : { certification: gap.name, students: gap.students, sharePct: gap.sharePct },
+              ),
             summary: cohort.summary,
           }
         : { withheld: true, reason: cohort.summary },

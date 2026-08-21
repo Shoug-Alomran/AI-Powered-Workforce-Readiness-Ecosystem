@@ -279,4 +279,11 @@ export const student: Record<string, string> = {
   "Submit a request on the left and it will be tracked here with its status and the reviewer's written outcome.": "أرسل طلباً من اليسار وسيُتابَع هنا مع حالته والنتيجة المكتوبة من المراجع.",
   "Review your student identity and securely manage your sign-in information.": "راجع هويتك الطلابية وأدر معلومات دخولك بأمان.",
   "Update your email address or choose a new password for your account.": "حدّث بريدك الإلكتروني أو اختر كلمة مرور جديدة لحسابك.",
+  // Readiness headroom. Three figures across two pages describe different sets,
+  // so the Arabic keeps them distinct rather than reusing one phrase.
+  "IF YOU DO ALL RECOMMENDED": "لو نفّذت كل ما يُوصى به",
+  "FROM YOUR OPEN MILESTONES": "من محطاتك المفتوحة",
+  "Headroom from milestones you have accepted": "المتاح من المحطات التي قبلتها",
+  "this step: +": "هذه الخطوة: +",
+  "pts": "نقطة",
 };

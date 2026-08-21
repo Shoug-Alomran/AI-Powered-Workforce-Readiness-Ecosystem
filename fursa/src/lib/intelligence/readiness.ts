@@ -351,3 +351,38 @@ export function computeCareerReadiness(
     explanation,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Readiness headroom
+// ---------------------------------------------------------------------------
+// Three surfaces used to show a "potential gain" figure, each computing it
+// slightly differently and all three labelled almost identically. A single
+// student could see +7% on the dashboard, +0 on the roadmap, and a +10 pill on
+// a recommendation inside that same roadmap — three numbers for what a reader
+// would reasonably take to be one thing.
+//
+// They were measuring genuinely different sets, so the fix is not to collapse
+// them into one number but to make the arithmetic identical and the names
+// distinct:
+//
+//   - dashboard  : headroom across everything the engine currently RECOMMENDS
+//   - roadmap    : headroom across the milestones the student has ACCEPTED
+//   - pill       : one item's own estimate, uncapped
+//
+// The cap is what made them diverge: a sum of item estimates can exceed the
+// points actually left in the score, so any total has to be clamped to
+// `100 - score` while an individual item's estimate is not. That clamp lives
+// here now, so no surface can clamp differently or forget to.
+
+/**
+ * Points a set of recommendations could still add, capped by what is left in
+ * the score. Never negative.
+ *
+ * This is an estimate of what the listed items are worth, not a prediction
+ * that the student will complete them, and not a forecast of a future score.
+ */
+export function readinessHeadroom(currentScore: number, expectedImpacts: readonly number[]): number {
+  const remaining = Math.max(0, 100 - currentScore);
+  const claimed = expectedImpacts.reduce((total, impact) => total + Math.max(0, impact), 0);
+  return Math.max(0, Math.min(remaining, claimed));
+}

@@ -61,7 +61,6 @@ export const publicSite: Record<string, string> = {
   // Landing: workflow
   "Seamless Workflow": "سير عمل متكامل",
   "Sync & Analyze": "المزامنة والتحليل",
-  "Students sync their academic transcripts and projects. Fursah AI analyzes 200+ skill markers.": "يزامن الطلاب سجلاتهم الأكاديمية ومشاريعهم، ويحلل ذكاء فرصة أكثر من 200 مؤشر مهاري.",
   "Identify & Upskill": "تحديد الفجوات وتطويرها",
   "Receive a Readiness Score and a custom roadmap to bridge gaps identified by real employer demands.": "احصل على درجة جاهزية وخارطة طريق مخصصة لسد الفجوات وفق احتياجات أصحاب العمل الفعلية.",
   "Match & Hire": "المطابقة والتوظيف",
@@ -83,7 +82,6 @@ export const publicSite: Record<string, string> = {
   "Demo Students": "طلاب تجريبيون",
   "Sample Opportunities": "فرص تجريبية",
   "Demo Employers": "أصحاب عمل تجريبيون",
-  "Rec. Accuracy": "دقة التوصيات",
   "Ready to transform the future of workforce readiness?": "هل أنت مستعد لتغيير مستقبل الجاهزية المهنية؟",
   "Start exploring the Fursah prototype today and see how explainable AI is making a difference.": "ابدأ استكشاف نموذج فرصة اليوم وشاهد كيف يصنع الذكاء الاصطناعي القابل للتفسير فرقاً حقيقياً.",
   "Get Started Now": "ابدأ الآن",

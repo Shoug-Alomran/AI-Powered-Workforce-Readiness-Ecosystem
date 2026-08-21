@@ -234,16 +234,13 @@ export const university: Record<string, string> = {
   "EMERGING TECH TO WATCH": "تقنيات ناشئة تستحق المتابعة",
   "TOP EMERGING SKILL": "أبرز مهارة ناشئة",
   "Projected Skill Demand (AI)": "الطلب المتوقع على المهارات (ذكاء اصطناعي)",
-  "⌁ Predictive Trends (2025-2027)": "⌁ اتجاهات تنبؤية (2025-2027)",
   "⌁ DECLINING DEMAND": "⌁ طلب متراجع",
-  "♧ HIGH GROWTH FORECAST": "♧ توقع نمو مرتفع",
   "Early Stage": "مرحلة مبكرة",
   "Peak Performance": "ذروة الأداء",
   "Pending Renewal": "بانتظار التجديد",
   "vs Prev Period": "مقارنة بالفترة السابقة",
   "Post-6 Mo": "بعد 6 أشهر",
   "AY 2024-2025": "العام الجامعي 2024-2025",
-  "2026 Forecasting": "توقعات 2026",
 
   // AI panels
   "✦ AI EXECUTIVE SUMMARY": "✦ الملخص التنفيذي الذكي",
@@ -300,7 +297,6 @@ export const university: Record<string, string> = {
   "EXPECTED IMPACT": "الأثر المتوقع",
   "EMPLOYABILITY IMPACT": "الأثر على قابلية التوظيف",
   "CAREER READINESS IMPACT": "الأثر على الجاهزية المهنية",
-  "ALIGNMENT IMPROVEMENT FORECAST": "توقع تحسن المواءمة",
   "IMPLEMENTATION RISK HEATMAP": "خريطة مخاطر التنفيذ",
   "Implementation": "التنفيذ",
   "Starting stage": "مرحلة البداية",
@@ -480,7 +476,6 @@ export const university: Record<string, string> = {
   "Manual QA and basic Data Entry roles are projected to shrink by 45% as LLM automation matures.": "يُتوقع تقلص وظائف اختبار الجودة اليدوي وإدخال البيانات الأساسي بنسبة 45% مع نضج أتمتة نماذج اللغة.",
   "Quantum Computing and Bio-Tech integration is projected to grow by 120% in the Riyadh Tech Hub by 2026.": "يُتوقع نمو دمج الحوسبة الكمية والتقنية الحيوية بنسبة 120% في مركز الرياض التقني بحلول 2026.",
   "8 new companies expressed interest in hiring Data Science graduates this month.": "أبدت 8 جهات جديدة اهتماماً بتوظيف خريجي علوم البيانات هذا الشهر.",
-  "“AI predicts high implementation success based on current faculty engagement and budget allocation.”": "«يتوقع النظام نجاحاً مرتفعاً للتنفيذ بناءً على تفاعل أعضاء هيئة التدريس الحالي وتخصيص الميزانية».",
   "“Early partnership data suggests 22% increase in immediate post-grad job placement for similar institutions.”": "«تشير بيانات الشراكة المبكرة إلى ارتفاع 22% في التوظيف الفوري بعد التخرج لمؤسسات مماثلة».",
   "“Integrate this as a mandatory module in CS-301 to bridge the gap with AWS Security certification standards.”": "«أدرج هذا كوحدة إلزامية في CS-301 لسد الفجوة مع معايير شهادة أمن AWS».",
   "✦ AI Recommendation: Deprecate CS202 and replace with Python-based System Architecture module.": "✦ توصية: إيقاف CS202 واستبداله بوحدة معمارية أنظمة قائمة على Python.",
@@ -518,4 +513,8 @@ export const university: Record<string, string> = {
   "BM: 3,800 (Avg)": "المرجع: 3,800 (متوسط)",
   "Grants AWS Certified Cloud Practitioner": "يمنح شهادة AWS Certified Cloud Practitioner",
   "“Based on current labor market trends, introducing": "«بناءً على اتجاهات سوق العمل الحالية، فإن إدراج",
+  // Cohort suppression markers.
+  "⊘ Withheld": "⊘ محجوب",
+  "Withheld": "محجوب",
+  "Cohort pathways withheld": "مسارات الدفعة محجوبة",
 };

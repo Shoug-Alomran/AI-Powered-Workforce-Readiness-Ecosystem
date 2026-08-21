@@ -3,7 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getCurrentStudent } from "@/lib/session";
 import { dismissRoadmapItem, restoreRoadmapItem, syncRoadmap, updateRoadmapItem } from "@/actions/student";
-import { getStudentIntelligence } from "@/lib/intelligence";
+import { getStudentIntelligence, readinessHeadroom } from "@/lib/intelligence";
 
 const LABEL: Record<string, string> = {
   NOT_STARTED: "Not started",
@@ -47,12 +47,15 @@ export default async function RoadmapPage() {
   const completed = active.filter((item) => item.status === "COMPLETED").length;
   const openItems = active.filter((item) => item.status !== "COMPLETED");
 
-  // Potential gain is capped by the headroom left in the score. It is what the
-  // open recommendations are estimated to be worth, not a prediction that the
-  // student will complete them.
-  const potentialGain = Math.min(
-    100 - (readiness?.score ?? 0),
-    openItems.reduce((total, item) => total + item.expectedImpact, 0),
+  // Headroom across the milestones the student has ACCEPTED onto this roadmap
+  // and not yet completed. The dashboard shows headroom across what the engine
+  // recommends, which is a different set — a student who has accepted nothing
+  // sees a figure here of zero while the dashboard still shows what is on
+  // offer. Both go through the same clamp so they can never disagree about the
+  // arithmetic, only about the set they describe.
+  const acceptedHeadroom = readinessHeadroom(
+    readiness?.score ?? 0,
+    openItems.map((item) => item.expectedImpact),
   );
 
   // Not yet on the roadmap: everything the engine currently recommends that has
@@ -96,8 +99,8 @@ export default async function RoadmapPage() {
             </b>
           </span>
           <span>
-            <small>POTENTIAL GAIN</small>
-            <b className="green">+{Math.max(0, potentialGain)}</b>
+            <small>FROM YOUR OPEN MILESTONES</small>
+            <b className="green">+{acceptedHeadroom} pts</b>
           </span>
         </footer>
       </section>
@@ -120,6 +123,10 @@ export default async function RoadmapPage() {
           </div>
           <p className="muted" style={{ fontSize: 12 }}>
             Each bar is a scored component of your readiness, not a projection. Fursah does not forecast future scores.
+            Two headroom figures appear across Fursah and they describe different sets: your dashboard shows what
+            <em> everything currently recommended</em> could add, while this page shows what the milestones you have
+            <em> already accepted</em> could add. Both are estimates of what the listed items are worth, capped by the
+            points left in your score, and neither is a prediction that you will complete them.
           </p>
         </article>
 
@@ -134,8 +141,8 @@ export default async function RoadmapPage() {
             <b>{readiness?.score ?? 0}%</b>
           </p>
           <p>
-            <span>Estimated headroom from open milestones</span>
-            <b className="green">+{Math.max(0, potentialGain)}</b>
+            <span>Headroom from milestones you have accepted</span>
+            <b className="green">+{acceptedHeadroom} pts</b>
           </p>
           <p>
             <span>Dismissed recommendations</span>
@@ -168,7 +175,7 @@ export default async function RoadmapPage() {
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <span className="pill">{SOURCE_LABEL[recommendation.source] ?? recommendation.source}</span>
-                  <span className="pill">+{recommendation.expectedImpact} potential</span>
+                  <span className="pill">this step: +{recommendation.expectedImpact} pts</span>
                   {recommendation.offeringProvider && <span className="pill">{recommendation.offeringProvider}</span>}
                 </div>
                 <strong style={{ display: "block", marginTop: 8 }}>{recommendation.title}</strong>

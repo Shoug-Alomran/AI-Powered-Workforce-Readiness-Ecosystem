@@ -8,6 +8,8 @@ import { getStudentIntelligence } from "@/lib/intelligence";
 import { dismissCareerSuggestion, exploreSuggestedCareer } from "@/actions/student";
 import PageToc from "@/components/PageToc";
 import FursahAssistant from "@/components/FursahAssistant";
+import { assistantConfigured } from "@/lib/assistant/llm";
+import { readinessHeadroom } from "@/lib/intelligence";
 
 export default async function StudentDashboard() {
   const ctx = await getCurrentStudent();
@@ -126,6 +128,10 @@ export default async function StudentDashboard() {
   const roadmapRecommendations =
     intelligence.roadmapRecommendations.slice(0, 5);
 
+  // Server-side only: reads whether the assistant Worker URL and credential
+  // are present. The boolean crosses to the client, never the values.
+  const showAssistant = assistantConfigured();
+
   const directionSuggestion =
     intelligence.directionSuggestion;
 
@@ -138,13 +144,13 @@ export default async function StudentDashboard() {
   const topCareerMatches =
     intelligence.careerMatches.slice(0, 3);
 
-  const nextPotentialGain = Math.min(
-    100 - readinessScore,
-    roadmapRecommendations.reduce(
-      (total, recommendation) =>
-        total + recommendation.expectedImpact,
-      0
-    )
+  // Headroom across what the engine currently RECOMMENDS, whether or not the
+  // student has accepted any of it onto their roadmap. The roadmap page shows
+  // a different set (accepted milestones), which is why the two are named
+  // differently rather than being reconciled into one number.
+  const recommendedHeadroom = readinessHeadroom(
+    readinessScore,
+    roadmapRecommendations.map((recommendation) => recommendation.expectedImpact)
   );
 
   const topGap =
@@ -357,10 +363,17 @@ export default async function StudentDashboard() {
             id: "career-intelligence",
             label: "Career intelligence",
           },
-          {
-            id: "fursah-assistant",
-            label: "Ask the assistant",
-          },
+          // The assistant is only advertised when the server can actually
+          // answer. A table-of-contents link to a feature that returns
+          // "not configured" is worse than the feature being absent.
+          ...(showAssistant
+            ? [
+                {
+                  id: "fursah-assistant",
+                  label: "Ask the assistant",
+                },
+              ]
+            : []),
           {
             id: "feedback",
             label: "Employer feedback",
@@ -458,8 +471,8 @@ export default async function StudentDashboard() {
             </span>
 
             <span>
-              <small>NEXT POTENTIAL GAIN</small>
-              <b>+{Math.max(0, nextPotentialGain)}%</b>
+              <small>IF YOU DO ALL RECOMMENDED</small>
+              <b>+{recommendedHeadroom} pts</b>
             </span>
 
             <span>
@@ -522,8 +535,8 @@ export default async function StudentDashboard() {
                       </span>
 
                       <span className="pill">
-                        +{recommendation.expectedImpact}%
-                        potential
+                        this step: +
+                        {recommendation.expectedImpact} pts
                       </span>
                     </div>
 
@@ -828,7 +841,7 @@ export default async function StudentDashboard() {
         </section>
       )}
 
-      <div style={{ marginTop: 18 }}>
+      {showAssistant && <div style={{ marginTop: 18 }}>
         <FursahAssistant
           eyebrow="FURSAH ASSISTANT"
           heading="Ask about your readiness and next steps"
@@ -842,7 +855,7 @@ export default async function StudentDashboard() {
               : ["Which career track fits my evidence best?"]),
           ]}
         />
-      </div>
+      </div>}
 
       <section
         className="card student-feedback-section"

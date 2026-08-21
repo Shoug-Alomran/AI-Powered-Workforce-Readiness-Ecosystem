@@ -30,6 +30,9 @@ export default function FursahAssistant({
   const [question, setQuestion] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Set when the server reports this account has hit its own limit. The input
+  // is closed rather than left inviting a question that cannot be answered.
+  const [limited, setLimited] = useState(false);
   const [meta, setMeta] = useState<string | null>(null);
   const threadRef = useRef<HTMLDivElement>(null);
 
@@ -39,7 +42,7 @@ export default function FursahAssistant({
 
   async function send(text: string) {
     const trimmed = text.trim();
-    if (!trimmed || pending) return;
+    if (!trimmed || pending || limited) return;
 
     setError(null);
     setQuestion("");
@@ -66,6 +69,10 @@ export default function FursahAssistant({
 
       if (!response.ok || !data.answer) {
         setError(data.error ?? "The assistant could not answer just now.");
+        // 429 covers both this account's own limit and the shared free
+        // allocation being spent. Either way no further question can succeed
+        // right now, so the composer closes instead of failing repeatedly.
+        if (response.status === 429) setLimited(true);
         return;
       }
 
@@ -84,7 +91,7 @@ export default function FursahAssistant({
       <h2>{heading}</h2>
       <p className="muted">{intro}</p>
 
-      {turns.length === 0 && suggestions.length > 0 && (
+      {turns.length === 0 && suggestions.length > 0 && !limited && (
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 12 }}>
           {suggestions.map((suggestion) => (
             <button
@@ -136,6 +143,12 @@ export default function FursahAssistant({
         </div>
       )}
 
+      {limited ? (
+        <p className="muted" style={{ fontSize: 13, marginTop: 14 }}>
+          The assistant is paused for this account. Everything it reports is already on this page — the assistant
+          explains those figures, it does not produce them.
+        </p>
+      ) : (
       <form
         onSubmit={(event) => {
           event.preventDefault();
@@ -158,6 +171,7 @@ export default function FursahAssistant({
           {pending ? "Thinking…" : "Ask"}
         </button>
       </form>
+      )}
 
       <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
         Answers are generated from your authorized Fursah data and are advisory only. Every figure comes from the

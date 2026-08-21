@@ -4,10 +4,29 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { setSessionUserId, clearSession } from "@/lib/session";
 import { studentLandingPath } from "@/lib/studentOnboarding";
+import { demoLoginEnabled, isDemoAccountEmail } from "@/lib/demoAccounts";
 
+/**
+ * Password-free shortcut into a prepared demo account.
+ *
+ * This is a server action, so the id is attacker-controlled: it cannot be
+ * treated as "whatever the demo page rendered". Two guards therefore apply
+ * before a session is issued — the shortcut has to be enabled, and the target
+ * has to belong to the prepared demo set. Without the second guard the action
+ * would open a session as any account on the platform, including one created
+ * through the real sign-up flow, which is exactly the impersonation the
+ * signed cookie is meant to prevent.
+ */
 export async function loginAsUser(userId: string) {
+  if (!demoLoginEnabled()) throw new Error("Demo sign-in is disabled on this environment");
+
   const user = await prisma.user.findUnique({ where: { id: userId }, include: { student: true } });
   if (!user) throw new Error("User not found");
+  if (!isDemoAccountEmail(user.email)) {
+    throw new Error("This account is not a prepared demo account and cannot be opened without credentials");
+  }
+  if (!user.active) throw new Error("This demo account is disabled");
+
   await setSessionUserId(user.id);
   const destination =
     user.role === "STUDENT"

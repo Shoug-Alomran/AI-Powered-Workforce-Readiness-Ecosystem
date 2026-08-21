@@ -54,22 +54,48 @@ const trackInclude = {
   trackCerts: { include: { certification: true } },
 } as const;
 
-const loadAllCareerTracks = unstable_cache(
-  async (): Promise<CareerTrack[]> => {
-    const rows = await prisma.careerTrack.findMany({
-      include: trackInclude,
-      orderBy: { label: "asc" },
-    });
-    if (rows.length === 0) return CAREER_TRACKS;
-    return rows.map(mapDbTrack);
-  },
-  ["all-career-tracks"],
-  { tags: [CAREER_TRACKS_TAG], revalidate: 3600 },
-);
+async function readAllCareerTracks(): Promise<CareerTrack[]> {
+  const rows = await prisma.careerTrack.findMany({
+    include: trackInclude,
+    orderBy: { label: "asc" },
+  });
+  if (rows.length === 0) return CAREER_TRACKS;
+  return rows.map(mapDbTrack);
+}
 
-// `cache` on top of `unstable_cache` so that repeated calls within a single
-// render share one result without even touching the cache handler.
-export const getAllCareerTracksAsync = cache(loadAllCareerTracks);
+const loadAllCareerTracks = unstable_cache(readAllCareerTracks, ["all-career-tracks"], {
+  tags: [CAREER_TRACKS_TAG],
+  revalidate: 3600,
+});
+
+/**
+ * `unstable_cache` requires Next's incremental cache, which only exists inside
+ * a request or render. The verification scripts run under plain tsx and call
+ * straight into the intelligence layer, so every one of them threw
+ * "Invariant: incrementalCache missing" the moment it touched the taxonomy —
+ * including scripts/verify-assistant.ts, which the Responsible AI policy cites
+ * as the automated proof that a university context cannot contain an
+ * individual student.
+ *
+ * Falling back to the uncached read keeps the caching behaviour identical in
+ * the app and makes the same code callable from a script. The fallback is
+ * narrow on purpose: only this invariant is swallowed, and anything else is
+ * rethrown.
+ */
+async function loadCareerTracksAnywhere(): Promise<CareerTrack[]> {
+  try {
+    return await loadAllCareerTracks();
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("incrementalCache missing")) {
+      return readAllCareerTracks();
+    }
+    throw error;
+  }
+}
+
+// `cache` on top so that repeated calls within a single render share one
+// result without even touching the cache handler.
+export const getAllCareerTracksAsync = cache(loadCareerTracksAnywhere);
 
 export async function getCareerTrackAsync(id: string): Promise<CareerTrack> {
   // Served from the same cached list rather than its own query: the taxonomy is

@@ -4,7 +4,8 @@ import { prisma } from "@/lib/db";
 import { getCurrentUniversity } from "@/lib/session";
 import { getAllCareerTracksAsync } from "@/lib/careerTracks.server";
 import { computeCurriculumIntelligence } from "@/lib/curriculum";
-import { computeCohortReadiness } from "@/lib/cohort";
+import { computeCohortReadiness, MIN_COHORT } from "@/lib/cohort";
+import SuppressedFigure from "@/components/SuppressedFigure";
 
 export default async function UniversityAnalytics() {
   const ctx = await getCurrentUniversity();
@@ -46,7 +47,11 @@ export default async function UniversityAnalytics() {
 
   // Where the curriculum gap and the cohort gap are the same skill, the case for
   // acting is strongest: employers ask for it, you don't teach it, students lack it.
-  const cohortGapNames = new Map(cohort.gaps.map((gap) => [gap.name.toLowerCase(), gap]));
+  // Suppressed gaps carry null statistics, so they cannot be used to claim a
+  // skill is "missing across your cohort" — that claim needs a reportable figure.
+  const cohortGapNames = new Map(
+    cohort.gaps.filter((gap) => !gap.suppressed).map((gap) => [gap.name.toLowerCase(), gap]),
+  );
   const compounded = intel.gaps
     .map((gap) => ({ gap, cohort: cohortGapNames.get(gap.name.toLowerCase()) }))
     .filter((entry) => entry.cohort)
@@ -141,15 +146,21 @@ export default async function UniversityAnalytics() {
               <div key={band.label} style={{ marginTop: 12 }}>
                 <div className="data-row">
                   <span>{band.label}</span>
-                  <b>{band.sharePct}%</b>
+                  {band.suppressed ? <SuppressedFigure /> : <b>{band.sharePct}%</b>}
                 </div>
                 <div className="bar">
-                  <i style={{ width: `${band.sharePct}%` }} />
+                  <i style={{ width: `${band.suppressed ? 0 : band.sharePct}%` }} />
                 </div>
               </div>
             ))
           ) : (
             <div className="notice">{cohort.summary}</div>
+          )}
+          {cohort.reportable && cohort.bands.some((band) => band.suppressed) && (
+            <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+              Bands holding fewer than {MIN_COHORT} students are withheld. Where withholding one band would let its
+              value be recovered by subtracting the others, a second band is withheld too.
+            </p>
           )}
           <Link className="link" href="/university/student-readiness" style={{ display: "inline-block", marginTop: 14 }}>
             Open cohort readiness →

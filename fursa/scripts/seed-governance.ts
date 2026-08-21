@@ -1,5 +1,5 @@
 /**
- * Governance demo data.
+ * Demo enrichment: cohort depth plus the governance operating history.
  *
  * The governance surfaces — evidence review, the audit trail, model
  * monitoring, and the scenario register — are the platform's strongest claim,
@@ -18,12 +18,28 @@
  * original" will not resolve. That is deliberate — this script does not
  * fabricate documents, only the review history around them.
  *
+ * It also seeds cohort depth. Suppression applies to every reporting group,
+ * not just the cohort total, so a university with six students spread over
+ * five career tracks has nothing publishable — correct, but it demonstrates
+ * nothing. The cohort seeder fills the two registered institutions until the
+ * main career tracks clear MIN_COHORT while deliberately leaving two small
+ * tracks below it, so both the analytics and the privacy control are visible
+ * on the same page. Two small groups rather than one is itself deliberate:
+ * a single suppressed group is recoverable by subtracting the published ones,
+ * which is why the suppression logic withholds a second.
+ *
+ * Everything is idempotent and keyed on email or on the exact note text, so
+ * reruns add nothing. The hand-written scenario students from prisma/seed.ts
+ * are never touched.
+ *
  * Runs against whatever DATABASE_URL / TURSO_AUTH_TOKEN are configured, so
  * check which database is pointed at before running.
  */
 
 import { prisma } from "../src/lib/db";
 import { serializeIssues } from "../src/lib/governanceIssues";
+import { CAREER_TRACKS } from "../src/lib/careerTracks";
+import { MIN_COHORT } from "../src/lib/cohort";
 
 const RESET = process.argv.includes("--reset");
 const DEMO_PREFIX = "demo/governance/";
@@ -43,7 +59,34 @@ async function reset() {
   const snaps = await prisma.monitoringSnapshot.deleteMany({ where: { notes: { contains: DEMO_TAG } } });
   const scenarios = await prisma.governanceScenario.deleteMany({ where: { description: { contains: DEMO_TAG } } });
   const audits = await prisma.auditEvent.deleteMany({ where: { explanation: { contains: DEMO_TAG } } });
-  console.log(`Removed ${docs.count} evidence, ${snaps.count} snapshots, ${scenarios.count} scenarios, ${audits.count} audit events.`);
+  const appeals = await prisma.appeal.deleteMany({ where: { reason: { contains: DEMO_TAG } } });
+  const requests = await prisma.dataRequest.deleteMany({ where: { details: { contains: DEMO_TAG } } });
+  // Generated cohort members only. The hand-written scenario students carry no
+  // cohort tag and are left alone.
+  const cohort = await prisma.user.deleteMany({
+    where: { role: "STUDENT", student: { bio: { contains: COHORT_BIO_TAG } } },
+  });
+  console.log(
+    `Removed ${docs.count} evidence, ${snaps.count} snapshots, ${scenarios.count} scenarios, ${audits.count} audit events, ${appeals.count} appeals, ${requests.count} data requests, ${cohort.count} generated cohort students.`,
+  );
+}
+
+/**
+ * The record a seeded document is evidence for.
+ *
+ * Mirrors what the upload path stores: a certification document carries the
+ * certificationId, a project document the project id, an experience document
+ * the experience id. Falls back to the student id only when the student has no
+ * such record, which keeps the seed working on a thin database.
+ */
+function contextIdFor(
+  contextType: string,
+  student: { id: string; certifications: { certificationId: string }[]; projects: { id: string }[]; experiences: { id: string }[] },
+): string {
+  if (contextType === "CERTIFICATION") return student.certifications[0]?.certificationId ?? student.id;
+  if (contextType === "PROJECT") return student.projects[0]?.id ?? student.id;
+  if (contextType === "EXPERIENCE") return student.experiences[0]?.id ?? student.id;
+  return student.id;
 }
 
 async function seedEvidence() {
@@ -161,7 +204,12 @@ async function seedEvidence() {
       data: {
         ownerUserId: student.userId,
         contextType: template.contextType,
-        contextId: student.id,
+        // contextId identifies the record the document is evidence *for*, and
+        // the reviewer action reads it as such: approving a CERTIFICATION
+        // document updates the StudentCertification with that certificationId.
+        // Seeding the student id here meant an approved document propagated to
+        // nothing, so the demo showed an approval that changed no record.
+        contextId: contextIdFor(template.contextType, student),
         purpose: `Supporting evidence for ${template.contextType.toLowerCase()}`,
         storageKey,
         originalName: template.originalName,
@@ -180,6 +228,210 @@ async function seedEvidence() {
     created++;
   }
   console.log(`Evidence documents created: ${created}`);
+  return created;
+}
+
+// ---------------------------------------------------------------------------
+// Cohort depth
+// ---------------------------------------------------------------------------
+
+/** Marks a generated cohort member so --reset can find them again. */
+const COHORT_BIO_TAG = "[demo cohort]";
+
+/**
+ * Evidence profiles.
+ *
+ * Readiness weights technical skills 35%, certifications 20%, experience 20%,
+ * soft skills 15% and portfolio 10%, so a profile is defined by how much of a
+ * track's requirements it satisfies rather than by a target score. The score
+ * is then whatever the real engine computes from that evidence — nothing here
+ * writes a readiness number, and nothing asserts one.
+ */
+const EVIDENCE_PROFILES = {
+  strong: { technicalShare: 1, technicalLevel: 5, softShare: 1, softLevel: 4, certShare: 1, experienceShare: 1.2, projects: 3 },
+  solid: { technicalShare: 0.85, technicalLevel: 4, softShare: 1, softLevel: 4, certShare: 1, experienceShare: 1, projects: 3 },
+  developing: { technicalShare: 0.6, technicalLevel: 3, softShare: 0.67, softLevel: 3, certShare: 0.5, experienceShare: 0.6, projects: 2 },
+  early: { technicalShare: 0.3, technicalLevel: 2, softShare: 0.34, softLevel: 2, certShare: 0, experienceShare: 0.16, projects: 1 },
+} as const;
+
+type ProfileName = keyof typeof EVIDENCE_PROFILES;
+
+const FIRST_NAMES = [
+  "Aisha", "Bandar", "Danah", "Ebtisam", "Fahad", "Ghadah", "Hessa", "Ibrahim",
+  "Jawaher", "Kholoud", "Layan", "Mishal", "Nawaf", "Ohood", "Raed", "Sultan",
+  "Tala", "Waleed", "Yara", "Ziyad", "Amjad", "Basma", "Faisal", "Haya",
+  "Majed", "Norah", "Rakan", "Shatha", "Turki", "Wafa", "Rayan", "Lulwah",
+  "Saad", "Munira",
+];
+
+const LAST_NAMES = [
+  "Al-Subaie", "Al-Dossary", "Al-Juhani", "Al-Malki", "Al-Shammari", "Al-Balawi",
+  "Al-Amri", "Al-Zahrani", "Al-Harbi", "Al-Qarni", "Al-Mutairi", "Al-Ghamdi",
+  "Al-Otaibi", "Al-Anazi", "Al-Rashidi", "Al-Yami",
+];
+
+/**
+ * Target shape per institution.
+ *
+ * Three tracks per institution clear MIN_COHORT so the analytics are real, and
+ * two sit under it so the suppression notice is real too. Both facts have to
+ * be visible on the same screen for the control to be demonstrable rather than
+ * merely claimed.
+ */
+const COHORT_TARGETS: { institution: string; tracks: Record<string, number> }[] = [
+  {
+    institution: "King Saud University",
+    tracks: {
+      "software-engineer": 8,
+      "data-scientist": 7,
+      "cybersecurity-specialist": 6,
+      "financial-analyst": 2,
+      "ux-designer": 1,
+    },
+  },
+  {
+    institution: "Prince Sultan University",
+    tracks: {
+      "software-engineer": 7,
+      "data-scientist": 6,
+      "cybersecurity-specialist": 5,
+      "ux-designer": 2,
+      "financial-analyst": 1,
+    },
+  },
+];
+
+/** Bands need populating too, so profiles cycle rather than clustering. */
+const PROFILE_CYCLE: ProfileName[] = [
+  "strong", "developing", "early", "solid", "developing", "early",
+  "strong", "developing", "early", "solid", "developing", "early",
+];
+
+const DEGREE_BY_TRACK: Record<string, string> = {
+  "software-engineer": "B.Sc. Software Engineering",
+  "data-scientist": "B.Sc. Data Science",
+  "cybersecurity-specialist": "B.Sc. Cybersecurity",
+  "financial-analyst": "B.Sc. Finance",
+  "ux-designer": "B.A. Design",
+};
+
+function take<T>(items: readonly T[], share: number): T[] {
+  const count = Math.max(0, Math.min(items.length, Math.round(items.length * share)));
+  return items.slice(0, count);
+}
+
+async function seedCohortStudents() {
+  const trackById = new Map(CAREER_TRACKS.map(track => [track.id, track]));
+  const skills = await prisma.skill.findMany();
+  const skillIdByName = new Map(skills.map(skill => [skill.name.toLowerCase(), skill.id]));
+  const certifications = await prisma.certification.findMany();
+  const certIdByName = new Map(certifications.map(entry => [entry.name.toLowerCase(), entry.id]));
+
+  if (!skillIdByName.size) {
+    console.log("No skills in the taxonomy — run the main seed first. Skipping cohort.");
+    return 0;
+  }
+
+  let created = 0;
+  let nameIndex = 0;
+  let profileIndex = 0;
+
+  for (const target of COHORT_TARGETS) {
+    for (const [trackId, wanted] of Object.entries(target.tracks)) {
+      const track = trackById.get(trackId);
+      if (!track) continue;
+
+      const existing = await prisma.student.count({
+        where: { university: target.institution, targetCareer: trackId },
+      });
+      const missing = Math.max(0, wanted - existing);
+
+      for (let index = 0; index < missing; index++) {
+        const first = FIRST_NAMES[nameIndex % FIRST_NAMES.length];
+        const last = LAST_NAMES[Math.floor(nameIndex / FIRST_NAMES.length) % LAST_NAMES.length];
+        nameIndex++;
+
+        const name = `${first} ${last}`;
+        const email = `${first}.${last.replace("Al-", "")}@example.com`.toLowerCase();
+
+        // Idempotent: a rerun finds the address and moves on.
+        if (await prisma.user.findUnique({ where: { email } })) continue;
+
+        const profileName = PROFILE_CYCLE[profileIndex % PROFILE_CYCLE.length];
+        profileIndex++;
+        const profile = EVIDENCE_PROFILES[profileName];
+
+        const user = await prisma.user.create({
+          data: { role: "STUDENT", name, email },
+        });
+
+        const student = await prisma.student.create({
+          data: {
+            userId: user.id,
+            targetCareer: trackId,
+            university: target.institution,
+            degree: DEGREE_BY_TRACK[trackId] ?? "B.Sc.",
+            bio: `${COHORT_BIO_TAG} Synthetic cohort member used to demonstrate institution-level analytics and the cohort suppression threshold. Not a real person.`,
+          },
+        });
+
+        for (const requirement of take(track.technicalSkills, profile.technicalShare)) {
+          const skillId = skillIdByName.get(requirement.name.toLowerCase());
+          if (!skillId) continue;
+          await prisma.studentSkill.create({
+            data: { studentId: student.id, skillId, level: profile.technicalLevel },
+          });
+        }
+
+        for (const requirement of take(track.softSkills, profile.softShare)) {
+          const skillId = skillIdByName.get(requirement.name.toLowerCase());
+          if (!skillId) continue;
+          await prisma.studentSkill.create({
+            data: { studentId: student.id, skillId, level: profile.softLevel },
+          });
+        }
+
+        for (const certName of take(track.certifications, profile.certShare)) {
+          const certificationId = certIdByName.get(certName.toLowerCase());
+          if (!certificationId) continue;
+          // Only human-approved evidence counts toward readiness, so seeded
+          // certifications are approved explicitly rather than left pending.
+          await prisma.studentCertification.create({
+            data: { studentId: student.id, certificationId, verificationStatus: "APPROVED" },
+          });
+        }
+
+        const months = Math.round(track.recommendedExperienceMonths * profile.experienceShare);
+        if (months > 0) {
+          await prisma.experience.create({
+            data: {
+              studentId: student.id,
+              type: "internship",
+              title: `${track.label} internship`,
+              org: target.institution === "King Saud University" ? "Riyadh FinTech Group" : "Nexariya Technologies",
+              months,
+              verificationStatus: "APPROVED",
+            },
+          });
+        }
+
+        for (let projectIndex = 0; projectIndex < profile.projects; projectIndex++) {
+          await prisma.project.create({
+            data: {
+              studentId: student.id,
+              title: `${track.label} portfolio project ${projectIndex + 1}`,
+              description: `${COHORT_BIO_TAG} Coursework project evidencing ${track.technicalSkills[projectIndex % track.technicalSkills.length]?.name ?? track.label}.`,
+              verificationStatus: projectIndex === 0 ? "APPROVED" : "SELF_REPORTED",
+            },
+          });
+        }
+
+        created++;
+      }
+    }
+  }
+
+  console.log(`Cohort students created: ${created}`);
   return created;
 }
 
@@ -311,6 +563,120 @@ async function seedAuditTrail() {
   return created;
 }
 
+/**
+ * The rights side of the lifecycle: a student contesting an automated result,
+ * and the four PDPL request types. The governance page renders appeals in its
+ * review queue, and /admin/data-requests renders these, so both surfaces have
+ * something to show. Statuses are mixed on purpose — an all-resolved queue
+ * demonstrates nothing about how the queue behaves.
+ */
+async function seedRightsAndAppeals() {
+  const students = await prisma.student.findMany({ include: { user: true }, orderBy: { id: "asc" }, take: 6 });
+  if (!students.length) {
+    console.log("No students found — skipping appeals and data requests.");
+    return 0;
+  }
+
+  const appeals = [
+    {
+      subjectType: "READINESS",
+      reason: `${DEMO_TAG} My bootcamp training is not in the skill taxonomy, so my readiness score does not reflect work I can evidence.`,
+      status: "RESOLVED",
+      resolution:
+        "Upheld. An advisor recorded the competency against the taxonomy and the score was recomputed. The missing taxonomy entry was raised as a catalogue gap rather than treated as this student's problem.",
+      reviewedBy: "Governance reviewer",
+      ageDays: 14,
+    },
+    {
+      subjectType: "EVIDENCE",
+      reason: `${DEMO_TAG} My certificate was rejected because the scan was unclear, but the certificate itself is valid.`,
+      status: "RESOLVED",
+      resolution:
+        "Upheld. Re-uploaded document was legible and approved. Rejection reason was document quality, never the validity of the claim, and the wording shown to students was changed to say so.",
+      reviewedBy: "Evidence reviewer",
+      ageDays: 6,
+    },
+    {
+      subjectType: "MATCH",
+      reason: `${DEMO_TAG} I was ranked below candidates with fewer skills for a role I meet the requirements of.`,
+      status: "UNDER_REVIEW",
+      resolution: null,
+      reviewedBy: null,
+      ageDays: 2,
+    },
+  ];
+
+  const requests = [
+    {
+      type: "ACCESS",
+      details: `${DEMO_TAG} Requesting a copy of every field held about me, including extraction output.`,
+      status: "COMPLETED",
+      resolution: "Fulfilled in eight days. Export included profile, evidence, extraction output, scores and audit entries.",
+      reviewedBy: "Data protection contact",
+      ageDays: 8,
+    },
+    {
+      type: "DOWNLOAD",
+      details: `${DEMO_TAG} Portability request: machine-readable export for another platform.`,
+      status: "COMPLETED",
+      resolution: "JSON export delivered. Skills mapped to the published taxonomy so the receiving system can read them.",
+      reviewedBy: "Data protection contact",
+      ageDays: 21,
+    },
+    {
+      type: "CORRECTION",
+      details: `${DEMO_TAG} The extraction read my certificate issuer as the accrediting body. Please correct it.`,
+      status: "PROCESSING",
+      resolution: null,
+      reviewedBy: null,
+      ageDays: 3,
+    },
+    {
+      type: "DELETION",
+      details: `${DEMO_TAG} Requesting erasure of an uploaded document I no longer want stored.`,
+      status: "OPEN",
+      resolution: null,
+      reviewedBy: null,
+      ageDays: 1,
+    },
+  ];
+
+  let created = 0;
+
+  for (const [index, appeal] of appeals.entries()) {
+    const student = students[index % students.length];
+    if (await prisma.appeal.findFirst({ where: { reason: appeal.reason } })) continue;
+    const { ageDays, ...data } = appeal;
+    await prisma.appeal.create({
+      data: {
+        ...data,
+        studentId: student.id,
+        createdAt: daysAgo(ageDays),
+        reviewedAt: data.status === "RESOLVED" ? daysAgo(Math.max(0, ageDays - 2)) : null,
+      },
+    });
+    created++;
+  }
+
+  for (const [index, request] of requests.entries()) {
+    const student = students[(index + 1) % students.length];
+    if (await prisma.dataRequest.findFirst({ where: { details: request.details } })) continue;
+    const { ageDays, ...data } = request;
+    await prisma.dataRequest.create({
+      data: {
+        ...data,
+        studentId: student.id,
+        createdAt: daysAgo(ageDays),
+        reviewedAt: data.status === "COMPLETED" ? daysAgo(Math.max(0, ageDays - 1)) : null,
+      },
+    });
+    created++;
+  }
+
+  console.log(`Appeals and data requests created: ${created}`);
+  return created;
+}
+
 async function main() {
   console.log(RESET ? "Removing demo governance data...\n" : "Seeding governance demo data...\n");
   if (RESET) {
@@ -318,16 +684,33 @@ async function main() {
     return;
   }
 
+  await seedCohortStudents();
   await seedEvidence();
   await seedMonitoring();
   await seedScenarios();
+  await seedRightsAndAppeals();
   await seedAuditTrail();
 
   console.log("\nTotals now in the database:");
+  console.log(`  Students             ${await prisma.student.count()}`);
   console.log(`  Evidence documents   ${await prisma.evidenceDocument.count()}`);
   console.log(`  Monitoring snapshots ${await prisma.monitoringSnapshot.count()}`);
   console.log(`  Governance scenarios ${await prisma.governanceScenario.count()}`);
+  console.log(`  Appeals              ${await prisma.appeal.count()}`);
+  console.log(`  Data requests        ${await prisma.dataRequest.count()}`);
   console.log(`  Audit events         ${await prisma.auditEvent.count()}`);
+
+  for (const target of COHORT_TARGETS) {
+    const total = await prisma.student.count({ where: { university: target.institution } });
+    const below: string[] = [];
+    for (const trackId of Object.keys(target.tracks)) {
+      const count = await prisma.student.count({ where: { university: target.institution, targetCareer: trackId } });
+      if (count < MIN_COHORT) below.push(`${trackId} (${count})`);
+    }
+    console.log(
+      `  ${target.institution}: ${total} students; tracks below the ${MIN_COHORT} floor and therefore suppressed: ${below.length ? below.join(", ") : "none"}`,
+    );
+  }
   console.log("\nNote: seeded evidence rows have no object in R2, so 'download original' will not resolve.");
 }
 

@@ -2,10 +2,73 @@
 
 **Platform:** Fursah — AI Workforce Readiness Platform
 **Controller:** Fursah AI, Riyadh, Kingdom of Saudi Arabia · info@fursah.org
-**Version:** 1.0 · **Date:** 19 August 2026 · **Status:** Prototype assessment
+**Responsible owner:** Fursah Trust & Safety (`info@fursah.org`)
+**Version:** 1.1 · **Date:** 21 August 2026 · **Status:** Prototype assessment
+**Next scheduled review:** 21 February 2027, or on any triggering change in §7
 **Legal basis for assessment:** Personal Data Protection Law (Royal Decree M/19,
 amended by M/148), its Implementing Regulations, and SDAIA guidance on impact
 assessment for high-risk processing.
+
+---
+
+## 0. Assessment at a glance
+
+*One page. Every statement below describes behaviour implemented in this
+repository; §§1–7 give the full reasoning.*
+
+**What is processed.** Students supply academic background, skills,
+certifications, projects, experience and a target career, plus evidence
+documents they upload. Employers supply role requirements. Universities supply
+course offerings. No gender, nationality, age, GPA, photograph or any other
+protected characteristic is collected — the fields do not exist in the schema.
+
+**Where it goes.** Evidence files are stored in private Cloudflare R2 with no
+public bucket access. Document contents are sent to Cloudflare Workers AI for
+extraction. The role-scoped assistant sends a grounding pack, never a raw
+record. Everything else stays in the application database.
+
+**What the AI does, and does not do.** Every number that affects a person —
+readiness, skill gaps, candidate–role match — is produced by a deterministic
+rule engine with published weights (`src/lib/intelligence/readiness.ts`). No
+model is trained on historical hiring outcomes, and no learned component
+participates in any score. The language model does exactly two things: it reads
+an uploaded document and proposes the skills it evidences, and it explains
+results the deterministic layer already produced.
+
+**Human decision points.** Extraction is advisory and confers nothing: a named
+reviewer must approve a document before its evidence counts toward any score
+(`scripts/verify-evidence.ts` asserts this). Employers receive ranked decision
+support and make and record every hiring decision themselves. Any automated
+result can be appealed to a named human whose decision supersedes the engine.
+
+**Aggregation and cohort suppression.** Universities receive aggregates only,
+never a named student or a per-person score. Suppression applies to every
+reporting group, not just the cohort total: any readiness band, career track,
+skill gap or certification gap containing fewer than five students is withheld,
+and where withholding one group of a partition would let its value be recovered
+by subtracting the others, a second group is withheld too
+(`src/lib/cohort.ts`, asserted by `scripts/verify-privacy.ts`).
+
+**Data subject rights.** Purpose-specific, separately withdrawable consent;
+access, portability, correction and deletion requests; appeals against
+readiness, match, evidence and data decisions. All implemented as workflows,
+not as promises in a policy.
+
+**Principal risks and their status.**
+
+| Risk | Residual | Status |
+|---|---|---|
+| Cross-border model inference (R5) | Medium/High | **Blocking for production.** Bind inference in-Kingdom before real personal data |
+| Automation bias in human review (R2) | Medium/High | Ongoing: override rates monitored; low rates investigated |
+| Proxy discrimination via institution or region (R3) | Medium/High | Accepted with disclosure; needs institutional fairness review |
+| Automated exclusion at scale (R1) | Low/High | Ongoing: explanation quality and appeal volume |
+| Re-identification, cross-role disclosure, ranking capture, file access (R4, R6, R7, R8) | Low | Controls implemented and verified by script |
+
+**The honest limitation.** Because no protected attribute is collected,
+disparate-impact testing cannot be performed on this data. Data minimisation
+and demonstrable non-discrimination genuinely conflict here, and no instrument
+we could find resolves which takes precedence for an employment-adjacent
+system. This is stated publicly at `/standards` rather than left implicit.
 
 ---
 
@@ -164,9 +227,17 @@ and it is disclosed rather than resolved.
 **Inherent: Medium / Medium.** A readiness band distribution across three
 students identifies all three.
 
-**Controls.** `MIN_COHORT = 5` in `src/lib/cohort.ts` suppresses any group below
-five students entirely, returning an explanatory message rather than a chart.
-Suppression is enforced in the aggregation layer, so every consumer inherits it.
+**Controls.** `MIN_COHORT = 5` in `src/lib/cohort.ts` applies to *every*
+reporting group, not only to the cohort as a whole: readiness bands, career
+tracks, skill gaps and certification gaps are each withheld below five
+students. Bands and tracks partition the cohort, so withholding exactly one of
+them would leak it by subtraction; the aggregation layer therefore withholds a
+second group whenever that would otherwise happen. Withheld groups are returned
+with null statistics and rendered as an explicit "withheld" marker, so the
+control is visible rather than appearing as absent data. Suppression is
+enforced in the aggregation layer, so every consumer inherits it — including
+the assistant, which receives `{withheld: true}` rather than a number.
+`scripts/verify-privacy.ts` asserts all of this against live data.
 
 **Residual: Low / Medium.** Combining multiple suppressed reports over time
 remains theoretically possible; Terms of Use prohibit attempts.

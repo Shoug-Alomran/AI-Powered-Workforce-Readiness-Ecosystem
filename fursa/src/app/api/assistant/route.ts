@@ -25,21 +25,29 @@ import {
 const MAX_QUESTION_LENGTH = 1000;
 
 /**
- * Rate limits, in place so a demo cannot exhaust the Cloudflare Workers AI
- * free allocation (10,000 neurons/day, roughly 280 answers at this model and
- * these caps).
+ * Rate limits, in place so a public demo cannot exhaust the Cloudflare Workers
+ * AI free allocation (10,000 neurons/day, roughly 280 answers at this model
+ * and these caps).
+ *
+ * Both limits are per authenticated user. An earlier version added a
+ * platform-wide daily cap on top, which had the property that one visitor
+ * working through the suggestions could switch the assistant off for everyone
+ * else — including for a judge opening the site afterwards. A shared resource
+ * protected by a shared counter fails for the wrong person. Per-user counters
+ * bound each visitor instead, and the Worker still returns QUOTA_EXHAUSTED if
+ * the account allocation genuinely runs out, which this route reports plainly.
  *
  * Counted from the ASSISTANT_QUERY audit rows the route already writes, so the
- * limit is durable and shared across serverless instances rather than living
+ * limits are durable and shared across serverless instances rather than living
  * in per-process memory. The audit rows hold no chat content.
  */
 const PER_USER_HOURLY_LIMIT = 15;
-const PLATFORM_DAILY_LIMIT = 200;
+const PER_USER_DAILY_LIMIT = 40;
 
 async function rateLimit(userId: string) {
   const now = Date.now();
 
-  const [userCount, platformCount] = await Promise.all([
+  const [hourly, daily] = await Promise.all([
     prisma.auditEvent.count({
       where: {
         actorUserId: userId,
@@ -49,18 +57,19 @@ async function rateLimit(userId: string) {
     }),
     prisma.auditEvent.count({
       where: {
+        actorUserId: userId,
         action: "ASSISTANT_QUERY",
         createdAt: { gte: new Date(now - 24 * 60 * 60 * 1000) },
       },
     }),
   ]);
 
-  if (userCount >= PER_USER_HOURLY_LIMIT) {
-    return "You have reached this hour's assistant limit. Please try again later.";
+  if (hourly >= PER_USER_HOURLY_LIMIT) {
+    return `You have asked the assistant ${PER_USER_HOURLY_LIMIT} questions in the past hour, which is this account's limit. It resets within the hour — every figure the assistant quotes is also on the page itself.`;
   }
 
-  if (platformCount >= PLATFORM_DAILY_LIMIT) {
-    return "The assistant has reached its daily limit for this environment. It resets in 24 hours.";
+  if (daily >= PER_USER_DAILY_LIMIT) {
+    return `You have reached this account's daily limit of ${PER_USER_DAILY_LIMIT} assistant questions. It resets 24 hours after your first question today.`;
   }
 
   return null;

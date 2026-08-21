@@ -2,6 +2,7 @@ import Link from "next/link";
 import { cacheLife } from "next/cache";
 import { prisma } from "@/lib/db";
 import { loginAsUser } from "@/actions/auth";
+import { isDemoAccountEmail } from "@/lib/demoAccounts";
 
 // The prepared demo accounts change only when the prototype data is reseeded,
 // so the list is cached and this page prerenders instead of querying on every
@@ -9,7 +10,10 @@ import { loginAsUser } from "@/actions/auth";
 async function getDemoUsers() {
   "use cache";
   cacheLife("hours");
-  return prisma.user.findMany({ orderBy: [{ role: "asc" }, { name: "asc" }], take: 20 });
+  const users = await prisma.user.findMany({ orderBy: [{ role: "asc" }, { name: "asc" }] });
+  // `loginAsUser` refuses anything outside the prepared demo set, so listing a
+  // non-demo account here would render a button that throws when pressed.
+  return users.filter((user) => user.active && isDemoAccountEmail(user.email)).slice(0, 24);
 }
 
 export default async function DemoUsersPage() {

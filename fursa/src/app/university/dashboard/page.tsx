@@ -5,6 +5,7 @@ import { getCurrentUniversity } from "@/lib/session";
 import { getUniversityIntelligence } from "@/lib/intelligence";
 import { MIN_COHORT } from "@/lib/cohort";
 import FursahAssistant from "@/components/FursahAssistant";
+import { assistantConfigured } from "@/lib/assistant/llm";
 
 /** Renders a figure the database can support, or an explicit unknown state. */
 function value(input: number | string | null, suffix = "") {
@@ -334,30 +335,61 @@ export default async function UniversityDashboard() {
                       <header>
                         <i>◎</i>
                         <span className={`p${index}`}>
-                          {track.averageScore >= 80 ? "Strong" : track.averageScore >= 55 ? "Developing" : "Skill gap"}
+                          {track.suppressed
+                            ? "Withheld"
+                            : (track.averageScore ?? 0) >= 80
+                              ? "Strong"
+                              : (track.averageScore ?? 0) >= 55
+                                ? "Developing"
+                                : "Skill gap"}
                         </span>
                       </header>
                       <h3>{track.label}</h3>
-                      <div>
-                        <label>
-                          Students<b>{track.students}</b>
-                        </label>
-                        <label>
-                          Avg readiness<b>{track.averageScore}/100</b>
-                        </label>
-                        <label>
-                          Open roles
-                          <b>
-                            {intelligence.coveredSkills.length > 0 ? intelligence.openRoleCount : 0}
-                          </b>
-                        </label>
-                        <label>
-                          Top gap<b>{track.topGap ?? "None shared"}</b>
-                        </label>
-                      </div>
-                      <footer>
-                        Most common gap {track.topGap ? <span>{track.topGap}</span> : <span>None</span>}
-                      </footer>
+                      {track.suppressed ? (
+                        <>
+                          <div>
+                            <label>
+                              Students<b>⊘</b>
+                            </label>
+                            <label>
+                              Avg readiness<b>⊘</b>
+                            </label>
+                            <label>
+                              Open roles
+                              <b>{intelligence.coveredSkills.length > 0 ? intelligence.openRoleCount : 0}</b>
+                            </label>
+                            <label>
+                              Top gap<b>⊘</b>
+                            </label>
+                          </div>
+                          <footer>
+                            Withheld: fewer than {MIN_COHORT} students target this track here.
+                          </footer>
+                        </>
+                      ) : (
+                        <>
+                          <div>
+                            <label>
+                              Students<b>{track.students}</b>
+                            </label>
+                            <label>
+                              Avg readiness<b>{track.averageScore}/100</b>
+                            </label>
+                            <label>
+                              Open roles
+                              <b>
+                                {intelligence.coveredSkills.length > 0 ? intelligence.openRoleCount : 0}
+                              </b>
+                            </label>
+                            <label>
+                              Top gap<b>{track.topGap ?? "None shared"}</b>
+                            </label>
+                          </div>
+                          <footer>
+                            Most common gap {track.topGap ? <span>{track.topGap}</span> : <span>None</span>}
+                          </footer>
+                        </>
+                      )}
                     </article>
                   ))
                 ) : (
@@ -437,7 +469,7 @@ export default async function UniversityDashboard() {
           </aside>
         </div>
 
-        <div style={{ marginTop: 22 }}>
+        {assistantConfigured() && <div style={{ marginTop: 22 }}>
           <FursahAssistant
             eyebrow="FURSAH ASSISTANT"
             heading="Ask about curriculum alignment"
@@ -449,7 +481,7 @@ export default async function UniversityDashboard() {
               "What action would address the largest gap?",
             ]}
           />
-        </div>
+        </div>}
       </div>
     </main>
   );

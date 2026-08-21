@@ -247,14 +247,21 @@ Each of these is an implemented mechanism, not an aspiration:
 | Commitment | Where it lives |
 |---|---|
 | No protected attributes collected — no gender, nationality, age, or GPA field exists | [`prisma/schema.prisma`](fursa/prisma/schema.prisma) |
-| Cohort aggregates suppressed below 5 students, so a distribution cannot re-identify | `MIN_COHORT` in [`src/lib/cohort.ts`](fursa/src/lib/cohort.ts) |
+| Cohort aggregates suppressed below 5 students in **every** reporting group — band, career track, skill gap, certification gap — not just the cohort total | `MIN_COHORT` in [`src/lib/cohort.ts`](fursa/src/lib/cohort.ts) |
+| Secondary suppression: withholding one group of a partition would leak it by subtraction, so a second is withheld | `suppressPartition` in [`src/lib/cohort.ts`](fursa/src/lib/cohort.ts) |
+| Suppression is *shown*, not silent — a withheld figure renders as ⊘ with its reason | [`src/components/SuppressedFigure.tsx`](fursa/src/components/SuppressedFigure.tsx) |
 | Every consequential action logged with its ruleset version and reasoning | `AuditEvent` model |
 | Purpose-specific consent, versioned, independently withdrawable | `ConsentRecord` model |
 | Four PDPL request types: access, portability, correction, deletion | `DataRequest` model |
 | Appeals against readiness, match, evidence, and data decisions | `Appeal` model |
 | Drift monitoring with a `PAUSED` state, so rollback is an available action | `MonitoringSnapshot` model |
 | Governance decisions recorded including where a human **overrode** the proposal | `GovernanceScenario.humanDecision` |
-| Assistant role-scoping verified automatically — a university context can never contain an individual student record | [`scripts/verify-assistant.ts`](fursa/scripts/verify-assistant.ts) |
+| Assistant role-scoping verified automatically for all three roles — a university context can never contain an individual student record, an employer context never a non-applicant, a student context never a peer | [`scripts/verify-assistant.ts`](fursa/scripts/verify-assistant.ts) |
+| Cohort suppression verified against live data on every run | [`scripts/verify-privacy.ts`](fursa/scripts/verify-privacy.ts) |
+| Evidence stays advisory until a named human approves it — asserted, not assumed | [`scripts/verify-evidence.ts`](fursa/scripts/verify-evidence.ts) |
+| Session cookies are HMAC-signed, so a user id alone cannot open a session | `signSession` in [`src/lib/session.ts`](fursa/src/lib/session.ts) |
+| The password-free demo shortcut opens prepared demo accounts only, never a real sign-up | [`src/lib/demoAccounts.ts`](fursa/src/lib/demoAccounts.ts) |
+| Assistant rate limits are per authenticated user, so one visitor cannot switch it off for everyone | [`src/app/api/assistant/route.ts`](fursa/src/app/api/assistant/route.ts) |
 | Employer blind review, withholding identifying detail at screening | `Job.blindReview` |
 
 Published policies: [Privacy](https://fursah.org/policies/privacy) ·
@@ -272,7 +279,15 @@ Stated here rather than discovered later:
   these to a compliant region and documenting any residual transfer.
 - **No independent WCAG 2.1 AA audit** has been carried out; the conformance
   claim is a target based on internal review.
-- **Arabic coverage is partial** and still being extended across all portals.
+- **Arabic coverage is complete on the public pages and partial inside the
+  portals.** Untranslated strings fall back to English rather than failing, so
+  a portal page in Arabic can still show English fragments.
+- **The assistant's behavioural safety probes only run where the assistant is
+  configured.** `scripts/verify-assistant.ts` asserts the grounding contract
+  and the data boundaries everywhere, but the adversarial prompts — refusing
+  another student's data, refusing a hiring decision, resisting prompt
+  injection — report SKIP without `ASSISTANT_AI_URL`. Model behaviour is
+  unverified until they run.
 - **Fairness monitoring cannot use protected attributes**, because none are
   collected. Disparity review therefore depends on institutions conducting
   evaluation under their own lawful basis with separately governed data.

@@ -15,6 +15,7 @@ const AREA_ID: Record<string, string> = {
   "Saudi regulatory instruments": "saudi",
   "National strategy and statistics": "national",
   "International frameworks": "international",
+  "Fursah governance documents": "fursah",
 };
 
 const AREA_NOTE: Record<string, string> = {
@@ -26,6 +27,8 @@ const AREA_NOTE: Record<string, string> = {
     "The evidence base for the problem statement. Every figure on the National Impact page traces back to one of these, dated and attributed.",
   "International frameworks":
     "Voluntary frameworks the governance design follows, used to structure risk assessment and management rather than to claim certification.",
+  "Fursah governance documents":
+    "Written by this project rather than cited by it, and listed here because they are the assessment a reader needs in order to check the claims the other documents are used to support.",
 };
 
 export default function KnowledgeBasePage() {
