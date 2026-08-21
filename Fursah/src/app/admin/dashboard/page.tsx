@@ -6,6 +6,7 @@ import { getCurrentAdmin } from "@/lib/session";
 import { reviewCertification, reviewCurriculumCompletion, reviewEmployer, toggleUserActive } from "@/actions/admin";
 import PageToc from "@/components/PageToc";
 import AZStrip from "@/components/AZStrip";
+import ActionQueue from "@/components/ActionQueue";
 
 const ROLE_LABEL: Record<string, string> = {
   STUDENT: "Students",
@@ -81,6 +82,13 @@ export default async function AdminDashboard({
         <Link className="button secondary" href="/admin/career-tracks">Manage career taxonomy</Link>
       </div>
       <p className="muted">Review submitted evidence, approve employer accounts, and manage user access.</p>
+
+      <ActionQueue eyebrow="GOVERNANCE WORK QUEUE" title="Human decisions requiring attention" items={[
+        ...(pendingEmployers.length ? [{ title: `Review ${pendingEmployers.length} employer account${pendingEmployers.length === 1 ? "" : "s"}`, reason: "Unverified employers cannot publish roles or inspect candidates.", href: "/admin/dashboard#employer-verification", action: "Open employer review", priority: "high" as const }] : []),
+        ...(pendingCerts.length ? [{ title: `Decide ${pendingCerts.length} certificate submission${pendingCerts.length === 1 ? "" : "s"}`, reason: "Automated extraction remains advisory until a named reviewer records a decision.", href: "/admin/dashboard#certificate-review", action: "Open evidence review", priority: "high" as const }] : []),
+        ...(curriculumReviews.length ? [{ title: `Verify ${curriculumReviews.length} curriculum completion${curriculumReviews.length === 1 ? "" : "s"}`, reason: "Completion claims require supporting evidence and a human outcome.", href: "/admin/dashboard#curriculum-review", action: "Review completion", priority: "medium" as const }] : []),
+        { title: "Review enterprise control readiness", reason: "Inspect implemented, partial, and partner-dependent production controls before any pilot commitment.", href: "/admin/enterprise", action: "Open control register", priority: "low" as const },
+      ].slice(0, 4)}/>
 
       <PageToc
         items={[

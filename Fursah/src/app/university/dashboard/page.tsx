@@ -5,6 +5,7 @@ import { getCurrentUniversity } from "@/lib/session";
 import { getUniversityIntelligence } from "@/lib/intelligence";
 import { MIN_COHORT } from "@/lib/cohort";
 import FursahAssistant from "@/components/FursahAssistant";
+import ActionQueue from "@/components/ActionQueue";
 import { assistantConfigured } from "@/lib/assistant/llm";
 
 /** Renders a figure the database can support, or an explicit unknown state. */
@@ -53,6 +54,11 @@ export default async function UniversityDashboard() {
     .slice(0, 4);
 
   const topDemand = intelligence.coveredSkills.slice(0, 6);
+  const nextActions = [
+    ...(intelligence.gaps.length > 0 ? [{ title: `Assign an owner to the top curriculum gap`, reason: `${intelligence.gaps[0].skillName} is requested by employers but is not sufficiently covered by published offerings.`, href: "/university/actions/new", action: "Create intervention", priority: "high" as const, meta: `${intelligence.gaps.length} uncovered skill${intelligence.gaps.length === 1 ? "" : "s"}` }] : []),
+    ...(intelligence.curriculumActionCount > intelligence.completedCurriculumActionCount ? [{ title: "Review active curriculum interventions", reason: `${intelligence.curriculumActionCount - intelligence.completedCurriculumActionCount} initiative(s) have not reached verified completion.`, href: "/university/actions", action: "Open action register", priority: "medium" as const, meta: "Evidence required at completion" }] : []),
+    ...(!cohort.reportable ? [{ title: "Increase reportable evidence coverage", reason: `Cohort intelligence remains suppressed until at least ${MIN_COHORT} eligible student records are available.`, href: "/university/student-readiness", action: "Inspect data coverage", priority: "medium" as const, meta: "Privacy floor remains enforced" }] : []),
+  ].slice(0, 3);
 
   const metrics: Array<[string, string, string, string]> = [
     [
@@ -131,6 +137,7 @@ export default async function UniversityDashboard() {
       </header>
 
       <div className="ud-content">
+        <ActionQueue eyebrow="INSTITUTIONAL ACTION QUEUE" title="Interventions requiring ownership" items={nextActions}/>
         <nav className="ud-toc" aria-label="Dashboard sections">
           <span>
             <b>EXPLORE DASHBOARD</b>

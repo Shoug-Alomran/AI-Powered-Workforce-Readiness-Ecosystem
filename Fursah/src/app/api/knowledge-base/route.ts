@@ -1,8 +1,6 @@
 import { KNOWLEDGE_BASE } from "@/lib/knowledgeBase";
 import { ITU_DIMENSIONS, POLICY_GAPS, Y3172_NODES } from "@/lib/standards";
 
-export const dynamic = "force-static";
-
 function csvCell(value: unknown) {
   const text = Array.isArray(value) ? value.join("; ") : String(value ?? "");
   return `"${text.replaceAll('"', '""')}"`;

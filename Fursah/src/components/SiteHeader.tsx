@@ -3,7 +3,7 @@ import Link from "next/link";
 import { getCurrentUser } from "@/lib/session";
 import BrandBolt from "@/components/BrandBolt";
 
-const anchors = [["Solutions", "solutions"], ["How it Works", "how-it-works"], ["Responsible AI", "ai-ethics"]] as const;
+const anchors = [["Who it’s for", "solutions"], ["How it works", "how-it-works"], ["Trust", "ai-ethics"]] as const;
 
 /**
  * The landing-page navigation bar, shared by every public marketing page so the
@@ -18,7 +18,7 @@ async function SiteHeaderAccount() {
   const dashboard = user?.role === "STUDENT" ? "/student/dashboard" : user?.role === "EMPLOYER" ? "/employer/dashboard" : user?.role === "UNIVERSITY" ? "/university/dashboard" : user?.role === "ADMIN" ? "/admin/dashboard" : "/login";
   return <>
     {user ? <Link href={dashboard}>Dashboard</Link> : <Link href="/login">Sign In</Link>}
-    <Link className="primary" href={user ? dashboard : "/login/demo"}>{user ? "Continue" : "Explore Prototype"}</Link>
+    <Link className="primary" href={user ? dashboard : "/login/demo"}>{user ? "Open workspace" : "Choose workspace"}</Link>
   </>;
 }
 
@@ -28,8 +28,8 @@ export default function SiteHeader({ onHome = false }: { onHome?: boolean }) {
     <Link href="/" className="home-logo"><BrandBolt /><b>FURSAH</b></Link>
     <nav>
       {anchors.map(([label, id]) => <a key={id} href={anchor(id)}>{label}</a>)}
-      <Link href="/impact">National Impact</Link>
-      <Link href="/judge-demo">Judge Demo</Link>
+      <Link href="/impact">Impact</Link>
+      <Link href="/commercial-readiness">Pilot</Link>
     </nav>
     <div>
       {/* min-height holds the row's height so the streamed-in links do not

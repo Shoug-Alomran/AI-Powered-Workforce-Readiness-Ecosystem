@@ -10,6 +10,7 @@ import PageToc from "@/components/PageToc";
 import FursahAssistant from "@/components/FursahAssistant";
 import { assistantConfigured } from "@/lib/assistant/llm";
 import { readinessHeadroom } from "@/lib/intelligence";
+import ActionQueue from "@/components/ActionQueue";
 
 export default async function StudentDashboard() {
   const ctx = await getCurrentStudent();
@@ -192,6 +193,12 @@ export default async function StudentDashboard() {
       `Keep adding verified skills, certifications, projects, and experience as you progress.`;
   }
 
+  const nextActions = [
+    ...(topGap ? [{ title: `Build evidence for ${topGap.skillName}`, reason: topGap.openRoleCount > 0 ? `${topGap.openRoleCount} open role${topGap.openRoleCount === 1 ? "" : "s"} currently request this skill.` : `This is a high-impact gap for ${track.label}.`, href: "/student/roadmap", action: "Open recommended pathway", priority: "high" as const, meta: "Readiness impact shown before acceptance" }] : []),
+    ...(student.certifications.some(item => item.verificationStatus !== "APPROVED") ? [{ title: "Complete evidence verification", reason: "Unverified certifications remain visible but cannot contribute to your readiness score.", href: "/student/evidence", action: "Review evidence status", priority: "high" as const, meta: "Human approval required" }] : []),
+    ...(matches[0] ? [{ title: `Review your closest opportunity`, reason: `${matches[0].job.title} currently matches ${matches[0].match.score}% of your available evidence.`, href: "/student/jobs", action: "Inspect requirements", priority: "medium" as const, meta: "Advisory match—not an employment prediction" }] : []),
+  ].slice(0, 3);
+
   return (
     <main className="page-shell student-dashboard-design">
       <section className="student-design-hero student-dashboard-hero">
@@ -233,6 +240,8 @@ export default async function StudentDashboard() {
           </Link>
         </div>
       </section>
+
+      <ActionQueue eyebrow="YOUR NEXT BEST ACTIONS" title="Move your evidence forward" items={nextActions}/>
 
       {directionSuggestion.shouldSuggestChange &&
         directionSuggestion.suggestedCareer && (

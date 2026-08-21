@@ -37,6 +37,7 @@ const sections: { label: string; items: Item[] }[] = [
   ]},
   { label: "System", items: [
     { label: "Platform Health", href: "/admin/monitoring", icon: icons.health },
+    { label: "Enterprise Readiness", href: "/admin/enterprise", icon: icons.building },
     { label: "Security", href: "/admin/data-requests", icon: icons.security },
   ]},
 ];
