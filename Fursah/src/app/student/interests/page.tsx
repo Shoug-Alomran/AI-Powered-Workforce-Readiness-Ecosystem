@@ -302,7 +302,7 @@ export default async function StudentInterests({
         })}
       </section>
 
-      <section className="card" id="career-tracks" style={{ marginTop: 18, scrollMarginTop: 80 }}>
+      <section className="card student-interest-list-card" id="career-tracks" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">Career tracks</span>
         <h2>Favorite career tracks</h2>
         <p className="muted">Beyond your primary target career, follow any track you&apos;re curious about.</p>
@@ -311,12 +311,12 @@ export default async function StudentInterests({
           <button className="button secondary" type="submit">Search</button>
           {trackQ && <a className="link" href="/student/interests#career-tracks" style={{ alignSelf: "center" }}>Clear</a>}
         </form>
-        <div className="stack" style={{ marginTop: 12 }}>
+        <div className="stack student-interest-list" style={{ marginTop: 12 }}>
           {visibleTracks.length === 0 && <div className="notice">No career tracks match &ldquo;{trackQ}&rdquo;.</div>}
           {visibleTracks.map((track) => {
             const isFavorite = favoriteTrackIds.has(track.id);
             return (
-              <div className="data-row" key={track.id}>
+              <div className="data-row student-interest-list-row" key={track.id}>
                 <span>{track.label}{track.id === student.targetCareer ? " (primary)" : ""}</span>
                 <div className="student-track-actions">{track.id !== student.targetCareer && <form action={setPrimaryCareerTrack}><input type="hidden" name="careerTrackId" value={track.id}/><button className="button secondary">Set as target</button></form>}<form action={toggleFavoriteCareerTrack}>
                   <input type="hidden" name="careerTrackId" value={track.id} />
@@ -328,7 +328,7 @@ export default async function StudentInterests({
         </div>
       </section>
 
-      <section className="card" id="companies" style={{ marginTop: 18, scrollMarginTop: 80 }}>
+      <section className="card student-interest-list-card" id="companies" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">Companies</span>
         <h2>Favorite companies</h2>
         <p className="muted">Follow a company to get matched against every role they post, not just the ones you happen to see.</p>
@@ -337,12 +337,12 @@ export default async function StudentInterests({
           <button className="button secondary" type="submit">Search</button>
           {companyQ && <a className="link" href="/student/interests#companies" style={{ alignSelf: "center" }}>Clear</a>}
         </form>
-        <div className="stack" style={{ marginTop: 12 }}>
+        <div className="stack student-interest-list" style={{ marginTop: 12 }}>
           {visibleEmployers.length === 0 && <div className="notice">No companies match &ldquo;{companyQ}&rdquo;.</div>}
           {visibleEmployers.map((employer) => {
             const isFavorite = favoriteEmployerIds.has(employer.id);
             return (
-              <div className="data-row" key={employer.id}>
+              <div className="data-row student-interest-list-row" key={employer.id}>
                 <div><strong>{employer.company}</strong><div className="muted">{employer.industry ?? "-"} · {employer.jobs.length} open role(s)</div></div>
                 <form action={toggleFavoriteCompany}>
                   <input type="hidden" name="employerId" value={employer.id} />

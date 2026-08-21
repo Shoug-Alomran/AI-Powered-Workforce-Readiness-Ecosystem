@@ -152,7 +152,7 @@ async function JobsContent({
               <div className="notice student-job-explanation">{m.explanation}</div>
 
               {m.missingSkills.length > 0 && (
-                <div style={{ marginTop: 10 }}>
+                <div className="student-job-skills">
                   <strong>Highest-impact skills for this role</strong>
                   {job.requiredSkills
                     .filter((requirement) => m.missingSkills.includes(requirement.skill.name))

@@ -247,7 +247,7 @@ export function createFirestorePrisma(metadataClient: PrismaClient): PrismaClien
   async function project(model: Model, row: Row, args: Args, memo: Map<string, Row[]>): Promise<Row> {
     const include = args?.include as Row | undefined;
     const select = args?.select as Row | undefined;
-    let result: Row = select ? {} : { ...row };
+    const result: Row = select ? {} : { ...row };
     if (select) for (const [key, config] of Object.entries(select)) if (config === true && key in row) result[key] = row[key];
     const relations = { ...(include ?? {}), ...Object.fromEntries(Object.entries(select ?? {}).filter(([, value]) => value && typeof value === "object")) };
     for (const [key, config] of Object.entries(relations)) {

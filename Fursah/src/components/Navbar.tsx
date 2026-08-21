@@ -3,6 +3,7 @@ import { getCurrentUser } from "@/lib/session";
 import { logout } from "@/actions/auth";
 import StudentPortalChrome from "@/components/StudentPortalChrome";
 import BrandBolt from "@/components/BrandBolt";
+import { prisma } from "@/lib/db";
 
 export default async function Navbar() {
   const user = await getCurrentUser();
@@ -10,7 +11,21 @@ export default async function Navbar() {
   if (user?.role === "ADMIN") return null;
 
   if (user?.role === "STUDENT") {
-    return <StudentPortalChrome name={user.name} />;
+    const notifications = await prisma.notification.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 8,
+    });
+    return <StudentPortalChrome
+      name={user.name}
+      notifications={notifications.map((notification) => ({
+        id: notification.id,
+        title: notification.title,
+        body: notification.body,
+        read: notification.readAt !== null,
+        createdAt: notification.createdAt.toISOString(),
+      }))}
+    />;
   }
 
   return (

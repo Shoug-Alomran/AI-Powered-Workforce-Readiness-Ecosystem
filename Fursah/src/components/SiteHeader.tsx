@@ -32,8 +32,6 @@ export default function SiteHeader({ onHome = false }: { onHome?: boolean }) {
       <a href={anchor("metrics")}>Prototype</a>
     </nav>
     <div>
-      <span className="home-language" aria-label="Language">◎　AR</span>
-      <span className="home-theme-icon" aria-hidden="true">◔</span>
       {/* min-height holds the row's height so the streamed-in links do not
           shift the header when they arrive. */}
       <Suspense fallback={<span aria-hidden style={{ display: "inline-block", minHeight: 40 }} />}>

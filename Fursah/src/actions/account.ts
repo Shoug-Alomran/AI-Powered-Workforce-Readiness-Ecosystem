@@ -16,6 +16,17 @@ export type AccountUpdateState = {
   success?: string;
 };
 
+export async function markNotificationsRead() {
+  const user = await getCurrentUser();
+  if (!user) return;
+
+  await prisma.notification.updateMany({
+    where: { userId: user.id, readAt: null },
+    data: { readAt: new Date() },
+  });
+  revalidatePath("/student", "layout");
+}
+
 function emailDomain(email: string) {
   return email.split("@")[1]?.toLowerCase() ?? "";
 }
