@@ -1,6 +1,5 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { getCurrentUser } from "@/lib/session";
 
 const anchors = [["Solutions", "solutions"], ["How it Works", "how-it-works"], ["Responsible AI", "ai-ethics"]] as const;
@@ -17,7 +16,7 @@ async function SiteHeaderAccount() {
   const user = await getCurrentUser();
   const dashboard = user?.role === "STUDENT" ? "/student/dashboard" : user?.role === "EMPLOYER" ? "/employer/dashboard" : user?.role === "UNIVERSITY" ? "/university/dashboard" : user?.role === "ADMIN" ? "/admin/dashboard" : "/login";
   return <>
-    {user ? <Link href={dashboard}>Open Dashboard</Link> : <Link href="/login">Sign In</Link>}
+    {user ? <Link href={dashboard}>Dashboard</Link> : <Link href="/login">Sign In</Link>}
     <Link className="primary" href={user ? dashboard : "/login/demo"}>{user ? "Continue" : "Explore Prototype"}</Link>
   </>;
 }
@@ -25,15 +24,14 @@ async function SiteHeaderAccount() {
 export default function SiteHeader({ onHome = false }: { onHome?: boolean }) {
   const anchor = (id: string) => onHome ? `#${id}` : `/#${id}`;
   return <header className="home-nav">
-    <Link href="/" className="home-logo"><span className="brand-mark"><Image src="/logo.png" alt="" width={353} height={512} priority /></span><b>FURSAH</b></Link>
+    <Link href="/" className="home-logo"><span aria-hidden="true">ϟ</span><b>FURSA</b></Link>
     <nav>
       {anchors.map(([label, id]) => <a key={id} href={anchor(id)}>{label}</a>)}
-      <Link href="/impact">National Impact</Link>
-      <Link href="/standards">Standards</Link>
-      <Link href="/team">Team</Link>
       <a href={anchor("metrics")}>Prototype</a>
     </nav>
     <div>
+      <span className="home-language" aria-label="Language">◎　AR</span>
+      <span className="home-theme-icon" aria-hidden="true">◔</span>
       {/* min-height holds the row's height so the streamed-in links do not
           shift the header when they arrive. */}
       <Suspense fallback={<span aria-hidden style={{ display: "inline-block", minHeight: 40 }} />}>

@@ -2,8 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getCurrentUser } from "@/lib/session";
 import { logout } from "@/actions/auth";
-import PortalNavLinks from "@/components/PortalNavLinks";
-import AccountAvatar from "@/components/AccountAvatar";
+import StudentPortalChrome from "@/components/StudentPortalChrome";
 
 export default async function Navbar() {
   const user = await getCurrentUser();
@@ -11,24 +10,7 @@ export default async function Navbar() {
   if (user?.role === "ADMIN") return null;
 
   if (user?.role === "STUDENT") {
-    const links = [
-      { href: "/student/dashboard", label: "Dashboard" },
-      { href: "/student/interests", label: "Career Interests" },
-      { href: "/student/jobs", label: "Job Discovery" },
-      { href: "/student/applications", label: "Applications" },
-      { href: "/student/roadmap", label: "Career Roadmap" },
-      { href: "/student/profile", label: "Skills Passport" },
-    ];
-    return <header className="student-topbar">
-      <div className="student-topbar-inner">
-        <Link href="/student/dashboard" className="student-brand"><Image src="/logo.png" alt="" width={353} height={512}/><strong>FURSAH</strong></Link>
-        <PortalNavLinks links={links} className="student-nav" />
-        <div className="student-account">
-          <Link href="/student/account" className="student-profile-link" aria-label={`Open ${user.name}'s account profile`}><AccountAvatar initials={user.name.split(" ").map(part => part[0]).slice(0,2).join("")}/><b>{user.name}<small>View profile</small></b></Link>
-          <form action={logout}><button type="submit" className="student-logout">Log out</button></form>
-        </div>
-      </div>
-    </header>;
+    return <StudentPortalChrome name={user.name} />;
   }
 
   return (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Suspense } from "react";
 import { prisma } from "@/lib/db";
 import { getCurrentEmployer } from "@/lib/session";
 import { computeJobMatch } from "@/lib/ai";
@@ -24,13 +25,42 @@ function getWeekAgo() {
   return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 }
 
+type EmployerIntelligence = Awaited<ReturnType<typeof getEmployerIntelligence>>;
+
+async function HiringIntelligence({
+  intelligencePromise,
+  priorityJob,
+  pendingReview,
+  jobsWithoutSkills,
+  topSkills,
+}: {
+  intelligencePromise: Promise<EmployerIntelligence>;
+  priorityJob: { id: string; title: string; applicationCount: number } | null;
+  pendingReview: number;
+  jobsWithoutSkills: number;
+  topSkills: string[];
+}) {
+  const intelligence = await intelligencePromise;
+  const intelligenceByJob = new Map(intelligence.jobs.map((entry) => [entry.jobId, entry]));
+  const priorityIntelligence = priorityJob ? intelligenceByJob.get(priorityJob.id) : null;
+
+  return <section className="erd-intel"><header><h2>✦　HIRING INTELLIGENCE</h2><p>Analysis of your current hiring data</p></header><div>{priorityJob?<><small>HIGHEST ACTIVITY ROLE</small><article><h3>{priorityJob.title}</h3><p>{priorityJob.applicationCount} application{priorityJob.applicationCount===1?"":"s"} received for this opportunity.</p></article><small>CURRENT BOTTLENECKS</small><p>ⓘ　 {pendingReview} application{pendingReview===1?"":"s"} awaiting initial review.</p><p>ⓘ　 {jobsWithoutSkills} role{jobsWithoutSkills===1?"":"s"} without mapped skill requirements.</p><small>MOST REQUESTED SKILLS</small><div className="erd-tags">{topSkills.length?topSkills.map(skill=><span key={skill}>{skill}</span>):<span>No skills mapped</span>}</div>
+    <small>TALENT AVAILABILITY</small><p>ⓘ　 {intelligence.totalCandidatePool} of {intelligence.studentPoolSize} student profile(s) score 60% or above against at least one of your open roles.</p>
+    {priorityIntelligence&&<><small>HIRING DIFFICULTY</small><p>ⓘ　 {priorityJob.title}: {priorityIntelligence.hiringDifficulty.toLowerCase()} — {priorityIntelligence.strongCandidateCount} profile(s) score 80% or above.</p></>}
+    {intelligence.recurringGaps.length>0&&<><small>RECURRING CANDIDATE GAPS</small>{intelligence.recurringGaps.slice(0,3).map(gap=><p key={gap.skillName}>ⓘ　 {gap.skillName}: unevidenced by {gap.applicantCount} applicant(s) ({gap.sharePct}%).</p>)}</>}
+    <small>DECISION SUPPORT ONLY</small><p>ⓘ　 Rankings are explainable and evidence-based. Fursah does not make hiring decisions; every outcome is recorded against a human reviewer.</p></>:<div className="erd-empty"><h3>Not enough data yet</h3><p>Post a role and map its required skills to receive hiring intelligence.</p></div>}</div></section>;
+}
+
 export default async function EmployerDashboard({searchParams}:{searchParams:Promise<{q?:string;all?:string}>}){
   const ctx=await getCurrentEmployer(); if(!ctx) redirect("/login");
   const params=await searchParams;
   const query=String(params.q||"").trim().toLowerCase();
   const showAllRoles=params.all==="1";
-  const [jobs,intelligence]=await Promise.all([prisma.job.findMany({where:{employerId:ctx.employer.id},include:{applications:{include:{student:{include:{skills:{include:{skill:true}},certifications:{include:{certification:true}},experiences:true,projects:true,user:true}}}},requiredSkills:{include:{skill:true}},requiredCerts:{include:{certification:true}}},orderBy:{createdAt:"desc"}}),getEmployerIntelligence(ctx.employer.id)]);
-  const intelligenceByJob=new Map(intelligence.jobs.map(entry=>[entry.jobId,entry]));
+  // Start the broad talent-pool analysis immediately, but do not hold the
+  // dashboard's useful content behind it. The right-hand insight panel streams
+  // in independently once its all-student scan finishes.
+  const intelligencePromise=getEmployerIntelligence(ctx.employer.id);
+  const jobs=await prisma.job.findMany({where:{employerId:ctx.employer.id},include:{applications:{include:{student:{include:{skills:{include:{skill:true}},certifications:{include:{certification:true}},experiences:true,projects:true,user:true}}}},requiredSkills:{include:{skill:true}},requiredCerts:{include:{certification:true}}},orderBy:{createdAt:"desc"}});
   const applications=jobs.flatMap(job=>job.applications.map(a=>({...a,job,match:computeJobMatch(a.student,job)}))).sort((a,b)=>b.match.score-a.match.score);
   const visibleJobs=query?jobs.filter(job=>[job.title,job.careerTrack,...job.requiredSkills.map(item=>item.skill.name)].some(value=>value.toLowerCase().includes(query))):jobs;
   const roles=(showAllRoles?visibleJobs:visibleJobs.slice(0,3)).map(job=>({id:job.id,title:job.title,dept:job.careerTrack.replaceAll("-"," "),skills:job.requiredSkills.map(s=>s.skill.name).slice(0,3),applicants:job.applications.length,match:job.applications.length?Math.round(job.applications.reduce((n,a)=>n+computeJobMatch(a.student,job).score,0)/job.applications.length):null,status:job.status==="open"?"Published":"Closed"}));
@@ -53,11 +83,7 @@ export default async function EmployerDashboard({searchParams}:{searchParams:Pro
       <div className="erd-layout"><div>
         <section className="erd-positions"><header><h2>{query?`Search results for “${query}”`:"Current Positions"}</h2><div><Link href="/employer/jobs/new">Post a Job</Link><a href="/api/employer/jobs/export">Export</a>{visibleJobs.length>3&&<Link className="erd-view-all" href={`/employer/dashboard?${new URLSearchParams({...(query?{q:query}:{}),...(showAllRoles?{}:{all:"1"})}).toString()}`}>{showAllRoles?"Show fewer":`View all ${visibleJobs.length}`}</Link>}</div></header>{roles.length?<><div className="erd-table-head"><b>JOB TITLE &amp; TRACK</b><b>CORE SKILLS</b><b>APPLICANTS</b><b>AI MATCH</b><b>STATUS</b></div>{roles.map(role=><article key={role.id}><div><h3><Link href={`/employer/jobs/${role.id}`}>{role.title}</Link></h3><p>{role.dept}</p></div><div>{role.skills.map(s=><span key={s}>{s}</span>)}</div><strong>{role.applicants}</strong><b className="match">{role.match===null?"-":`${role.match}%`}</b><label className={role.status==="Closed"?"paused":""}>● {role.status}</label><Link className="erd-row-link" href={`/employer/jobs/${role.id}`}>→</Link></article>)}</>:<div className="erd-empty"><h3>{query?"No matching roles":"No roles posted yet"}</h3><p>{query?"Try another job title, career track, or skill.":"Create your first opportunity to begin receiving applications."}</p>{query?<Link href="/employer/dashboard">Clear search</Link>:<Link href="/employer/jobs/new">Create an opportunity</Link>}</div>}<footer>Showing {roles.length} of {visibleJobs.length} roles{!showAllRoles&&visibleJobs.length>roles.length&&<Link href={`/employer/dashboard?${new URLSearchParams({...(query?{q:query}:{}),all:"1"}).toString()}`}>View all roles</Link>}</footer></section>
         <section className="erd-ranking"><header><h2><Icon name="medal"/>Top Match Ranking</h2>{applications.length>0&&<span>Sorted by AI readiness score</span>}</header>{applications.length?applications.slice(0,3).map(a=><article key={a.id}><i>{a.student.user.name.split(" ").map(n=>n[0]).join("").slice(0,2)}</i><div><h3>{a.student.user.name} <label className={`candidate-status candidate-status--${a.status}`}>{a.status.toUpperCase()}</label></h3><p>Applied for {a.job.title}</p><b>AI MATCH:　<strong>{a.match.score}%</strong></b></div><blockquote>{a.match.explanation}</blockquote><span><Link href={`/employer/jobs/${a.job.id}/candidates/${a.id}`}>Profile</Link><Link href={`/employer/jobs/${a.job.id}/candidates/${a.id}`}>Review</Link></span></article>):<div className="erd-empty"><h3>No candidates yet</h3><p>Candidate rankings will appear after students apply to your published roles.</p></div>}</section>
-      </div><aside><section className="erd-intel"><header><h2>✦　HIRING INTELLIGENCE</h2><p>Analysis of your current hiring data</p></header><div>{priorityJob?<><small>HIGHEST ACTIVITY ROLE</small><article><h3>{priorityJob.title}</h3><p>{priorityJob.applications.length} application{priorityJob.applications.length===1?"":"s"} received for this opportunity.</p></article><small>CURRENT BOTTLENECKS</small><p>ⓘ　 {pendingReview} application{pendingReview===1?"":"s"} awaiting initial review.</p><p>ⓘ　 {jobs.filter(job=>job.requiredSkills.length===0).length} role{jobs.filter(job=>job.requiredSkills.length===0).length===1?"":"s"} without mapped skill requirements.</p><small>MOST REQUESTED SKILLS</small><div className="erd-tags">{topSkills.length?topSkills.map(skill=><span key={skill}>{skill}</span>):<span>No skills mapped</span>}</div>
-        <small>TALENT AVAILABILITY</small><p>ⓘ　 {intelligence.totalCandidatePool} of {intelligence.studentPoolSize} student profile(s) score 60% or above against at least one of your open roles.</p>
-        {intelligenceByJob.get(priorityJob.id)&&<><small>HIRING DIFFICULTY</small><p>ⓘ　 {priorityJob.title}: {intelligenceByJob.get(priorityJob.id)!.hiringDifficulty.toLowerCase()} — {intelligenceByJob.get(priorityJob.id)!.strongCandidateCount} profile(s) score 80% or above.</p></>}
-        {intelligence.recurringGaps.length>0&&<><small>RECURRING CANDIDATE GAPS</small>{intelligence.recurringGaps.slice(0,3).map(gap=><p key={gap.skillName}>ⓘ　 {gap.skillName}: unevidenced by {gap.applicantCount} applicant(s) ({gap.sharePct}%).</p>)}</>}
-        <small>DECISION SUPPORT ONLY</small><p>ⓘ　 Rankings are explainable and evidence-based. Fursah does not make hiring decisions; every outcome is recorded against a human reviewer.</p></>:<div className="erd-empty"><h3>Not enough data yet</h3><p>Post a role and map its required skills to receive hiring intelligence.</p></div>}</div></section><section className="erd-activity"><h2>Recent Activity</h2>{activity.length?activity.map((item,i)=><article key={item.id}><i className={`a${i}`}>{item.kind==="application"?"＋":"▣"}</i><div><p>{item.text}</p><small>{item.date.toLocaleDateString("en-SA",{month:"short",day:"numeric",year:"numeric"})}</small></div></article>):<div className="erd-empty"><h3>No activity yet</h3><p>New roles and applications will appear here.</p></div>}</section></aside></div>
+      </div><aside><Suspense fallback={<section className="erd-intel" aria-busy="true"><header><h2>✦　HIRING INTELLIGENCE</h2><p>Analyzing your current hiring data…</p></header></section>}><HiringIntelligence intelligencePromise={intelligencePromise} priorityJob={priorityJob?{id:priorityJob.id,title:priorityJob.title,applicationCount:priorityJob.applications.length}:null} pendingReview={pendingReview} jobsWithoutSkills={jobs.filter(job=>job.requiredSkills.length===0).length} topSkills={topSkills}/></Suspense><section className="erd-activity"><h2>Recent Activity</h2>{activity.length?activity.map((item,i)=><article key={item.id}><i className={`a${i}`}>{item.kind==="application"?"＋":"▣"}</i><div><p>{item.text}</p><small>{item.date.toLocaleDateString("en-SA",{month:"short",day:"numeric",year:"numeric"})}</small></div></article>):<div className="erd-empty"><h3>No activity yet</h3><p>New roles and applications will appear here.</p></div>}</section></aside></div>
       {assistantConfigured() && <div style={{marginTop:20}}>
         <FursahAssistant
           eyebrow="FURSAH ASSISTANT"

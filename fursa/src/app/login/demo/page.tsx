@@ -7,13 +7,31 @@ import { isDemoAccountEmail } from "@/lib/demoAccounts";
 // The prepared demo accounts change only when the prototype data is reseeded,
 // so the list is cached and this page prerenders instead of querying on every
 // visit.
+//
+// Every prepared role gets a place on the page. The cohort seed adds dozens of
+// filler students, so a plain "first N by role" slice pushed the university
+// accounts off the list entirely and left the administrator surviving only by
+// where ADMIN happens to sort. Each role is taken separately instead, and
+// students are taken oldest-first so the named scenario accounts come before
+// the cohort filler.
+const ROLE_ORDER = ["ADMIN", "EMPLOYER", "UNIVERSITY", "STUDENT"] as const;
+const ROLE_LIMIT: Record<(typeof ROLE_ORDER)[number], number> = {
+  ADMIN: 2,
+  EMPLOYER: 6,
+  UNIVERSITY: 4,
+  STUDENT: 12,
+};
+
 async function getDemoUsers() {
   "use cache";
   cacheLife("hours");
-  const users = await prisma.user.findMany({ orderBy: [{ role: "asc" }, { name: "asc" }] });
+  const users = await prisma.user.findMany({ orderBy: [{ createdAt: "asc" }, { name: "asc" }] });
   // `loginAsUser` refuses anything outside the prepared demo set, so listing a
   // non-demo account here would render a button that throws when pressed.
-  return users.filter((user) => user.active && isDemoAccountEmail(user.email)).slice(0, 24);
+  const openable = users.filter((user) => user.active && isDemoAccountEmail(user.email));
+  return ROLE_ORDER.flatMap((role) =>
+    openable.filter((user) => user.role === role).slice(0, ROLE_LIMIT[role]),
+  );
 }
 
 export default async function DemoUsersPage() {
