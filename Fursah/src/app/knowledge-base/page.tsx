@@ -48,6 +48,10 @@ export default function KnowledgeBasePage() {
           <article><b>{withCode}</b><small>Traced to the specific file in this repository that depends on them</small></article>
           <article><b>{arabic}</b><small>Published in Arabic or bilingually by the issuing authority</small></article>
         </div>
+        <div className="kb-downloads" aria-label="Knowledge base downloads">
+          <a href="/api/knowledge-base?format=json">Download structured JSON</a>
+          <a href="/api/knowledge-base?format=csv">Download review CSV</a>
+        </div>
       </section>
 
       <PageToc items={KNOWLEDGE_AREAS.map(area => ({ id: AREA_ID[area], label: area }))} />

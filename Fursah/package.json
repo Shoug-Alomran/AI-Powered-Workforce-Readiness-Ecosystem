@@ -20,7 +20,8 @@
     "verify:privacy": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-privacy.ts",
     "verify:assistant": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-assistant.ts",
     "verify:evidence": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-evidence.ts",
-    "verify": "npm run verify:privacy && npm run verify:assistant && npm run verify:evidence",
+    "verify:submission": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-submission.ts",
+    "verify": "npm run verify:privacy && npm run verify:assistant && npm run verify:evidence && npm run verify:submission",
     "smoke": "tsx --require ./scripts/allow-server-only.cjs scripts/smoke-test.ts"
   },
   "dependencies": {

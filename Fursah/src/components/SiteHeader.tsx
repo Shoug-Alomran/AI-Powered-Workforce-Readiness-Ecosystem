@@ -29,7 +29,7 @@ export default function SiteHeader({ onHome = false }: { onHome?: boolean }) {
     <nav>
       {anchors.map(([label, id]) => <a key={id} href={anchor(id)}>{label}</a>)}
       <Link href="/impact">National Impact</Link>
-      <a href={anchor("metrics")}>Prototype</a>
+      <Link href="/judge-demo">Judge Demo</Link>
     </nav>
     <div>
       {/* min-height holds the row's height so the streamed-in links do not

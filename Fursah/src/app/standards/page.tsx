@@ -142,6 +142,12 @@ export default function StandardsPage() {
                 <div><span className="imp-kicker">Why it is not ours to fix</span><p>{gap.why}</p></div>
                 <div><span className="imp-kicker">What would close it</span><p>{gap.recommendation}</p></div>
               </div>
+              <div className="std-policy-action">
+                <div><span className="imp-kicker">Accountable owner</span><p>{gap.owner}</p></div>
+                <div><span className="imp-kicker">Trigger</span><p>{gap.trigger}</p></div>
+                <div><span className="imp-kicker">Success measure</span><p>{gap.metric}</p></div>
+                <div><span className="imp-kicker">Review cadence</span><p>{gap.reviewCadence}</p></div>
+              </div>
             </article>)}
           </div>;
         })}

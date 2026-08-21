@@ -315,6 +315,10 @@ export type PolicyGap = {
   why: string;
   /** What would close it. */
   recommendation: string;
+  owner: string;
+  trigger: string;
+  metric: string;
+  reviewCadence: string;
   blocking?: boolean;
 };
 
@@ -329,6 +333,10 @@ export const POLICY_GAPS: PolicyGap[] = [
       "Data minimisation and demonstrable non-discrimination pull in opposite directions, and no instrument we could find resolves which takes precedence for an employment-adjacent system. Proxies remain: institution, region and career interruption can each stand in for a protected class.",
     recommendation:
       "A lawful basis for holding protected attributes strictly for fairness auditing, held separately from the scoring path and accessible only to an auditor. Without it, every minimising system in this category is structurally unauditable.",
+    owner: "SDAIA/NDMO with the Ministry of Human Resources and Social Development",
+    trigger: "An employment-adjacent scoring system enters a controlled pilot or records 100 consequential recommendations.",
+    metric: "Complete separation between audit attributes and scoring inputs, quarterly proxy review, and documented remediation for any material disparity.",
+    reviewCadence: "Quarterly during pilots; annually after approval",
     blocking: false,
   },
   {
@@ -341,6 +349,10 @@ export const POLICY_GAPS: PolicyGap[] = [
       "PDPL transfer conditions are clear about the obligation, but a small project has no accessible compliant inference option: the affordable model-serving platforms are all extraterritorial, and the in-Kingdom alternatives are procurement relationships rather than services one can sign up for.",
     recommendation:
       "A published tier of in-Kingdom inference reachable by research and prototype workloads, or a defined sandbox basis under which pre-production systems may use extraterritorial inference on non-production data with disclosure.",
+    owner: "SDAIA, CST and approved in-Kingdom cloud providers",
+    trigger: "Before production personal data or identifiable evidence is sent to a model endpoint.",
+    metric: "All production inference and evidence storage completed in an approved region, with processor and transfer records retained.",
+    reviewCadence: "Before launch and after every hosting or model-provider change",
     blocking: true,
   },
   {
@@ -353,6 +365,10 @@ export const POLICY_GAPS: PolicyGap[] = [
       "This is a data-harmonisation gap of the kind chapter 4 names directly. Every platform in this category invents its own taxonomy, which makes results incomparable between platforms and prevents an institution from carrying its mapping to another system.",
     recommendation:
       "A standardised, versioned skill taxonomy with a defined extension mechanism, so that a curriculum mapping made once is portable and two platforms' readiness figures mean the same thing.",
+    owner: "SDAIA, Ministry of Education, ETEC and sector skills councils",
+    trigger: "Two institutions or platforms exchange course, credential or vacancy requirements.",
+    metric: "At least 95% of exchanged skills resolve to a versioned national identifier; extensions carry an owner and review date.",
+    reviewCadence: "Twice yearly, with emergency additions for regulated occupations",
     blocking: false,
   },
   {
@@ -365,6 +381,10 @@ export const POLICY_GAPS: PolicyGap[] = [
       "There is no standard representation for 'this evidence was checked by a named party under a stated procedure' that a receiving system can evaluate. Verification effort is therefore duplicated at every boundary, which is the cost that keeps credential checking manual.",
     recommendation:
       "A verifiable-credential profile for skills evidence that carries the verifying party, the procedure applied and its date, so a receiving system can decide whether to accept it rather than repeat it.",
+    owner: "Ministry of Education, ETEC and participating credential issuers",
+    trigger: "A verified skill or certificate is shared outside the system that reviewed it.",
+    metric: "Every exported verification carries issuer, reviewer, method, date, status and revocation reference; receiving acceptance is auditable.",
+    reviewCadence: "At issuance, revocation and annual trust-list review",
     blocking: false,
   },
   {
@@ -377,6 +397,10 @@ export const POLICY_GAPS: PolicyGap[] = [
       "Graduate and labour figures are published annually or quarterly by separate authorities on separate schedules and cuts. There is no joined education-to-employment outcome series at the resolution a matching system would need to know whether its recommendations worked.",
     recommendation:
       "A published graduate-outcomes series linking field of study to employment outcome at a suppressed but usable granularity. Without it, no platform in this category can demonstrate effect rather than activity.",
+    owner: "GASTAT, Ministry of Education and the Human Capability Development Program",
+    trigger: "Annual graduate-outcomes publication and any platform effectiveness evaluation.",
+    metric: "A documented, privacy-suppressed field-of-study-to-outcome series with stable definitions and at least three comparable periods.",
+    reviewCadence: "Annual publication with quarterly quality review",
     blocking: false,
   },
   {
@@ -389,6 +413,10 @@ export const POLICY_GAPS: PolicyGap[] = [
       "The distinction between decision support and automated decision-making is stated in principle but has no operational test. A platform can satisfy every disclosure requirement while its output is used exactly as an automated decision.",
     recommendation:
       "An operational test for effective automation — pass-through rate, override rate, or a mandated minimum review — so the obligation attaches to how output is used rather than how it is described.",
+    owner: "Ministry of Human Resources and Social Development with SDAIA",
+    trigger: "A score, rank or recommendation is used to exclude, shortlist or materially prioritise a candidate.",
+    metric: "Documented human review for every exclusion, monitored override and appeal rates, and suspension when review evidence is missing.",
+    reviewCadence: "Monthly operational monitoring and quarterly governance review",
     blocking: false,
   },
 ];

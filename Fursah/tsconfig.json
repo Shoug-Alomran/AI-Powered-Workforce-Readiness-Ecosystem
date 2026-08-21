@@ -24,12 +24,21 @@
   },
   "include": [
     "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "scripts/**/*.ts",
+    "scripts/**/*.mts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
-    "**/*.mts"
+    "*.ts",
+    "*.mts"
   ],
-  "//": "The ' ?' patterns drop the numbered copies (e.g. 'routes.d 2.ts', 'page 2.tsx') that a file-sync agent keeps leaving next to real files. They are byte-identical duplicates and only ever produce duplicate-identifier errors.",
-  "exclude": ["node_modules", "**/* ?.ts", "**/* ?.tsx", "**/* ?"]
+  "exclude": [
+    "node_modules",
+    ".next/cache",
+    ".next/types/**/* ?.ts",
+    ".next/dev/types/**/* ?.ts",
+    "coverage",
+    "dist"
+  ]
 }
