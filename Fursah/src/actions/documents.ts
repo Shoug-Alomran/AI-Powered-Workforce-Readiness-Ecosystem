@@ -25,5 +25,11 @@ export async function reviewEvidenceDocument(formData: FormData) {
   revalidatePath("/admin/dashboard");
   revalidatePath("/student/evidence");
   revalidatePath("/student/profile");
+  // A verification decision moves readiness, the roadmap built from it, and the
+  // aggregates every other portal reads. Refreshing only the two student pages
+  // that show the document left those downstream surfaces on the old state.
+  revalidatePath("/student/dashboard");
+  revalidatePath("/student/roadmap");
   revalidatePath("/university/actions");
+  revalidatePath("/workforce-intelligence");
 }

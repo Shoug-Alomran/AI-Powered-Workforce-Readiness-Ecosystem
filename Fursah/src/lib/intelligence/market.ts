@@ -16,8 +16,17 @@ import {
 // rendered together, so the scan is memoized for the length of a request.
 export const getMarketIntelligence = cache(async (): Promise<MarketIntelligenceResult> => {
     const jobs = await prisma.job.findMany({
+        // An unverified employer cannot publish a role: `createJob` refuses,
+        // students never see one, and the university analytics page already
+        // excluded them. This scan did not, so demand could be driven by roles
+        // that no portal presents as open — and an employer whose verification
+        // was later withdrawn kept contributing demand indefinitely. Demand now
+        // means the same set of roles everywhere.
         where: {
             status: "open",
+            employer: {
+                verificationStatus: "APPROVED",
+            },
         },
         select: {
             id: true,

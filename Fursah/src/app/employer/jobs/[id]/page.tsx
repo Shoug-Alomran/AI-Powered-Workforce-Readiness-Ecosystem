@@ -4,7 +4,8 @@ import { prisma } from "@/lib/db";
 import { getCurrentEmployer } from "@/lib/session";
 import { computeJobMatch } from "@/lib/ai";
 import { getEmployerIntelligence } from "@/lib/intelligence";
-import { closeJob, reopenJob } from "@/actions/employer";
+import { getAllCareerTracksAsync } from "@/lib/careerTracks.server";
+import { closeJob, reopenJob, updateJob } from "@/actions/employer";
 import JobDeleteControl from "@/components/JobDeleteControl";
 import PageToc from "@/components/PageToc";
 import EmployerHeader from "@/components/EmployerHeader";
@@ -47,12 +48,13 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
 
   if (!job || job.employerId !== ctx.employer.id) notFound();
 
-  const [jobDocuments, intelligence] = await Promise.all([
+  const [jobDocuments, intelligence, tracks] = await Promise.all([
     prisma.evidenceDocument.findMany({
       where: { contextType: "JOB", contextId: job.id },
       orderBy: { createdAt: "asc" },
     }),
     getEmployerIntelligence(ctx.employer.id),
+    getAllCareerTracksAsync(),
   ]);
 
   const jobIntelligence = intelligence.jobs.find((entry) => entry.jobId === job.id) ?? null;
@@ -112,11 +114,87 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
             <p className="muted">{job.minExperience} month(s)</p>
           </div>
         </div>
+        <div className="grid-2" style={{ marginTop: 14 }}>
+          <div>
+            <strong>Preferred skills</strong>
+            <p className="muted">{job.requiredSkills.filter((s) => s.requirementType === "PREFERRED").map((s) => s.skill.name).join(", ") || "None listed"}</p>
+          </div>
+          <div>
+            <strong>Where and how</strong>
+            <p className="muted">
+              {[job.location, job.employmentType, job.arrangement, job.department].filter(Boolean).join(" · ") || "Not stated on this role"}
+            </p>
+            <strong style={{ display: "block", marginTop: 10 }}>Stated requirements not used in ranking</strong>
+            <p className="muted">
+              {[job.educationLevel, job.languages].filter(Boolean).join(" · ") || "No education level or language requirement stated"}
+            </p>
+          </div>
+        </div>
         {jobDocuments.length > 0 && <div style={{ marginTop: 14 }}>
           <strong>Private role documents</strong>
           {jobDocuments.map((document) => <div className="data-row" key={document.id}><span>{document.originalName}</span><a className="button secondary" href={`/api/documents/${document.id}`}>Download</a></div>)}
         </div>}
       </section>
+
+      {/*
+        * Editing used to be impossible: correcting one requirement meant
+        * deleting the role, and with it every application and match. The form
+        * carries the current values so a change is an edit, not a re-entry.
+        */}
+      <details className="card" id="edit-role" style={{ marginTop: 18, scrollMarginTop: 80 }}>
+        <summary><strong>Edit this role</strong></summary>
+        <p className="muted" style={{ marginTop: 10 }}>
+          Requirements you change here immediately re-rank every candidate and change what the
+          shared workforce figures count. Applications and their historical match scores are kept.
+        </p>
+        <form action={updateJob} className="form-grid" style={{ marginTop: 12 }}>
+          <input type="hidden" name="jobId" value={job.id} />
+          <label>Role title<input className="input" name="title" defaultValue={job.title} required /></label>
+          <label>Career track
+            <select className="input" name="careerTrack" defaultValue={job.careerTrack}>
+              {tracks.map((track) => <option key={track.id} value={track.id}>{track.label}</option>)}
+            </select>
+          </label>
+          <label>Department<input className="input" name="department" defaultValue={job.department ?? ""} placeholder="e.g. Engineering" /></label>
+          <label>Employment type
+            <select className="input" name="employmentType" defaultValue={job.employmentType ?? "Full-time"}>
+              <option>Full-time</option><option>Part-time</option><option>Contract</option>
+            </select>
+          </label>
+          <label>Location<input className="input" name="location" defaultValue={job.location ?? ""} placeholder="e.g. Riyadh, Saudi Arabia" /></label>
+          <label>Work arrangement
+            <select className="input" name="arrangement" defaultValue={job.arrangement ?? "on-site"}>
+              <option value="on-site">On-site</option><option value="hybrid">Hybrid</option><option value="remote">Remote</option>
+            </select>
+          </label>
+          <label>Minimum experience (months)<input className="input" name="minExperience" type="number" min="0" defaultValue={job.minExperience} /></label>
+          <label>Education level
+            <select className="input" name="educationLevel" defaultValue={job.educationLevel ?? ""}>
+              <option value="">Not specified</option>
+              <option>High School</option><option>Diploma</option><option>Bachelor&apos;s Degree</option>
+              <option>Master&apos;s Degree</option><option>Doctorate</option>
+            </select>
+            <small className="muted">Shown on the role. Not used to rank candidates.</small>
+          </label>
+          <label>Languages<input className="input" name="languages" defaultValue={job.languages ?? ""} placeholder="e.g. Arabic, English" />
+            <small className="muted">Shown on the role. Not used to rank candidates.</small>
+          </label>
+          <label className="wide">Essential skills
+            <input className="input" name="skills" defaultValue={job.requiredSkills.filter((s) => s.requirementType !== "PREFERRED").map((s) => `${s.skill.name}:${s.weight}`).join(", ")} placeholder="Skill:weight, Skill:weight" />
+            <small className="muted">Weight 1–3. Anything left out is removed from the role.</small>
+          </label>
+          <label className="wide">Preferred skills
+            <input className="input" name="preferredSkills" defaultValue={job.requiredSkills.filter((s) => s.requirementType === "PREFERRED").map((s) => `${s.skill.name}:${s.weight}`).join(", ")} placeholder="Skill:weight" />
+          </label>
+          <label className="wide">Required certifications
+            <input className="input" name="certifications" defaultValue={job.requiredCerts.map((c) => c.certification.name).join(", ")} placeholder="Comma separated" />
+          </label>
+          <label className="wide">Description<textarea className="input" name="description" defaultValue={job.description ?? ""} /></label>
+          <div className="actions" style={{ margin: 0 }}>
+            <button className="button primary">Save requirements</button>
+          </div>
+        </form>
+      </details>
 
       {jobIntelligence && (
         <section className="card" style={{ marginTop: 18 }}>

@@ -86,7 +86,7 @@ export default async function EmployerReviewPage({ params }: { params: Promise<{
     <section className="card" style={{ marginTop: 20 }}>
       <span className="eyebrow">What the platform knows</span>
       <h2>Automated checks</h2>
-      <p className="muted">Signals derived from the account record. None of them confirms the company exists — they only show where a human should look before approving.</p>
+      <p className="muted">Signals derived from the account record. None of them confirms the company exists. They only show where a human should look before approving.</p>
       <div className="employer-check-grid">
         {checks.map((check) => <div className={`employer-check is-${check.tone}`} key={check.label}>
           <span>{check.label}</span>
@@ -106,7 +106,7 @@ export default async function EmployerReviewPage({ params }: { params: Promise<{
             <div className="muted">{document.purpose} · {document.contextType.toLowerCase().replace(/_/g, " ")} · {formatBytes(document.sizeBytes)} · uploaded {document.createdAt.toLocaleDateString()}</div>
           </div>
           <a className="button secondary" href={`/api/documents/${document.id}`}>Open file</a>
-        </div>) : <EmptyState icon="⎙" title="No documents on file" body="This employer has not uploaded anything yet. Registration does not require a document, so an empty list is normal — judge the account on the checks above and the roles it has drafted." />}
+        </div>) : <EmptyState icon="⎙" title="No documents on file" body="This employer has not uploaded anything yet. Registration does not require a document, so an empty list is normal. Judge the account on the checks above and the roles it has drafted." />}
       </div>
     </section>
 
@@ -134,7 +134,7 @@ export default async function EmployerReviewPage({ params }: { params: Promise<{
         Already {STATUS_LABEL[employer.verificationStatus]?.toLowerCase() ?? employer.verificationStatus.toLowerCase()}
         {employer.reviewedAt ? ` on ${employer.reviewedAt.toLocaleDateString()}` : ""}
         {employer.reviewedBy ? ` by ${actorName.get(employer.reviewedBy) ?? "a former administrator"}` : ""}
-        {employer.reviewNote ? ` — “${employer.reviewNote}”` : "."} Submitting again replaces that decision.
+        {employer.reviewNote ? `: “${employer.reviewNote}”` : "."} Submitting again replaces that decision.
       </div> : null}
       <form action={reviewEmployer} className="form-grid" style={{ marginTop: 14 }}>
         <input type="hidden" name="employerId" value={employer.id} />

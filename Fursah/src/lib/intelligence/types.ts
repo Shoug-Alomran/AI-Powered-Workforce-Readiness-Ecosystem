@@ -58,6 +58,12 @@ export type StudentReadinessResult = {
     missingCertifications: string[];
     /** Submitted but not yet human-verified; reported, never scored. */
     unverifiedCertifications: string[];
+    /** Recorded experience and portfolio evidence no human has approved. */
+    unverifiedExperienceMonths: number;
+    unverifiedProjectCount: number;
+    /** The share of the above awaiting a decision rather than unsubmitted. */
+    pendingExperienceMonths: number;
+    pendingProjectCount: number;
     experienceMonths: number;
     recommendedExperienceMonths: number;
     projectCount: number;
@@ -136,6 +142,8 @@ export type RoadmapRecommendation = {
     skillName: string | null;
     offeringId: string | null;
     offeringProvider: string | null;
+    /** Where the student can actually go to take it, when the catalogue records one. */
+    offeringUrl: string | null;
     certificationId: string | null;
     source: RoadmapRecommendationSource;
     expectedImpact: number;
@@ -159,6 +167,15 @@ export type StudentIntelligenceResult = {
     roadmapRecommendations: RoadmapRecommendation[];
     /** Recommendations not already present on the persisted roadmap. */
     newRoadmapRecommendations: RoadmapRecommendation[];
+    /**
+     * Points the score would gain if every current recommendation were
+     * completed, computed jointly by the readiness engine rather than by
+     * summing the individual figures, which double-counts changes sharing a
+     * component.
+     */
+    combinedRecommendationGain: number;
+    /** Points still available in the score: 100 minus the current score. */
+    remainingHeadroom: number;
 };
 
 export type JobQualityResult = {

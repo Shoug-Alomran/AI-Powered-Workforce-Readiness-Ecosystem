@@ -43,7 +43,20 @@ export async function reviewCertification(formData: FormData) {
       console.error("Firestore mirror of certification review failed", error);
     }
   }
-  revalidatePath("/admin/dashboard"); revalidatePath("/admin/governance"); revalidatePath("/student/profile"); revalidatePath("/student/dashboard");
+  // The document-review path already notified the owner; this one recorded the
+  // decision and told nobody, so a student whose certificate was decided from
+  // the dashboard queue learned about it only by re-reading their passport.
+  await prisma.notification.create({
+    data: {
+      userId: submission.student.user.id,
+      type: "EVIDENCE_REVIEW",
+      title: decision === "APPROVED" ? "Certificate verified" : "Certificate not verified",
+      body: `${submission.certification.name}: ${reviewNote}`,
+    },
+  });
+  revalidatePath("/admin/dashboard"); revalidatePath("/admin/evidence"); revalidatePath("/admin/governance");
+  revalidatePath("/student/profile"); revalidatePath("/student/dashboard"); revalidatePath("/student/evidence");
+  revalidatePath("/student/roadmap"); revalidatePath("/workforce-intelligence");
 }
 
 export async function reviewEmployer(formData: FormData) {

@@ -25,7 +25,11 @@ export async function markNotificationsRead() {
     where: { userId: user.id, readAt: null },
     data: { readAt: new Date() },
   });
+  // The bell now appears in three portals, so all three shells have to drop
+  // their cached copy of the unread count.
   revalidatePath("/student", "layout");
+  revalidatePath("/employer", "layout");
+  revalidatePath("/university", "layout");
 }
 
 function emailDomain(email: string) {

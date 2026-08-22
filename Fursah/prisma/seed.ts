@@ -326,6 +326,24 @@ async function main() {
   );
 
   // --- Students ---
+  // Decisions are attributed by user id so every archive resolves to a name.
+  const adminUser = await prisma.user.findFirstOrThrow({ where: { role: "ADMIN" } });
+
+  type EvidenceState = "SELF_REPORTED" | "PENDING" | "APPROVED" | "REJECTED";
+
+  /** A decision record, so approved seed evidence is auditable like any other. */
+  function evidenceDecision(state: EvidenceState | undefined, note: string) {
+    if (state !== "APPROVED" && state !== "REJECTED") {
+      return { verificationStatus: state ?? "SELF_REPORTED" };
+    }
+    return {
+      verificationStatus: state,
+      reviewNote: note,
+      reviewedAt: new Date("2026-07-05"),
+      reviewedBy: adminUser.id,
+    };
+  }
+
   const studentSeeds: {
     name: string;
     email: string;
@@ -335,8 +353,15 @@ async function main() {
     bio: string;
     skills: { name: string; level: number }[];
     certs: string[];
-    experiences: { type: string; title: string; org: string; months: number }[];
-    projects: { title: string; description: string }[];
+    /*
+     * `verification` is deliberate, not incidental. Only human-approved
+     * experience and portfolio evidence is scored, so the seed has to state
+     * which entries a reviewer has actually seen. Leaving it unset means
+     * SELF_REPORTED: recorded by the student, shown on their passport, and
+     * correctly not counted.
+     */
+    experiences: { type: string; title: string; org: string; months: number; verification?: EvidenceState }[];
+    projects: { title: string; description: string; verification?: EvidenceState }[];
   }[] = [
     {
       name: "Sara Al-Dosari",
@@ -355,8 +380,8 @@ async function main() {
       ],
       certs: ["Meta Front-End Developer"],
       experiences: [
-        { type: "internship", title: "Front-End Intern", org: "STC Pay", months: 3 },
-        { type: "hackathon", title: "Hackathon KSA 2025 - 2nd place", org: "AI for Good", months: 1 },
+        { type: "internship", title: "Front-End Intern", org: "STC Pay", months: 3, verification: "APPROVED" },
+        { type: "hackathon", title: "Hackathon KSA 2025 - 2nd place", org: "AI for Good", months: 1, verification: "APPROVED" },
       ],
       projects: [
         { title: "Campus Events App", description: "React Native app for university events." },
@@ -379,8 +404,8 @@ async function main() {
         { name: "Teamwork", level: 4 },
       ],
       certs: [],
-      experiences: [{ type: "internship", title: "Backend Intern", org: "Jahez", months: 2 }],
-      projects: [{ title: "Delivery Tracking API", description: "Node.js + Postgres microservice." }],
+      experiences: [{ type: "internship", title: "Backend Intern", org: "Jahez", months: 2, verification: "APPROVED" }],
+      projects: [{ title: "Delivery Tracking API", description: "Node.js + Postgres microservice.", verification: "APPROVED" }],
     },
     {
       name: "Lina Al-Zahrani",
@@ -399,10 +424,12 @@ async function main() {
       ],
       certs: ["Google Data Analytics"],
       experiences: [
-        { type: "research", title: "NLP Research Assistant", org: "PNU AI Lab", months: 6 },
+        // The scan attached to this entry is the rejected document in the
+        // evidence demo, so the entry itself carries the same decision.
+        { type: "research", title: "NLP Research Assistant", org: "PNU AI Lab", months: 6, verification: "REJECTED" },
       ],
       projects: [
-        { title: "Arabic Sentiment Classifier", description: "Fine-tuned transformer for Arabic tweets." },
+        { title: "Arabic Sentiment Classifier", description: "Fine-tuned transformer for Arabic tweets.", verification: "APPROVED" },
         { title: "Demand Forecasting Model", description: "Time-series model for retail demand." },
       ],
     },
@@ -441,7 +468,7 @@ async function main() {
         { type: "competition", title: "National CTF Finalist", org: "SDAIA", months: 1 },
         { type: "internship", title: "SOC Intern", org: "Sanad Secure", months: 3 },
       ],
-      projects: [{ title: "Home Lab IDS", description: "Built an intrusion detection lab with Snort." }],
+      projects: [{ title: "Home Lab IDS", description: "Built an intrusion detection lab with Snort.", verification: "APPROVED" }],
     },
     {
       name: "Hana Al-Mutairi",
@@ -457,7 +484,7 @@ async function main() {
         { name: "Critical Thinking", level: 3 },
       ],
       certs: [],
-      experiences: [{ type: "internship", title: "Finance Intern", org: "Riyadh FinTech Group", months: 3 }],
+      experiences: [{ type: "internship", title: "Finance Intern", org: "Riyadh FinTech Group", months: 3, verification: "APPROVED" }],
       projects: [{ title: "Portfolio Risk Dashboard", description: "Excel + Power BI risk model." }],
     },
     {
@@ -475,7 +502,7 @@ async function main() {
         { name: "Attention to Detail", level: 3 },
       ],
       certs: ["CompTIA Security+"],
-      experiences: [{ type: "internship", title: "IT Security Intern", org: "Sanad Secure", months: 2 }],
+      experiences: [{ type: "internship", title: "IT Security Intern", org: "Sanad Secure", months: 2, verification: "PENDING" }],
       projects: [{ title: "Campus Wi-Fi Security Audit", description: "Pen-tested the PSU guest network for a capstone project." }],
     },
     {
@@ -493,7 +520,7 @@ async function main() {
         { name: "Attention to Detail", level: 3 },
       ],
       certs: [],
-      experiences: [{ type: "project", title: "Security Operations Trainee", org: "KSU Cyber Lab", months: 2 }],
+      experiences: [{ type: "project", title: "Security Operations Trainee", org: "KSU Cyber Lab", months: 2, verification: "PENDING" }],
       projects: [{ title: "Phishing Detection Study", description: "Analyzed common phishing indicators and documented a response playbook." }],
     },
     {
@@ -512,8 +539,8 @@ async function main() {
         { name: "Communication", level: 3 },
       ],
       certs: ["Google UX Design"],
-      experiences: [{ type: "internship", title: "UX Design Intern", org: "Nexariya Technologies", months: 3 }],
-      projects: [{ title: "Student Services App Redesign", description: "Usability study and redesign of the PSU student portal." }],
+      experiences: [{ type: "internship", title: "UX Design Intern", org: "Nexariya Technologies", months: 3, verification: "APPROVED" }],
+      projects: [{ title: "Student Services App Redesign", description: "Usability study and redesign of the PSU student portal.", verification: "APPROVED" }],
     },
     {
       name: "Omar Al-Rashid",
@@ -582,12 +609,18 @@ async function main() {
     }
     for (const e of s.experiences) {
       await prisma.experience.create({
-        data: { studentId: student.id, type: e.type, title: e.title, org: e.org, months: e.months },
+        data: {
+          studentId: student.id, type: e.type, title: e.title, org: e.org, months: e.months,
+          ...evidenceDecision(e.verification, "Employer letter inspected and confirmed with the organisation."),
+        },
       });
     }
     for (const p of s.projects) {
       await prisma.project.create({
-        data: { studentId: student.id, title: p.title, description: p.description },
+        data: {
+          studentId: student.id, title: p.title, description: p.description,
+          ...evidenceDecision(p.verification, "Repository and contribution history inspected."),
+        },
       });
     }
   }
@@ -638,10 +671,28 @@ async function main() {
     data: { studentId: dana.id, jobId: dsJob.id, status: "shortlisted", matchScore: computeJobMatch(dana, dsJobFull).score },
   });
 
+  /**
+   * When a checkpoint review was written.
+   *
+   * Every seeded review defaulted to `now`, which dated a 30-day, a 90-day and
+   * a 180-day review to the same afternoon — three checkpoints of a placement
+   * that had apparently all happened at once. Anchoring them to the checkpoint
+   * they represent makes the outcome loop read as a sequence, which is what it
+   * is, without inventing a trend: these are the review dates the placement
+   * would actually have produced.
+   */
+  function checkpointDate(checkpointDays: number) {
+    const date = new Date();
+    date.setDate(date.getDate() - (185 - checkpointDays));
+    date.setHours(11, 0, 0, 0);
+    return date;
+  }
+
   await prisma.feedback.create({
     data: {
       jobId: seJob.id,
       studentId: sara.id,
+      createdAt: checkpointDate(90),
       technical: 5,
       communication: 4,
       teamwork: 5,
@@ -655,6 +706,7 @@ async function main() {
     data: {
       jobId: dsJob.id,
       studentId: lina.id,
+      createdAt: checkpointDate(90),
       technical: 5,
       communication: 4,
       teamwork: 4,
@@ -668,6 +720,7 @@ async function main() {
     data: {
       jobId: csJob.id,
       studentId: reem.id,
+      createdAt: checkpointDate(90),
       technical: 4,
       communication: 3,
       teamwork: 4,
@@ -724,7 +777,7 @@ async function main() {
         verificationStatus,
         reviewNote: reviewNote ?? null,
         reviewedAt: reviewed ? new Date("2026-07-02") : null,
-        reviewedBy: reviewed ? "admin@fursah.demo" : null,
+        reviewedBy: reviewed ? adminUser.id : null,
       },
       create: {
         studentId,
@@ -732,7 +785,7 @@ async function main() {
         verificationStatus,
         reviewNote: reviewNote ?? null,
         reviewedAt: reviewed ? new Date("2026-07-02") : null,
-        reviewedBy: reviewed ? "admin@fursah.demo" : null,
+        reviewedBy: reviewed ? adminUser.id : null,
       },
     });
   }
@@ -1057,10 +1110,10 @@ async function main() {
 
   await prisma.feedback.createMany({
     data: [
-      { jobId: seJob.id, studentId: sara.id, checkpointDays: 30, technical: 4, communication: 4, teamwork: 4, problemSolving: 4, adaptability: 4, overall: 4, notes: "Strong start; onboarding completed ahead of schedule." },
-      { jobId: seJob.id, studentId: sara.id, checkpointDays: 180, technical: 5, communication: 5, teamwork: 5, problemSolving: 5, adaptability: 5, overall: 5, notes: "Now mentoring the next intake." },
-      { jobId: dsJob.id, studentId: lina.id, checkpointDays: 30, technical: 4, communication: 3, teamwork: 4, problemSolving: 4, adaptability: 4, overall: 4, notes: "Model quality good; stakeholder communication still developing." },
-      { jobId: csJob.id, studentId: reem.id, checkpointDays: 180, technical: 4, communication: 4, teamwork: 4, problemSolving: 4, adaptability: 4, overall: 4, notes: "Communication improved markedly since the 90-day review." },
+      { jobId: seJob.id, studentId: sara.id, createdAt: checkpointDate(30), checkpointDays: 30, technical: 4, communication: 4, teamwork: 4, problemSolving: 4, adaptability: 4, overall: 4, notes: "Strong start; onboarding completed ahead of schedule." },
+      { jobId: seJob.id, studentId: sara.id, createdAt: checkpointDate(180), checkpointDays: 180, technical: 5, communication: 5, teamwork: 5, problemSolving: 5, adaptability: 5, overall: 5, notes: "Now mentoring the next intake." },
+      { jobId: dsJob.id, studentId: lina.id, createdAt: checkpointDate(30), checkpointDays: 30, technical: 4, communication: 3, teamwork: 4, problemSolving: 4, adaptability: 4, overall: 4, notes: "Model quality good; stakeholder communication still developing." },
+      { jobId: csJob.id, studentId: reem.id, createdAt: checkpointDate(180), checkpointDays: 180, technical: 4, communication: 4, teamwork: 4, problemSolving: 4, adaptability: 4, overall: 4, notes: "Communication improved markedly since the 90-day review." },
     ],
   });
 
@@ -1082,7 +1135,6 @@ async function main() {
   // 11. Governance, consent, and model-assurance demo records.
   // ---------------------------------------------------------------------
 
-  const adminUser = await prisma.user.findFirstOrThrow({ where: { role: "ADMIN" } });
   const saraUser = await prisma.user.findFirstOrThrow({ where: { email: "sara.aldosari@example.com" } });
   const omarUser = await prisma.user.findFirstOrThrow({ where: { email: "omar.alrashid@example.com" } });
 

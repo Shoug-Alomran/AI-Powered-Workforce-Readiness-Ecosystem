@@ -11,6 +11,7 @@
 import type { CareerTrack } from "./careerTracks";
 import {
   computeCareerReadiness,
+  isScoredEvidence,
   READINESS_WEIGHTS,
   type ReadinessEvidenceInput,
   type ReadinessTrackInput,
@@ -18,8 +19,8 @@ import {
 
 export type StudentSkillLike = { level: number; skill: { name: string; category: string } };
 export type StudentCertLike = { certification: { name: string }; verificationStatus?: string };
-export type ExperienceLike = { type: string; months: number; title: string };
-export type ProjectLike = { title: string };
+export type ExperienceLike = { type: string; months: number; title: string; verificationStatus?: string };
+export type ProjectLike = { title: string; verificationStatus?: string };
 
 export interface StudentForScoring {
   targetCareer: string;
@@ -55,8 +56,23 @@ export function toReadinessEvidence(student: StudentForScoring): ReadinessEviden
       // verification and are treated as already verified rather than dropped.
       verified: !entry.verificationStatus || entry.verificationStatus === "APPROVED",
     })),
-    experienceMonths: student.experiences.reduce((sum, entry) => sum + Math.max(0, entry.months), 0),
-    projectCount: student.projects.length,
+    // Split by verification rather than summed. One evidence-trust model:
+    // approved evidence scores, everything else is carried through so the
+    // result can report it as recorded-but-unscored.
+    experienceMonths: student.experiences
+      .filter((entry) => isScoredEvidence(entry.verificationStatus))
+      .reduce((sum, entry) => sum + Math.max(0, entry.months), 0),
+    projectCount: student.projects.filter((entry) => isScoredEvidence(entry.verificationStatus)).length,
+    unverifiedExperienceMonths: student.experiences
+      .filter((entry) => !isScoredEvidence(entry.verificationStatus) && entry.verificationStatus !== "REJECTED")
+      .reduce((sum, entry) => sum + Math.max(0, entry.months), 0),
+    unverifiedProjectCount: student.projects.filter(
+      (entry) => !isScoredEvidence(entry.verificationStatus) && entry.verificationStatus !== "REJECTED",
+    ).length,
+    pendingExperienceMonths: student.experiences
+      .filter((entry) => entry.verificationStatus === "PENDING")
+      .reduce((sum, entry) => sum + Math.max(0, entry.months), 0),
+    pendingProjectCount: student.projects.filter((entry) => entry.verificationStatus === "PENDING").length,
   };
 }
 
@@ -134,7 +150,11 @@ function buildNextActions(
     }
   }
 
-  const totalMonths = student.experiences.reduce((s, e) => s + e.months, 0);
+  // The same evidence-trust rule the readiness engine applies, so the gap this
+  // recommends closing is the gap the score actually measures.
+  const totalMonths = student.experiences
+    .filter((e) => isScoredEvidence(e.verificationStatus))
+    .reduce((s, e) => s + e.months, 0);
   if (totalMonths < track.recommendedExperienceMonths) {
     actions.push({
       label: `Complete an internship or research role (${track.recommendedExperienceMonths - totalMonths} more month(s) recommended)`,
@@ -185,7 +205,11 @@ export function computeJobMatch(
   const haveCerts = new Set(
     student.certifications.filter((c) => !c.verificationStatus || c.verificationStatus === "APPROVED").map((c) => c.certification.name.toLowerCase())
   );
-  const totalMonths = student.experiences.reduce((s, e) => s + e.months, 0);
+  // A match shown to an employer must not credit experience nobody verified;
+  // the readiness score behind it does not.
+  const totalMonths = student.experiences
+    .filter((e) => isScoredEvidence(e.verificationStatus))
+    .reduce((s, e) => s + e.months, 0);
 
   const matchedSkills: string[] = [];
   const missingSkills: string[] = [];

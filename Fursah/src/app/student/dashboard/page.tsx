@@ -10,7 +10,6 @@ import { dismissCareerSuggestion, exploreSuggestedCareer } from "@/actions/stude
 import PageToc from "@/components/PageToc";
 import FursahAssistant from "@/components/FursahAssistant";
 import { assistantConfigured } from "@/lib/assistant/llm";
-import { readinessHeadroom } from "@/lib/intelligence";
 import ActionQueue from "@/components/ActionQueue";
 
 export default async function StudentDashboard() {
@@ -150,14 +149,22 @@ export default async function StudentDashboard() {
   const topCareerMatches =
     intelligence.careerMatches.slice(0, 3);
 
-  // Headroom across what the engine currently RECOMMENDS, whether or not the
-  // student has accepted any of it onto their roadmap. The roadmap page shows
-  // a different set (accepted milestones), which is why the two are named
-  // differently rather than being reconciled into one number.
-  const recommendedHeadroom = readinessHeadroom(
-    readinessScore,
-    roadmapRecommendations.map((recommendation) => recommendation.expectedImpact)
-  );
+  /*
+   * Three different quantities used to appear across Fursah as though they
+   * were one, which is how a student could read "+7", "+10" and "+0" for what
+   * looked like the same thing. They are now named for the set each covers:
+   *
+   *   remainingHeadroom  - points left between this score and 100
+   *   recommendedGain    - what completing EVERY current recommendation adds
+   *   (roadmap page)     - what completing the milestones you ACCEPTED adds
+   *   (per item)         - what that one action adds on its own
+   *
+   * All of them come from the readiness engine, and the two totals are
+   * computed by applying the changes together rather than by adding the
+   * individual figures, which would double-count changes sharing a component.
+   */
+  const remainingHeadroom = intelligence.remainingHeadroom;
+  const recommendedGain = intelligence.combinedRecommendationGain;
 
   const topGap =
     intelligence.skillGaps.length > 0
@@ -485,8 +492,13 @@ export default async function StudentDashboard() {
             </span>
 
             <span>
-              <small>IF YOU DO ALL RECOMMENDED</small>
-              <b>+{recommendedHeadroom} pts</b>
+              <small>IF YOU COMPLETE EVERY RECOMMENDATION</small>
+              <b>+{recommendedGain} pts</b>
+            </span>
+
+            <span>
+              <small>POINTS LEFT IN YOUR SCORE</small>
+              <b>{remainingHeadroom} pts</b>
             </span>
 
             <span>
@@ -657,7 +669,9 @@ export default async function StudentDashboard() {
             <p className="muted" style={{ fontSize: 12 }}>
               Model {readiness.modelVersion} · every component below is
               measured against the {readiness.careerTrackLabel} career
-              track. Only human-verified certifications are scored.
+              track. Only evidence a human reviewer has approved is scored: certifications,
+              experience and projects alike. Anything you have recorded but not had verified
+              is listed below its component and explained, never dropped.
             </p>
 
             <div className="grid-3">

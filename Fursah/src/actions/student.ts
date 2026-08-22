@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getCurrentStudent } from "@/lib/session";
-import { getFirebaseAdminDb } from "@/lib/firebase-admin";
+import { firebaseAdminConfigured, getFirebaseAdminDb } from "@/lib/firebase-admin";
 import { redirect } from "next/navigation";
 import { getCareerTrackAsync } from "@/lib/careerTracks.server";
 import { getStudentIntelligence, recommendationKey } from "@/lib/intelligence/student";
@@ -110,10 +110,21 @@ export async function addCertification(formData: FormData) {
     update: { evidencePath, evidenceName: evidence.name, evidenceType: evidence.type, verificationStatus: "PENDING", reviewNote: null, reviewedAt: null, reviewedBy: null },
     create: { studentId: student.id, certificationId: cert.id, evidencePath, evidenceName: evidence.name, evidenceType: evidence.type, verificationStatus: "PENDING" },
   });
-  await getFirebaseAdminDb().collection("users").doc(ctx.user.id).collection("certifications").doc(submission.id).set({
-    id: submission.id, certificationId: cert.id, name, evidencePath, evidenceName: evidence.name,
-    verificationStatus: "PENDING", submittedAt: new Date().toISOString(),
-  }, { merge: true });
+  // The mirror is a convenience copy, not the record of truth. Calling it
+  // unguarded threw "Firebase Admin configuration is missing" on any deployment
+  // without Firebase — after the submission row had already been written — so
+  // the student saw an error for a certificate that had in fact been filed.
+  // Every other mirror in this codebase is guarded the same way.
+  if (firebaseAdminConfigured) {
+    try {
+      await getFirebaseAdminDb().collection("users").doc(ctx.user.id).collection("certifications").doc(submission.id).set({
+        id: submission.id, certificationId: cert.id, name, evidencePath, evidenceName: evidence.name,
+        verificationStatus: "PENDING", submittedAt: new Date().toISOString(),
+      }, { merge: true });
+    } catch (error) {
+      console.error("Firestore mirror of certification submission failed", error);
+    }
+  }
 
   revalidatePath("/student/dashboard");
   revalidatePath("/student/profile");
@@ -218,6 +229,13 @@ export async function applyToJob(formData: FormData) {
 
   const match = computeJobMatch(studentFull, job);
 
+  // Read before the upsert so a re-application can be told apart from a first
+  // one; the employer should be notified once, not on every resubmission.
+  const existingApplication = await prisma.application.findUnique({
+    where: { studentId_jobId: { studentId: student.id, jobId } },
+    select: { id: true },
+  });
+
   const application = await prisma.application.upsert({
     where: { studentId_jobId: { studentId: student.id, jobId } },
     update: { matchScore: match.score },
@@ -226,9 +244,32 @@ export async function applyToJob(formData: FormData) {
   const files=formData.getAll("documents");
   if(files.some(file=>file instanceof File&&file.size>0)) await storeEvidenceDocuments({files,ownerUserId:student.userId,contextType:"APPLICATION",contextId:application.id,purpose:"Job application supporting document"});
 
+  // The employer had no way to learn an application had arrived: their portal
+  // shows a candidate list, but nothing told them to go and look at it.
+  if (!existingApplication) {
+    const employer = await prisma.employer.findUnique({
+      where: { id: job.employerId },
+      select: { userId: true },
+    });
+
+    if (employer) {
+      await prisma.notification.create({
+        data: {
+          userId: employer.userId,
+          type: "APPLICATION_RECEIVED",
+          title: `New application for ${job.title}`,
+          body: `A candidate applied and scores ${match.score}% against this role's structured requirements.`,
+        },
+      });
+    }
+  }
+
   revalidatePath("/student/jobs");
+  revalidatePath("/student/applications");
+  revalidatePath("/student/dashboard");
   revalidatePath(`/student/jobs/${jobId}`);
   revalidatePath(`/employer/jobs/${jobId}`);
+  revalidatePath("/employer/dashboard");
 }
 
 export async function toggleBookmark(formData: FormData) {

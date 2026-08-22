@@ -10,7 +10,11 @@ import {
 } from "./scoring";
 import {
     computeCareerReadiness,
+    expectedLevelForWeight,
+    isScoredEvidence,
+    projectedReadinessGain,
     READINESS_MODEL_VERSION,
+    type ReadinessChange,
     type ReadinessEvidenceInput,
     type ReadinessTrackInput,
 } from "./readiness";
@@ -155,11 +159,24 @@ export async function getStudentIntelligence(
             name: entry.certification.name,
             verified: entry.verificationStatus === "APPROVED",
         })),
-        experienceMonths: student.experiences.reduce(
-            (sum, entry) => sum + Math.max(0, entry.months),
-            0
-        ),
-        projectCount: student.projects.length,
+        // One evidence-trust model: only human-approved experience and
+        // portfolio entries are scored. The rest are carried through so the
+        // student is told they were received and why they do not count, rather
+        // than seeing a component silently sit at zero.
+        experienceMonths: student.experiences
+            .filter((entry) => isScoredEvidence(entry.verificationStatus))
+            .reduce((sum, entry) => sum + Math.max(0, entry.months), 0),
+        projectCount: student.projects.filter((entry) => isScoredEvidence(entry.verificationStatus)).length,
+        unverifiedExperienceMonths: student.experiences
+            .filter((entry) => !isScoredEvidence(entry.verificationStatus) && entry.verificationStatus !== "REJECTED")
+            .reduce((sum, entry) => sum + Math.max(0, entry.months), 0),
+        unverifiedProjectCount: student.projects.filter(
+            (entry) => !isScoredEvidence(entry.verificationStatus) && entry.verificationStatus !== "REJECTED"
+        ).length,
+        pendingExperienceMonths: student.experiences
+            .filter((entry) => entry.verificationStatus === "PENDING")
+            .reduce((sum, entry) => sum + Math.max(0, entry.months), 0),
+        pendingProjectCount: student.projects.filter((entry) => entry.verificationStatus === "PENDING").length,
     };
 
     const demandBySkillId = new Map(market.skills.map((skill) => [skill.id, skill]));
@@ -226,6 +243,10 @@ export async function getStudentIntelligence(
             matchedCertifications: core.matchedCertifications.map((entry) => entry.name),
             missingCertifications: core.missingCertifications.map((entry) => entry.name),
             unverifiedCertifications: core.unverifiedCertifications,
+            unverifiedExperienceMonths: core.unverifiedExperienceMonths,
+            unverifiedProjectCount: core.unverifiedProjectCount,
+            pendingExperienceMonths: core.pendingExperienceMonths,
+            pendingProjectCount: core.pendingProjectCount,
             experienceMonths: core.experienceMonths,
             recommendedExperienceMonths: core.recommendedExperienceMonths,
             projectCount: core.projectCount,
@@ -579,21 +600,63 @@ export async function getStudentIntelligence(
 
     if (targetReadiness) {
         const trackRow = tracks.find((track) => track.id === targetReadiness.careerTrackId);
+        // The requirement set every projection below is measured against.
+        const targetTrackInput = trackRow
+            ? toTrackInput(trackRow as TrackRow)
+            : { id: targetReadiness.careerTrackId, label: targetReadiness.careerTrackLabel, skills: [], certifications: [], recommendedExperienceMonths: targetReadiness.recommendedExperienceMonths };
         const label = targetReadiness.careerTrackLabel;
 
+        const trackSkillIds = new Set((trackRow?.trackSkills ?? []).map((entry) => entry.skillId));
+        const studentInstitution = student.university?.trim().toLowerCase() ?? null;
+
+        /**
+         * Which offering to propose for a gap.
+         *
+         * This used to take `matchingOfferings[0]` — whichever row the database
+         * returned first — so a cybersecurity student short of Python was sent
+         * to an Applied Machine Learning course simply because it was created
+         * earlier. Any offering that teaches the skill closes the gap, but they
+         * are not equally sensible, so they are ranked: the student's own
+         * institution first (they can actually enrol), then how much of the
+         * rest of their target track the offering also covers, then whether it
+         * grants a certification that track recommends.
+         */
+        function rankOffering(offering: (typeof offerings)[number]) {
+            const sameInstitution =
+                studentInstitution !== null &&
+                offering.university.institution.trim().toLowerCase() === studentInstitution;
+
+            const trackOverlap = offering.skills.filter((entry) => trackSkillIds.has(entry.skillId)).length;
+
+            const grantsTrackCertification =
+                offering.certificationId !== null &&
+                (trackRow?.trackCerts ?? []).some(
+                    (entry) => entry.certificationId === offering.certificationId
+                );
+
+            return (sameInstitution ? 100 : 0) + trackOverlap * 10 + (grantsTrackCertification ? 5 : 0);
+        }
+
         for (const gap of targetReadiness.missingSkills.slice(0, 6)) {
-            const matchingOfferings = offerings.filter((offering) =>
-                offering.skills.some(
-                    (offeringSkill) =>
-                        offeringSkill.skillId === gap.skillId ||
-                        normalizeSkillName(offeringSkill.skill.name) === normalizeSkillName(gap.skillName)
+            const matchingOfferings = offerings
+                .filter((offering) =>
+                    offering.skills.some(
+                        (offeringSkill) =>
+                            offeringSkill.skillId === gap.skillId ||
+                            normalizeSkillName(offeringSkill.skill.name) === normalizeSkillName(gap.skillName)
+                    )
                 )
-            );
+                .sort((a, b) => rankOffering(b) - rankOffering(a));
 
             const bestOffering = matchingOfferings[0] ?? null;
 
             roadmapRecommendations.push({
-                title: bestOffering ? bestOffering.title : `Develop ${gap.skillName}`,
+                // One offering can close several gaps on the same roadmap, and
+                // titling each entry with only the course name produced three
+                // identical-looking rows. The gap is what distinguishes them.
+                title: bestOffering
+                    ? `${bestOffering.title} — build ${gap.skillName}`
+                    : `Develop ${gap.skillName}`,
                 category: bestOffering ? bestOffering.type.toUpperCase() : "SKILL",
                 careerTrackId: targetReadiness.careerTrackId,
                 careerTrackLabel: label,
@@ -601,9 +664,24 @@ export async function getStudentIntelligence(
                 skillName: gap.skillName,
                 offeringId: bestOffering?.id ?? null,
                 offeringProvider: bestOffering?.university.institution ?? null,
+                offeringUrl: bestOffering?.url ?? null,
                 certificationId: bestOffering?.certificationId ?? null,
                 source: bestOffering ? "UNIVERSITY_OFFERING" : "SKILL_GAP",
-                expectedImpact: expectedImpactFromGap(gap.priorityScore),
+                // What closing this one gap is actually worth, from the same
+                // engine that produced the score, rather than an estimate
+                // derived from the priority ranking.
+                expectedImpact: projectedReadinessGain(evidence, targetTrackInput, [
+                    {
+                        kind: "SKILL",
+                        skillId: gap.skillId === gap.skillName ? null : gap.skillId,
+                        name: gap.skillName,
+                        toLevel: expectedLevelForWeight(gap.requiredWeight),
+                    },
+                ]),
+                // Ranking still weighs employer demand, which is a legitimate
+                // reason to do one thing before another. It is not the same
+                // quantity as the score impact and is no longer displayed as
+                // though it were.
                 recommendationScore: gap.priorityScore,
                 generatedAt,
                 reason: bestOffering
@@ -626,7 +704,7 @@ export async function getStudentIntelligence(
 
             roadmapRecommendations.push({
                 title: grantingOffering
-                    ? grantingOffering.title
+                    ? `${grantingOffering.title} — earn ${certificationName}`
                     : `Earn the "${certificationName}" certification`,
                 category: "CERTIFICATION",
                 careerTrackId: targetReadiness.careerTrackId,
@@ -635,9 +713,16 @@ export async function getStudentIntelligence(
                 skillName: null,
                 offeringId: grantingOffering?.id ?? null,
                 offeringProvider: grantingOffering?.university.institution ?? null,
+                offeringUrl: grantingOffering?.url ?? null,
                 certificationId: requirement?.certificationId ?? null,
                 source: grantingOffering ? "UNIVERSITY_OFFERING" : "CERTIFICATION_GAP",
-                expectedImpact: 8,
+                expectedImpact: projectedReadinessGain(evidence, targetTrackInput, [
+                    {
+                        kind: "CERTIFICATION",
+                        certificationId: requirement?.certificationId ?? null,
+                        name: certificationName,
+                    },
+                ]),
                 recommendationScore: 55,
                 generatedAt,
                 reason: grantingOffering
@@ -662,9 +747,12 @@ export async function getStudentIntelligence(
                 skillName: null,
                 offeringId: null,
                 offeringProvider: null,
+                offeringUrl: null,
                 certificationId: null,
                 source: "EXPERIENCE_GAP",
-                expectedImpact: 10,
+                expectedImpact: projectedReadinessGain(evidence, targetTrackInput, [
+                    { kind: "EXPERIENCE_MONTHS", months: remaining },
+                ]),
                 recommendationScore: 50,
                 generatedAt,
                 reason: `${label} recommends ${targetReadiness.recommendedExperienceMonths} month(s) of experience; ${targetReadiness.experienceMonths} month(s) are currently recorded.`,
@@ -683,9 +771,12 @@ export async function getStudentIntelligence(
                 skillName: null,
                 offeringId: null,
                 offeringProvider: null,
+                offeringUrl: null,
                 certificationId: null,
                 source: "PORTFOLIO_GAP",
-                expectedImpact: 5,
+                expectedImpact: projectedReadinessGain(evidence, targetTrackInput, [
+                    { kind: "PROJECTS", count: remaining },
+                ]),
                 recommendationScore: 35,
                 generatedAt,
                 reason: `${targetReadiness.projectCount} project(s) are documented; the portfolio component of readiness is measured against 3.`,
@@ -712,6 +803,42 @@ export async function getStudentIntelligence(
         })
         .sort((a, b) => b.recommendationScore - a.recommendationScore);
 
+    // Every recommended change applied at once. Summing the per-item figures
+    // would overstate the total: two skill gaps inside the same component share
+    // one weighting, so their joint value is less than the sum of their parts.
+    const combinedChanges: ReadinessChange[] = [];
+    if (targetReadiness) {
+        for (const gap of targetReadiness.missingSkills.slice(0, 6)) {
+            combinedChanges.push({
+                kind: "SKILL",
+                skillId: gap.skillId === gap.skillName ? null : gap.skillId,
+                name: gap.skillName,
+                toLevel: expectedLevelForWeight(gap.requiredWeight),
+            });
+        }
+        for (const certificationName of targetReadiness.missingCertifications.slice(0, 3)) {
+            combinedChanges.push({ kind: "CERTIFICATION", certificationId: null, name: certificationName });
+        }
+        if (targetReadiness.recommendedExperienceMonths > targetReadiness.experienceMonths) {
+            combinedChanges.push({
+                kind: "EXPERIENCE_MONTHS",
+                months: targetReadiness.recommendedExperienceMonths - targetReadiness.experienceMonths,
+            });
+        }
+        if (targetReadiness.projectCount < 3) {
+            combinedChanges.push({ kind: "PROJECTS", count: 3 - targetReadiness.projectCount });
+        }
+    }
+
+    const targetTrackForProjection = targetReadiness
+        ? tracks.find((track) => track.id === targetReadiness.careerTrackId) ?? null
+        : null;
+
+    const combinedRecommendationGain =
+        targetReadiness && targetTrackForProjection
+            ? projectedReadinessGain(evidence, toTrackInput(targetTrackForProjection as TrackRow), combinedChanges)
+            : 0;
+
     return {
         studentId: student.id,
         targetCareer: student.targetCareer,
@@ -724,6 +851,8 @@ export async function getStudentIntelligence(
         directionSuggestion,
         skillGaps: targetReadiness?.missingSkills ?? [],
         roadmapRecommendations: dedupedRecommendations,
+        combinedRecommendationGain,
+        remainingHeadroom: Math.max(0, 100 - (targetReadiness?.score ?? 0)),
         newRoadmapRecommendations: dedupedRecommendations.filter(
             (recommendation) =>
                 !activeRoadmapKeys.has(
@@ -755,6 +884,3 @@ export function recommendationKey(input: {
     return `${input.careerTrackId ?? "-"}::${subject}`;
 }
 
-function expectedImpactFromGap(priorityScore: number) {
-    return Math.max(1, Math.min(20, Math.round(priorityScore / 5)));
-}

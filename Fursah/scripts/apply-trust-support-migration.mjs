@@ -332,6 +332,89 @@ try {
   }
 
 
+
+  // =========================================================
+  // JOB POSTING DETAIL MIGRATION
+  // =========================================================
+  // The role form has always collected department, employment type, location,
+  // work arrangement, education level and languages. None of them had a column,
+  // so every answer was discarded on submit. Additive and nullable: existing
+  // roles keep working and simply carry no detail.
+
+  const jobColumns = await client.execute(
+    "PRAGMA table_info('Job')"
+  );
+
+  const hasPostingDetails = jobColumns.rows.some(
+    (row) => row.name === "arrangement"
+  );
+
+  if (!hasPostingDetails) {
+    console.log(
+      "Applying job posting detail migration..."
+    );
+
+    const jobDetailMigration = await readFile(
+      new URL(
+        "../prisma/migrations/20260823090000_job_posting_details/migration.sql",
+        import.meta.url
+      ),
+      "utf8"
+    );
+
+    await client.executeMultiple(jobDetailMigration);
+
+    console.log(
+      "Job posting detail migration applied."
+    );
+  }
+
+  const hasEducationLevel = (
+    await client.execute("PRAGMA table_info('Job')")
+  ).rows.some((row) => row.name === "educationLevel");
+
+  if (!hasEducationLevel) {
+    console.log(
+      "Applying job education/language migration..."
+    );
+
+    const educationMigration = await readFile(
+      new URL(
+        "../prisma/migrations/20260823140000_job_education_languages/migration.sql",
+        import.meta.url
+      ),
+      "utf8"
+    );
+
+    await client.executeMultiple(educationMigration);
+
+    console.log(
+      "Job education/language migration applied."
+    );
+  }
+
+  // Verification: every column the application writes must now exist, so a
+  // deploy fails loudly here rather than at the first employer who posts a role.
+  const jobCheck = await client.execute(
+    "PRAGMA table_info('Job')"
+  );
+
+  for (const column of [
+    "department",
+    "employmentType",
+    "location",
+    "arrangement",
+    "educationLevel",
+    "languages",
+  ]) {
+    if (!jobCheck.rows.some((row) => row.name === column)) {
+      throw new Error(
+        `Job posting detail migration verification failed: ${column} column missing`
+      );
+    }
+  }
+
+
   console.log(
     "Production migrations applied and verified successfully."
   );

@@ -287,9 +287,19 @@ function checkConfiguration() {
   if (assistantConfigured()) {
     pass("assistant configured", "ASSISTANT_AI_URL and a credential are present");
   } else {
+    // Naming whichever half is missing saves an operator from checking the
+    // wrong variable: the URL and the shared secret fail independently, and the
+    // old message always blamed the URL.
+    const missing = [
+      process.env.ASSISTANT_AI_URL ? null : "ASSISTANT_AI_URL",
+      process.env.ASSISTANT_AI_SECRET || process.env.EVIDENCE_AI_SECRET
+        ? null
+        : "a shared secret (ASSISTANT_AI_SECRET, or EVIDENCE_AI_SECRET as a fallback)",
+    ].filter(Boolean);
+
     warn(
       "assistant NOT configured",
-      "ASSISTANT_AI_URL is unset, so the assistant panel is hidden and /api/assistant returns 503",
+      `${missing.join(" and ")} missing, so the assistant panel is hidden and /api/assistant returns 503`,
     );
     manual.push("Set ASSISTANT_AI_URL (and deploy the Worker's /assistant route), then re-run this script.");
   }
@@ -300,7 +310,7 @@ function checkConfiguration() {
 
   const r2 = Boolean(process.env.R2_ACCOUNT_ID && process.env.R2_BUCKET_NAME && process.env.R2_ACCESS_KEY_ID);
   if (r2) pass("R2 storage configured", process.env.R2_BUCKET_NAME);
-  else warn("R2 storage NOT configured", "evidence upload will fail in this environment");
+  else warn("R2 storage NOT configured", "private documents fall back to local disk under .data/evidence, which is fine for a demo and not for a deployment");
 
   if (process.env.SESSION_SECRET) pass("SESSION_SECRET set", "session cookies signed with a dedicated key");
   else warn("SESSION_SECRET unset", "cookies are signed with the Worker credential as a fallback key");

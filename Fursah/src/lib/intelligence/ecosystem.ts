@@ -1,7 +1,7 @@
 import "server-only";
 
 import { prisma } from "@/lib/db";
-import { computeCareerReadiness, READINESS_MODEL_VERSION, type ReadinessEvidenceInput } from "./readiness";
+import { computeCareerReadiness, isScoredEvidence, READINESS_MODEL_VERSION, type ReadinessEvidenceInput } from "./readiness";
 import { getMarketIntelligence } from "./market";
 import { normalizeSkillName, round } from "./scoring";
 import type { EcosystemIntelligenceResult, EcosystemSkillSignal } from "./types";
@@ -65,7 +65,8 @@ export async function getEcosystemIntelligence(): Promise<EcosystemIntelligenceR
             }),
 
             prisma.job.findMany({
-                where: { status: "open" },
+                // Same set of roles the demand scan uses; see market.ts.
+                where: { status: "open", employer: { verificationStatus: "APPROVED" } },
                 include: {
                     requiredSkills: { include: { skill: true } },
                     requiredCerts: { include: { certification: true } },
@@ -134,8 +135,19 @@ export async function getEcosystemIntelligence(): Promise<EcosystemIntelligenceR
                     name: entry.certification.name,
                     verified: entry.verificationStatus === "APPROVED",
                 })),
-                experienceMonths: student.experiences.reduce((sum, entry) => sum + Math.max(0, entry.months), 0),
-                projectCount: student.projects.length,
+                // Same evidence-trust rule as every other surface; the
+                // platform-wide average must mean what a student's own score
+                // means.
+                experienceMonths: student.experiences
+                    .filter((entry) => isScoredEvidence(entry.verificationStatus))
+                    .reduce((sum, entry) => sum + Math.max(0, entry.months), 0),
+                projectCount: student.projects.filter((entry) => isScoredEvidence(entry.verificationStatus)).length,
+                unverifiedExperienceMonths: student.experiences
+                    .filter((entry) => !isScoredEvidence(entry.verificationStatus) && entry.verificationStatus !== "REJECTED")
+                    .reduce((sum, entry) => sum + Math.max(0, entry.months), 0),
+                unverifiedProjectCount: student.projects.filter(
+                    (entry) => !isScoredEvidence(entry.verificationStatus) && entry.verificationStatus !== "REJECTED",
+                ).length,
             };
 
             const result = computeCareerReadiness(evidence, {

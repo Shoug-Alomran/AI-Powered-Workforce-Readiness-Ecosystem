@@ -11,7 +11,6 @@ import {
 import { getFirebaseClientAuth } from "@/lib/firebase-client";
 import type { FirebaseRole } from "@/lib/firebase-types";
 import { localSignIn, localSignUp } from "@/actions/localAuth";
-import Link from "next/link";
 
 /**
  * Sign-in and sign-up.

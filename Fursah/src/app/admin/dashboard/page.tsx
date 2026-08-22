@@ -26,7 +26,7 @@ export default async function AdminDashboard({
 
   const { q = "", role = "", letter = "" } = await searchParams;
 
-  const [submissions, employers, users, curriculumReviews, curriculumDocuments] = await Promise.all([
+  const [submissions, employers, users, curriculumReviews, pendingDocumentCount, curriculumDocuments] = await Promise.all([
     prisma.studentCertification.findMany({
       include: { certification: true, student: { include: { user: true } } },
       orderBy: { earnedAt: "desc" },
@@ -37,6 +37,7 @@ export default async function AdminDashboard({
     }),
     prisma.user.findMany({ orderBy: [{ name: "asc" }] }),
     prisma.curriculumAction.findMany({ where: { status: "AWAITING_HUMAN_REVIEW" }, include: { university: true }, orderBy: { createdAt: "asc" } }),
+    prisma.evidenceDocument.count({ where: { reviewStatus: "PENDING" } }).catch(() => 0),
     prisma.evidenceDocument.findMany({ where: { contextType: "CURRICULUM_ACTION" }, orderBy: { createdAt: "asc" } }).catch((error) => {
       // Keep the governance dashboard available while a newly deployed
       // evidence-storage migration is still being applied to production.
@@ -45,7 +46,15 @@ export default async function AdminDashboard({
     }),
   ]);
 
-  const pendingCerts = submissions.filter((item) => item.verificationStatus === "PENDING" && item.evidencePath);
+  /*
+   * Every PENDING submission, whether or not a file made it into storage.
+   * Filtering on `evidencePath` meant a submission that reached the database
+   * without one — an upload that failed after the row was written, or a
+   * migrated record — sat as "under review" on the student's passport with no
+   * queue anywhere that could ever decide it. The card below now states when
+   * there is no image to inspect rather than the row being dropped.
+   */
+  const pendingCerts = submissions.filter((item) => item.verificationStatus === "PENDING");
   const reviewedCerts = submissions.filter((item) => ["APPROVED", "REJECTED"].includes(item.verificationStatus));
   const pendingEmployers = employers.filter((e) => e.verificationStatus === "PENDING");
   const roleCounts = users.reduce<Record<string, number>>((acc, u) => {
@@ -89,6 +98,7 @@ export default async function AdminDashboard({
         ...(pendingEmployers.length ? [{ title: `Review ${pendingEmployers.length} employer account${pendingEmployers.length === 1 ? "" : "s"}`, reason: "Unverified employers cannot publish roles or inspect candidates.", href: "/admin/dashboard#employer-verification", action: "Open employer review", priority: "high" as const }] : []),
         ...(pendingCerts.length ? [{ title: `Decide ${pendingCerts.length} certificate submission${pendingCerts.length === 1 ? "" : "s"}`, reason: "Automated extraction remains advisory until a named reviewer records a decision.", href: "/admin/dashboard#certificate-review", action: "Open evidence review", priority: "high" as const }] : []),
         ...(curriculumReviews.length ? [{ title: `Verify ${curriculumReviews.length} curriculum completion${curriculumReviews.length === 1 ? "" : "s"}`, reason: "Completion claims require supporting evidence and a human outcome.", href: "/admin/dashboard#curriculum-review", action: "Review completion", priority: "medium" as const }] : []),
+        ...(pendingDocumentCount ? [{ title: `Review ${pendingDocumentCount} uploaded document${pendingDocumentCount === 1 ? "" : "s"}`, reason: "Private evidence stays advisory until a named administrator inspects the file and records a decision.", href: "/admin/evidence", action: "Open document review", priority: "high" as const }] : []),
         { title: "Review enterprise control readiness", reason: "Inspect implemented, partial, and partner-dependent production controls before any pilot commitment.", href: "/admin/enterprise", action: "Open control register", priority: "low" as const },
       ].slice(0, 4)}/>
 
@@ -146,7 +156,9 @@ export default async function AdminDashboard({
         <div className="stack" style={{ marginTop: 12 }}>
           {pendingCerts.length ? pendingCerts.map((item) => (
             <article className="card review-card" key={item.id}>
-              <div><img className="certificate-preview" src={`/api/certificates/${item.id}/image`} alt={`Certificate submitted by ${item.student.user.name}`} /></div>
+              <div>{item.evidencePath
+                ? <img className="certificate-preview" src={`/api/certificates/${item.id}/image`} alt={`Certificate submitted by ${item.student.user.name}`} />
+                : <div className="notice">No image is stored against this submission. Ask the student to re-upload the certificate before approving it.</div>}</div>
               <div>
                 <span className="pill">Pending</span>
                 <h2>{item.certification.name}</h2>
@@ -174,7 +186,12 @@ export default async function AdminDashboard({
           status: item.verificationStatus,
           reviewNote: item.reviewNote ?? "No review note recorded",
           reviewedAt: item.reviewedAt?.toISOString() ?? null,
-          reviewerName: users.find((user) => user.id === item.reviewedBy)?.name ?? "Unknown reviewer",
+          // Older rows recorded the reviewer's address rather than their id;
+          // both resolve to the same person, and neither should read as
+          // "Unknown reviewer" in an audit archive.
+          reviewerName:
+            users.find((user) => user.id === item.reviewedBy || user.email === item.reviewedBy)?.name ??
+            (item.reviewedBy?.trim() ? item.reviewedBy : "Not recorded"),
           evidenceName: item.evidenceName,
           hasEvidence: Boolean(item.evidencePath),
         }))}

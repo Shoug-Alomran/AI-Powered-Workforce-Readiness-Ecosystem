@@ -59,7 +59,7 @@ export default async function DataRequestsAdmin() {
 
     <section className="card" style={{ marginTop: 18 }}>
       <h2>Awaiting a decision</h2>
-      <p className="muted">Record what was actually done — where an export was sent, what was corrected, or the lawful reason a deletion is refused. The user receives this text.</p>
+      <p className="muted">Record what was actually done: where an export was sent, what was corrected, or the lawful reason a deletion is refused. The user receives this text.</p>
       <div className="stack" style={{ marginTop: 14 }}>
         {outstanding.length ? outstanding.map((request) => {
           const age = dayOfWindow(request.createdAt);

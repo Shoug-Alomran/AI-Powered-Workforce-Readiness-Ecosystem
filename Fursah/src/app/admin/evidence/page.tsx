@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentAdmin } from "@/lib/session";
@@ -307,55 +308,113 @@ function ListField({
   );
 }
 
-export default async function EvidencePage() {
+/**
+ * Review states this page can be filtered by.
+ *
+ * A decision used to remove the item from the console entirely: the queries
+ * below asked only for `PENDING`, so an approved certificate could never be
+ * opened again and the reasoning behind it existed nowhere a reviewer could
+ * reach. Approval is a record, not a deletion, so every state is retrievable
+ * here and a decided item keeps its extraction, its note, its reviewer and its
+ * timestamp alongside the current state of the record it verified.
+ */
+const REVIEW_FILTERS = ["pending", "approved", "rejected", "all"] as const;
+
+type ReviewFilter = (typeof REVIEW_FILTERS)[number];
+
+function parseFilter(value: string | undefined): ReviewFilter {
+  return REVIEW_FILTERS.includes(value as ReviewFilter)
+    ? (value as ReviewFilter)
+    : "pending";
+}
+
+/** Prisma `where` fragment for a review filter, keyed on `reviewStatus`. */
+function reviewWhere(filter: ReviewFilter) {
+  if (filter === "all") return {};
+  return { reviewStatus: filter.toUpperCase() };
+}
+
+/**
+ * The same filter over projects and experiences, which record their decision
+ * on `verificationStatus`. "All" excludes SELF_REPORTED because an entry with
+ * no evidence attached was never submitted for review and has no decision to
+ * show.
+ */
+function linkWhere(filter: ReviewFilter) {
+  if (filter === "all") return { NOT: { verificationStatus: "SELF_REPORTED" } };
+  return { verificationStatus: filter.toUpperCase() };
+}
+
+const decisionFormatter = new Intl.DateTimeFormat("en-GB", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "UTC",
+});
+
+function formatTimestamp(value: Date | null | undefined) {
+  return value ? `${decisionFormatter.format(value)} UTC` : null;
+}
+
+export default async function EvidencePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string }>;
+}) {
   const ctx = await getCurrentAdmin();
 
   if (!ctx) {
     redirect("/login");
   }
 
+  const filter = parseFilter((await searchParams).status);
+
   const [
     projects,
     experiences,
     documents,
+    documentCounts,
+    linkCounts,
   ] = await Promise.all([
     prisma.project.findMany({
-      where: {
-        verificationStatus: "PENDING",
-      },
+      where: linkWhere(filter),
       include: {
         student: {
           include: {
             user: true,
           },
         },
+      },
+      orderBy: {
+        createdAt: filter === "pending" ? "asc" : "desc",
       },
     }),
 
     prisma.experience.findMany({
-      where: {
-        verificationStatus: "PENDING",
-      },
+      where: linkWhere(filter),
       include: {
         student: {
           include: {
             user: true,
           },
         },
+      },
+      orderBy: {
+        createdAt: filter === "pending" ? "asc" : "desc",
       },
     }),
 
     prisma.evidenceDocument
       .findMany({
-        where: {
-          reviewStatus: "PENDING",
-        },
+        where: reviewWhere(filter),
         include: {
           owner: true,
         },
-        orderBy: {
-          createdAt: "asc",
-        },
+        // Pending work is oldest-first because it is a queue. Decided work is
+        // newest-first because it is a history.
+        orderBy:
+          filter === "pending"
+            ? { createdAt: "asc" }
+            : [{ reviewedAt: "desc" }, { createdAt: "desc" }],
       })
       .catch((error) => {
         console.error(
@@ -365,6 +424,18 @@ export default async function EvidencePage() {
 
         return [];
       }),
+
+    prisma.evidenceDocument
+      .groupBy({
+        by: ["reviewStatus"],
+        _count: { _all: true },
+      })
+      .catch(() => [] as Array<{ reviewStatus: string; _count: { _all: number } }>),
+
+    Promise.all([
+      prisma.project.groupBy({ by: ["verificationStatus"], _count: { _all: true } }),
+      prisma.experience.groupBy({ by: ["verificationStatus"], _count: { _all: true } }),
+    ]),
   ]);
 
   const items = [
@@ -378,6 +449,114 @@ export default async function EvidencePage() {
       entityType: "EXPERIENCE" as const,
     })),
   ];
+
+  // ---- Reviewer identity -------------------------------------------------
+  // `reviewedBy` stores a user id. Rendering it raw told a reader nothing, so
+  // the ids are resolved to names here; anything that is not a known user id
+  // (older rows recorded a free-text reviewer label) is shown as written.
+  const reviewerIds = [
+    ...new Set(
+      [
+        ...documents.map((document) => document.reviewedBy),
+        ...items.map((item) => item.reviewedBy),
+      ].filter((value): value is string => Boolean(value))
+    ),
+  ];
+
+  const reviewers = reviewerIds.length
+    ? await prisma.user.findMany({
+        where: { OR: [{ id: { in: reviewerIds } }, { email: { in: reviewerIds } }] },
+        select: { id: true, name: true, email: true },
+      })
+    : [];
+
+  // Rows written before reviewers were stored by id recorded an address
+  // instead; both resolve to the same person.
+  const reviewerNameByKey = new Map(
+    reviewers.flatMap((user) => [
+      [user.id, user.name] as const,
+      [user.email, user.name] as const,
+    ]),
+  );
+
+  function reviewerLabel(value: string | null) {
+    if (!value) return "Not recorded";
+    return reviewerNameByKey.get(value) ?? value;
+  }
+
+  // ---- Current state of the record each document verified ----------------
+  // The decision is history; the record it acted on has a state right now, and
+  // those can legitimately differ (a student can resubmit after a rejection).
+  // Showing both is the point of an auditable review.
+  const decided = documents.filter((document) => document.reviewStatus !== "PENDING");
+
+  const [linkedProjects, linkedExperiences, linkedCertifications] = await Promise.all([
+    prisma.project.findMany({
+      where: { id: { in: decided.filter((d) => isProjectContext(d.contextType)).map((d) => d.contextId) } },
+      select: { id: true, title: true, verificationStatus: true },
+    }),
+    prisma.experience.findMany({
+      where: { id: { in: decided.filter((d) => isExperienceContext(d.contextType)).map((d) => d.contextId) } },
+      select: { id: true, title: true, verificationStatus: true },
+    }),
+    prisma.studentCertification.findMany({
+      where: {
+        certificationId: {
+          in: decided.filter((d) => isCertificationContext(d.contextType)).map((d) => d.contextId),
+        },
+      },
+      select: {
+        certificationId: true,
+        verificationStatus: true,
+        student: { select: { userId: true } },
+        certification: { select: { name: true } },
+      },
+    }),
+  ]);
+
+  /** The live verification state of whatever this document was evidence for. */
+  function linkedRecord(document: (typeof documents)[number]) {
+    if (isProjectContext(document.contextType)) {
+      const row = linkedProjects.find((entry) => entry.id === document.contextId);
+      return row ? { label: `Project · ${row.title}`, status: row.verificationStatus } : null;
+    }
+    if (isExperienceContext(document.contextType)) {
+      const row = linkedExperiences.find((entry) => entry.id === document.contextId);
+      return row ? { label: `Experience · ${row.title}`, status: row.verificationStatus } : null;
+    }
+    if (isCertificationContext(document.contextType)) {
+      const row = linkedCertifications.find(
+        (entry) => entry.certificationId === document.contextId && entry.student.userId === document.ownerUserId
+      );
+      return row ? { label: `Certification · ${row.certification.name}`, status: row.verificationStatus } : null;
+    }
+    return null;
+  }
+
+  // Prisma types groupBy's result as a union, so the array carries no generic
+  // reduce overload and a numeric seed looks unassignable. Naming the row shape
+  // once gives every use below a plain array to work with.
+  const documentStatusCounts: { reviewStatus: string; _count: { _all: number } }[] = documentCounts;
+
+  const documentCountFor = (status: string) =>
+    documentStatusCounts.find((row) => row.reviewStatus === status)?._count._all ?? 0;
+
+  const linkCountFor = (status: string) =>
+    linkCounts.flat().filter((row) => row.verificationStatus === status).reduce((sum, row) => sum + row._count._all, 0);
+
+  const totals = {
+    pending: documentCountFor("PENDING"),
+    approved: documentCountFor("APPROVED"),
+    rejected: documentCountFor("REJECTED"),
+    all: documentStatusCounts.reduce((sum, row) => sum + row._count._all, 0),
+  };
+
+  const filterLabel: Record<ReviewFilter, string> = {
+    pending: "Awaiting review",
+    approved: "Approved",
+    rejected: "Rejected",
+    all: "All",
+  };
 
   return (
     <main className="page-shell">
@@ -398,13 +577,65 @@ export default async function EvidencePage() {
         readiness result, or matching decision.
       </p>
 
+      <p className="muted">
+        A decision is a record, not a deletion. Approved and rejected evidence
+        stays here with its extraction, the reviewer, the note, the timestamp,
+        and the current state of the record it verified.
+      </p>
+
+      <div className="dsr-summary">
+        <div className={`dsr-summary-tile${totals.pending ? " is-active" : ""}`}>
+          <span>Awaiting review</span>
+          <b>{totals.pending}</b>
+        </div>
+
+        <div className="dsr-summary-tile">
+          <span>Approved</span>
+          <b>{totals.approved}</b>
+        </div>
+
+        <div className="dsr-summary-tile">
+          <span>Rejected</span>
+          <b>{totals.rejected}</b>
+        </div>
+
+        <div className="dsr-summary-tile">
+          <span>Link reviews outstanding</span>
+          <b>{linkCountFor("PENDING")}</b>
+        </div>
+      </div>
+
+      <div className="ticket-filters">
+        <div
+          className="ticket-filter-group"
+          role="group"
+          aria-label="Filter evidence by review state"
+        >
+          <span>Review state</span>
+
+          {REVIEW_FILTERS.map((value) => (
+            <Link
+              key={value}
+              className={filter === value ? "is-active" : ""}
+              href={value === "pending" ? "/admin/evidence" : `/admin/evidence?status=${value}`}
+            >
+              {filterLabel[value]} <b>{totals[value]}</b>
+            </Link>
+          ))}
+        </div>
+      </div>
+
       <section
         className="card"
         style={{
           marginTop: 26,
         }}
       >
-        <h2>Private document review</h2>
+        <h2>
+          {filter === "pending"
+            ? "Private document review"
+            : `Private document review · ${filterLabel[filter].toLowerCase()}`}
+        </h2>
 
         {documents.length ? (
           documents.map((document) => {
@@ -637,12 +868,22 @@ export default async function EvidencePage() {
                       )}
                   </span>
 
+                  <span
+                    className={`pill status-${document.reviewStatus.toLowerCase()}`}
+                  >
+                    {document.reviewStatus === "PENDING"
+                      ? "awaiting human review"
+                      : document.reviewStatus.toLowerCase()}
+                  </span>
+
                   <strong>
                     {document.originalName}
                   </strong>
 
                   <span className="muted">
                     {document.owner.name}
+                    {" · "}
+                    {document.owner.email}
                     {" · "}
                     {formatContextType(
                       document.contextType
@@ -653,6 +894,13 @@ export default async function EvidencePage() {
                       1024
                     ).toFixed(1)}{" "}
                     KB
+                  </span>
+
+                  <span className="muted">
+                    Uploaded {formatTimestamp(document.createdAt)}
+                    {document.aiAnalyzedAt
+                      ? ` · analysed ${formatTimestamp(document.aiAnalyzedAt)}`
+                      : ""}
                   </span>
 
                   {document.aiStatus ===
@@ -1615,34 +1863,94 @@ export default async function EvidencePage() {
                   </a>
                 </div>
 
-                <label>
-                  Human review note
+                {document.reviewStatus === "PENDING" ? (
+                  <>
+                    <label>
+                      Human review note
 
-                  <textarea
-                    className="input"
-                    name="reviewNote"
-                    required
-                    placeholder="Record what you inspected and why it is acceptable, or explain what must be replaced."
-                  />
-                </label>
+                      <textarea
+                        className="input"
+                        name="reviewNote"
+                        required
+                        placeholder="Record what you inspected and why it is acceptable, or explain what must be replaced."
+                      />
+                    </label>
 
-                <div className="actions">
-                  <button
-                    className="button primary"
-                    name="decision"
-                    value="APPROVED"
-                  >
-                    Approve
-                  </button>
+                    <div className="actions">
+                      <button
+                        className="button primary"
+                        name="decision"
+                        value="APPROVED"
+                      >
+                        Approve
+                      </button>
 
-                  <button
-                    className="button danger"
-                    name="decision"
-                    value="REJECTED"
-                  >
-                    Reject
-                  </button>
-                </div>
+                      <button
+                        className="button danger"
+                        name="decision"
+                        value="REJECTED"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="document-decision">
+                    <dl>
+                      <div>
+                        <dt>Human decision</dt>
+
+                        <dd>
+                          <span
+                            className={`pill status-${document.reviewStatus.toLowerCase()}`}
+                          >
+                            {document.reviewStatus.toLowerCase()}
+                          </span>
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>Reviewed by</dt>
+                        <dd>{reviewerLabel(document.reviewedBy)}</dd>
+                      </div>
+
+                      <div>
+                        <dt>Decision time</dt>
+
+                        <dd>
+                          {formatTimestamp(document.reviewedAt) ?? "Not recorded"}
+                        </dd>
+                      </div>
+
+                      {(() => {
+                        const linked = linkedRecord(document);
+
+                        return linked ? (
+                          <div>
+                            <dt>Record verified</dt>
+
+                            <dd>
+                              {linked.label}{" "}
+                              <span
+                                className={`pill status-${linked.status.toLowerCase()}`}
+                              >
+                                now {linked.status.toLowerCase().replaceAll("_", " ")}
+                              </span>
+                            </dd>
+                          </div>
+                        ) : null;
+                      })()}
+                    </dl>
+
+                    <blockquote>
+                      <strong>Human review note</strong>
+
+                      <span>
+                        {document.reviewNote?.trim() || "No review note recorded."}
+                      </span>
+                    </blockquote>
+                  </div>
+                )}
               </form>
             );
           })
@@ -1650,8 +1958,16 @@ export default async function EvidencePage() {
           <EmptyState
             tone="clear"
             icon="✓"
-            title="No documents awaiting review"
-            body="Uploaded evidence from students, employers, and universities appears here after automated analysis and remains pending until a human administrator makes a decision."
+            title={
+              filter === "pending"
+                ? "No documents awaiting review"
+                : `No ${filterLabel[filter].toLowerCase()} documents`
+            }
+            body={
+              filter === "pending"
+                ? "Uploaded evidence from students, employers, and universities appears here after automated analysis and remains pending until a human administrator makes a decision."
+                : "Decisions recorded on this platform are kept permanently. Nothing matches this filter yet."
+            }
           />
         )}
       </section>
@@ -1726,35 +2042,82 @@ export default async function EvidencePage() {
                   </a>
                 )}
 
-                <textarea
-                  className="input"
-                  name="note"
-                  placeholder="Review note; required when rejecting"
-                />
+                {item.verificationStatus === "PENDING" ? (
+                  <textarea
+                    className="input"
+                    name="note"
+                    placeholder="Review note; required when rejecting"
+                  />
+                ) : (
+                  <div className="document-decision">
+                    <dl>
+                      <div>
+                        <dt>Human decision</dt>
+
+                        <dd>
+                          <span
+                            className={`pill status-${item.verificationStatus.toLowerCase()}`}
+                          >
+                            {item.verificationStatus.toLowerCase().replaceAll("_", " ")}
+                          </span>
+                        </dd>
+                      </div>
+
+                      <div>
+                        <dt>Reviewed by</dt>
+                        <dd>{reviewerLabel(item.reviewedBy)}</dd>
+                      </div>
+
+                      <div>
+                        <dt>Decision time</dt>
+
+                        <dd>
+                          {formatTimestamp(item.reviewedAt) ?? "Not recorded"}
+                        </dd>
+                      </div>
+                    </dl>
+
+                    <blockquote>
+                      <strong>Human review note</strong>
+
+                      <span>
+                        {item.reviewNote?.trim() || "No review note recorded."}
+                      </span>
+                    </blockquote>
+                  </div>
+                )}
               </div>
 
-              <button
-                className="button primary"
-                name="decision"
-                value="APPROVED"
-              >
-                Approve
-              </button>
+              {item.verificationStatus === "PENDING" && (
+                <>
+                  <button
+                    className="button primary"
+                    name="decision"
+                    value="APPROVED"
+                  >
+                    Approve
+                  </button>
 
-              <button
-                className="button danger"
-                name="decision"
-                value="REJECTED"
-              >
-                Reject
-              </button>
+                  <button
+                    className="button danger"
+                    name="decision"
+                    value="REJECTED"
+                  >
+                    Reject
+                  </button>
+                </>
+              )}
             </form>
           ))
         ) : (
           <EmptyState
             tone="clear"
             icon="✓"
-            title="No links awaiting review"
+            title={
+              filter === "pending"
+                ? "No links awaiting review"
+                : `No ${filterLabel[filter].toLowerCase()} link reviews`
+            }
             body="Public evidence links submitted with projects and experience are reviewed separately because their contents can change after submission."
           />
         )}

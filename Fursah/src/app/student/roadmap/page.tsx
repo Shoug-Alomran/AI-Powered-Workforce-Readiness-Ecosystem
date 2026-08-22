@@ -107,7 +107,7 @@ export default async function RoadmapPage() {
             </b>
           </span>
           <span>
-            <small>FROM YOUR OPEN MILESTONES</small>
+            <small>IF YOU COMPLETE YOUR OPEN MILESTONES</small>
             <b className="green">+{acceptedHeadroom} pts</b>
           </span>
         </footer>
@@ -131,10 +131,12 @@ export default async function RoadmapPage() {
           </div>
           <p className="muted" style={{ fontSize: 12 }}>
             Each bar is a scored component of your readiness, not a projection. Fursah does not forecast future scores.
-            Two headroom figures appear across Fursah and they describe different sets: your dashboard shows what
-            <em> everything currently recommended</em> could add, while this page shows what the milestones you have
-            <em> already accepted</em> could add. Both are estimates of what the listed items are worth, capped by the
-            points left in your score, and neither is a prediction that you will complete them.
+            Three different point figures appear across Fursah, and each covers a different set:
+            <em> points left in your score</em> is simply 100 minus your score;
+            <em> if you complete every recommendation</em>, on your dashboard, covers everything Fursah currently
+            suggests; and <em> from your open milestones</em>, below, covers only the milestones you have accepted onto
+            this roadmap. Every one of them is calculated by the readiness engine, by working out what your score would
+            be with those changes made. None of them is a prediction that you will make them.
           </p>
         </article>
 
@@ -149,7 +151,7 @@ export default async function RoadmapPage() {
             <b>{readiness?.score ?? 0}%</b>
           </p>
           <p>
-            <span>Headroom from milestones you have accepted</span>
+            <span>If you complete your open milestones</span>
             <b className="green">+{acceptedHeadroom} pts</b>
           </p>
           <p>
@@ -183,13 +185,33 @@ export default async function RoadmapPage() {
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
                   <span className="pill">{SOURCE_LABEL[recommendation.source] ?? recommendation.source}</span>
-                  <span className="pill">this step: +{recommendation.expectedImpact} pts</span>
+                  <span className="pill">this action alone: +{recommendation.expectedImpact} pts</span>
                   {recommendation.offeringProvider && <span className="pill">{recommendation.offeringProvider}</span>}
                 </div>
                 <strong style={{ display: "block", marginTop: 8 }}>{recommendation.title}</strong>
                 <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
                   {recommendation.reason}
                 </div>
+                {/*
+                  * A recommendation that names a course used to end there: the
+                  * student was told which offering closes the gap and given no
+                  * way to reach it. Link to the provider's page when the
+                  * catalogue records one, and otherwise to the catalogue entry
+                  * in Career Interests, which lists the same offerings.
+                  */}
+                {recommendation.offeringId && (
+                  <div style={{ marginTop: 8 }}>
+                    {recommendation.offeringUrl ? (
+                      <a className="link" href={recommendation.offeringUrl} target="_blank" rel="noreferrer">
+                        View this offering at {recommendation.offeringProvider} →
+                      </a>
+                    ) : (
+                      <Link className="link" href="/student/interests#recommendations">
+                        See this offering in your career interests →
+                      </Link>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           ))}
@@ -220,7 +242,7 @@ export default async function RoadmapPage() {
 
               <dl className="student-milestone-details">
                 <div><dt>Purpose</dt><dd>{item.careerTrackId ? `Supports your ${item.careerTrackId.replaceAll("-", " ")} goal` : "Supports your target career"}</dd></div>
-                <div><dt>Readiness value</dt><dd>Worth up to {item.expectedImpact} points</dd></div>
+                <div><dt>Readiness value</dt><dd>+{item.expectedImpact} points on its own</dd></div>
                 {item.generatedAt && <div><dt>Added to your plan</dt><dd>{item.generatedAt.toLocaleDateString()}</dd></div>}
               </dl>
 

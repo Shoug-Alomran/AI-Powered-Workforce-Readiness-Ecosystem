@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { getCurrentEmployer } from "@/lib/session";
 import { storeEvidenceDocuments } from "@/lib/documents";
-import { deletePrivateDocument, r2Configured } from "@/lib/r2";
+import { deletePrivateDocument } from "@/lib/r2";
 
 async function requireEmployer() {
   const ctx = await getCurrentEmployer();
@@ -26,11 +26,29 @@ export async function createJob(formData: FormData) {
   const certsRaw = String(formData.get("certifications") ?? ""); // comma separated
   const preferredSkillsRaw = String(formData.get("preferredSkills") ?? "");
   const blindReview = formData.get("blindReview") === "on";
+  // The form has always asked for these four; nothing read them, so every
+  // answer was discarded on submit.
+  const department = String(formData.get("department") ?? "").trim();
+  const employmentType = String(formData.get("employmentType") ?? "").trim();
+  const location = String(formData.get("location") ?? "").trim();
+  const arrangement = String(formData.get("arrangement") ?? "").trim();
+  // Stated requirements. Displayed on the role; deliberately absent from
+  // candidate ranking, which reads structured evidence only.
+  const educationLevel = String(formData.get("educationLevel") ?? "").trim();
+  const languages = String(formData.get("languages") ?? "").trim();
 
   if (!title || !careerTrack) throw new Error("Title and career track are required");
 
   const job = await prisma.job.create({
-    data: { employerId: employer.id, title, careerTrack, description: description || null, minExperience, blindReview },
+    data: {
+      employerId: employer.id, title, careerTrack, description: description || null, minExperience, blindReview,
+      department: department || null,
+      employmentType: employmentType || null,
+      location: location || null,
+      arrangement: arrangement || null,
+      educationLevel: educationLevel || null,
+      languages: languages || null,
+    },
   });
 
   const skillEntries = skillsRaw
@@ -74,7 +92,98 @@ export async function createJob(formData: FormData) {
   if(files.some(file=>file instanceof File&&file.size>0)) await storeEvidenceDocuments({files,ownerUserId:employer.userId,contextType:"JOB",contextId:job.id,purpose:"Opportunity requirements and supporting material"});
 
   revalidatePath("/employer/dashboard");
+  // A published role changes skill demand, so it changes what students are told
+  // to learn, what a university reads as its coverage gap, and the shared
+  // workforce figures. That page caches its scan, so it has to be told.
+  revalidatePath("/workforce-intelligence");
+  revalidatePath("/student/jobs");
   redirect(`/employer/jobs/${job.id}`);
+}
+
+/**
+ * Edit a published role.
+ *
+ * Until this existed the only way to correct a requirement was to delete the
+ * role — which takes every application, match and uploaded document with it —
+ * and post it again. Requirements are replaced wholesale rather than diffed,
+ * because the form submits the complete set; applications are untouched, and
+ * their stored match score stays as the historical figure it always was while
+ * every live match recomputes against the new requirements.
+ */
+export async function updateJob(formData: FormData) {
+  const employer = await requireEmployer();
+  const jobId = String(formData.get("jobId") ?? "");
+  const job = await prisma.job.findFirst({ where: { id: jobId, employerId: employer.id } });
+  if (!job) throw new Error("This opportunity no longer exists");
+
+  const title = String(formData.get("title") ?? "").trim();
+  const careerTrack = String(formData.get("careerTrack") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+  const minExperience = Math.max(0, Number(formData.get("minExperience") ?? 0));
+  const department = String(formData.get("department") ?? "").trim();
+  const employmentType = String(formData.get("employmentType") ?? "").trim();
+  const location = String(formData.get("location") ?? "").trim();
+  const arrangement = String(formData.get("arrangement") ?? "").trim();
+  const educationLevel = String(formData.get("educationLevel") ?? "").trim();
+  const languages = String(formData.get("languages") ?? "").trim();
+  if (!title || !careerTrack) throw new Error("Title and career track are required");
+
+  await prisma.job.update({
+    where: { id: job.id },
+    data: {
+      title, careerTrack, description: description || null, minExperience,
+      department: department || null,
+      employmentType: employmentType || null,
+      location: location || null,
+      arrangement: arrangement || null,
+      educationLevel: educationLevel || null,
+      languages: languages || null,
+    },
+  });
+
+  await prisma.jobSkill.deleteMany({ where: { jobId: job.id } });
+  await prisma.jobCertification.deleteMany({ where: { jobId: job.id } });
+
+  async function addSkills(raw: string, requirementType: "ESSENTIAL" | "PREFERRED", fallbackWeight: number) {
+    for (const entry of raw.split(",").map((value) => value.trim()).filter(Boolean)) {
+      const [namePart, weightPart] = entry.split(":").map((value) => value.trim());
+      if (!namePart) continue;
+      const weight = Math.min(3, Math.max(1, Number(weightPart) || fallbackWeight));
+      const skill = await prisma.skill.upsert({ where: { name: namePart }, update: {}, create: { name: namePart, category: "technical" } });
+      await prisma.jobSkill.upsert({
+        where: { jobId_skillId: { jobId: job!.id, skillId: skill.id } },
+        update: { weight, requirementType },
+        create: { jobId: job!.id, skillId: skill.id, weight, requirementType },
+      });
+    }
+  }
+
+  await addSkills(String(formData.get("skills") ?? ""), "ESSENTIAL", 2);
+  await addSkills(String(formData.get("preferredSkills") ?? ""), "PREFERRED", 1);
+
+  for (const name of String(formData.get("certifications") ?? "").split(",").map((value) => value.trim()).filter(Boolean)) {
+    const certification = await prisma.certification.upsert({ where: { name }, update: {}, create: { name } });
+    await prisma.jobCertification.upsert({
+      where: { jobId_certificationId: { jobId: job.id, certificationId: certification.id } },
+      update: {},
+      create: { jobId: job.id, certificationId: certification.id },
+    });
+  }
+
+  await prisma.auditEvent.create({
+    data: {
+      actorUserId: employer.userId,
+      action: "JOB_REQUIREMENTS_UPDATED",
+      entityType: "JOB",
+      entityId: job.id,
+      explanation: `${title}: requirements edited by ${employer.company}.`,
+    },
+  });
+
+  revalidatePath(`/employer/jobs/${job.id}`);
+  revalidatePath("/employer/dashboard");
+  revalidatePath("/student/jobs");
+  revalidatePath("/workforce-intelligence");
 }
 
 export async function closeJob(formData: FormData) {
@@ -86,6 +195,10 @@ export async function closeJob(formData: FormData) {
   });
   revalidatePath("/employer/dashboard");
   revalidatePath(`/employer/jobs/${jobId}`);
+  // A closed role stops being demand everywhere, including the cached
+  // ecosystem scan and the student-facing opportunity list.
+  revalidatePath("/workforce-intelligence");
+  revalidatePath("/student/jobs");
 }
 
 export type JobDeleteState = { error?: string };
@@ -105,17 +218,20 @@ export async function deleteJob(_prev: JobDeleteState, formData: FormData): Prom
 
   // Evidence documents are linked polymorphically, so cascade deletes miss them.
   const documents = await prisma.evidenceDocument.findMany({ where: { contextType: "JOB", contextId: job.id }, select: { id: true, storageKey: true } });
-  if (r2Configured) {
-    await Promise.all(documents.map(async (document) => {
-      // A stored blob that fails to delete must not block removing the role.
-      try { await deletePrivateDocument(document.storageKey); }
-      catch (error) { console.error("Failed to delete job document from R2", document.storageKey, error); }
-    }));
-  }
+  // `deletePrivateDocument` resolves to R2 or to the local fallback, so this no
+  // longer has to know which is in use — skipping it when R2 was unconfigured
+  // left the stored bytes behind after the role was gone.
+  await Promise.all(documents.map(async (document) => {
+    // A stored blob that fails to delete must not block removing the role.
+    try { await deletePrivateDocument(document.storageKey); }
+    catch (error) { console.error("Failed to delete stored job document", document.storageKey, error); }
+  }));
   await prisma.evidenceDocument.deleteMany({ where: { contextType: "JOB", contextId: job.id } });
   await prisma.job.delete({ where: { id: job.id } });
 
   revalidatePath("/employer/dashboard");
+  revalidatePath("/workforce-intelligence");
+  revalidatePath("/student/jobs");
   redirect("/employer/dashboard");
 }
 
@@ -128,6 +244,8 @@ export async function reopenJob(formData: FormData) {
   });
   revalidatePath("/employer/dashboard");
   revalidatePath(`/employer/jobs/${jobId}`);
+  revalidatePath("/workforce-intelligence");
+  revalidatePath("/student/jobs");
 }
 
 export async function updateApplicationStatus(formData: FormData) {
@@ -166,6 +284,7 @@ export async function updateApplicationStatus(formData: FormData) {
   revalidatePath(`/employer/jobs/${jobId}`);
   revalidatePath(`/employer/jobs/${jobId}/candidates/${applicationId}`);
   revalidatePath("/student/applications");
+  revalidatePath("/student/dashboard");
 }
 
 export async function submitFeedback(formData: FormData) {

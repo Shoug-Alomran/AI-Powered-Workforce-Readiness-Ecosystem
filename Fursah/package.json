@@ -24,7 +24,10 @@
     "verify:assistant": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-assistant.ts",
     "verify:evidence": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-evidence.ts",
     "verify:submission": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-submission.ts",
-    "verify": "npm run verify:privacy && npm run verify:assistant && npm run verify:evidence && npm run verify:submission",
+    "verify:chains": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-chains.ts",
+    "verify:assistant:live": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-assistant-live.ts",
+    "cleanup:test-accounts": "tsx --require ./scripts/allow-server-only.cjs scripts/cleanup-test-accounts.ts",
+    "verify": "npm run verify:privacy && npm run verify:assistant && npm run verify:evidence && npm run verify:submission && npm run verify:chains",
     "smoke": "tsx --require ./scripts/allow-server-only.cjs scripts/smoke-test.ts"
   },
   "dependencies": {

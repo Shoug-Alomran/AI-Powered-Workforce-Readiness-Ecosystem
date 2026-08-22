@@ -259,6 +259,20 @@ model Job {
   careerTrack   String
   description   String?
   minExperience Int      @default(0) // months
+
+  // Collected by the role form since it was written. Nullable because roles
+  // created before these columns existed never answered them, and a blank is
+  // reported as "not stated" rather than guessed.
+  department     String?
+  employmentType String? // Full-time | Part-time | Contract
+  location       String?
+  arrangement    String? // on-site | hybrid | remote
+
+  // Stated requirements, shown on the role and never used to rank a candidate.
+  // Ranking reads structured skill, certification and experience evidence only.
+  educationLevel String?
+  languages      String? // comma-separated, as the employer typed them
+
   status        String   @default("open") // open | closed
   blindReview   Boolean  @default(false)
   createdAt     DateTime @default(now())

@@ -35,6 +35,31 @@ export const READINESS_WEIGHTS = {
 /** A requirement is considered met at this proficiency or above. */
 export const PROFICIENCY_MET_THRESHOLD = 70;
 
+/**
+ * The single rule deciding whether a piece of evidence may move a score.
+ *
+ * Certifications have always required human approval, but experience and
+ * portfolio entries were counted whatever their state: a self-reported
+ * internship and an internship whose letter an administrator had inspected
+ * produced exactly the same number, and so did one whose evidence had been
+ * REJECTED. That is two different trust models inside one score, and the
+ * weaker of the two is the one an employer reads.
+ *
+ * There is now one model. Human-approved evidence scores; everything else is
+ * recorded, shown with its state, and reported as present-but-unscored, never
+ * silently dropped and never quietly counted.
+ *
+ * A missing status is treated as unverified for experience and portfolio
+ * entries — the columns have always existed with a default, so an absent value
+ * means a caller did not supply it rather than a record predating verification.
+ * Certifications keep the opposite legacy default, which is deliberate: rows
+ * genuinely do exist from before that column was added, and they are handled
+ * where they are read.
+ */
+export function isScoredEvidence(verificationStatus: string | null | undefined): boolean {
+  return verificationStatus === "APPROVED";
+}
+
 /** Projects counted before the portfolio component is considered complete. */
 export const PORTFOLIO_TARGET_PROJECTS = 3;
 
@@ -74,8 +99,19 @@ export type ReadinessEvidenceCertification = {
 export type ReadinessEvidenceInput = {
   skills: ReadinessEvidenceSkill[];
   certifications: ReadinessEvidenceCertification[];
+  /** Months whose evidence a human approved. Only these are scored. */
   experienceMonths: number;
+  /** Projects whose evidence a human approved. Only these are scored. */
   projectCount: number;
+  /**
+   * Recorded but not human-approved. Never scored; reported so a student can
+   * see the platform received the entry and what it is waiting on.
+   */
+  unverifiedExperienceMonths?: number;
+  unverifiedProjectCount?: number;
+  /** Awaiting a decision, as opposed to never submitted for one. */
+  pendingExperienceMonths?: number;
+  pendingProjectCount?: number;
 };
 
 export type ReadinessSkillMatch = {
@@ -126,6 +162,12 @@ export type ReadinessCoreResult = {
   projectCount: number;
   /** Unverified certifications the student claims, reported but never scored. */
   unverifiedCertifications: string[];
+  /** Recorded experience and portfolio evidence that no human has approved. */
+  unverifiedExperienceMonths: number;
+  unverifiedProjectCount: number;
+  /** The share of the above that is awaiting a decision rather than unsubmitted. */
+  pendingExperienceMonths: number;
+  pendingProjectCount: number;
   explanation: string[];
 };
 
@@ -241,6 +283,9 @@ export function computeCareerReadiness(
   const certificationScore =
     track.certifications.length > 0 ? percentage(matchedCertifications.length, track.certifications.length) : 0;
 
+  // Both figures below are the human-approved subset. The caller separates
+  // approved from unapproved; this module never sees the total and so cannot
+  // accidentally score it.
   const experienceMonths = Math.max(0, Math.round(evidence.experienceMonths));
   const recommendedExperienceMonths = Math.max(0, Math.round(track.recommendedExperienceMonths));
   const experienceScore =
@@ -248,6 +293,11 @@ export function computeCareerReadiness(
 
   const projectCount = Math.max(0, Math.round(evidence.projectCount));
   const portfolioScore = clamp(Math.round((projectCount / PORTFOLIO_TARGET_PROJECTS) * 100));
+
+  const unverifiedExperienceMonths = Math.max(0, Math.round(evidence.unverifiedExperienceMonths ?? 0));
+  const unverifiedProjectCount = Math.max(0, Math.round(evidence.unverifiedProjectCount ?? 0));
+  const pendingExperienceMonths = Math.max(0, Math.round(evidence.pendingExperienceMonths ?? 0));
+  const pendingProjectCount = Math.max(0, Math.round(evidence.pendingProjectCount ?? 0));
 
   const components: ReadinessComponentResult[] = [
     {
@@ -286,7 +336,11 @@ export function computeCareerReadiness(
       percentage: experienceScore,
       earned: experienceMonths,
       possible: recommendedExperienceMonths,
-      detail: `${experienceMonths} of ${recommendedExperienceMonths} recommended month(s) recorded`,
+      detail:
+        `${experienceMonths} of ${recommendedExperienceMonths} recommended month(s) verified` +
+        (unverifiedExperienceMonths > 0
+          ? `; a further ${unverifiedExperienceMonths} month(s) are recorded but not yet human-verified and are not scored`
+          : ""),
       applicable: recommendedExperienceMonths > 0,
     },
     {
@@ -295,7 +349,11 @@ export function computeCareerReadiness(
       percentage: portfolioScore,
       earned: projectCount,
       possible: PORTFOLIO_TARGET_PROJECTS,
-      detail: `${projectCount} project(s) documented of ${PORTFOLIO_TARGET_PROJECTS} recommended`,
+      detail:
+        `${projectCount} verified project(s) of ${PORTFOLIO_TARGET_PROJECTS} recommended` +
+        (unverifiedProjectCount > 0
+          ? `; a further ${unverifiedProjectCount} project(s) are documented but not yet human-verified and are not scored`
+          : ""),
       applicable: true,
     },
   ];
@@ -327,6 +385,27 @@ export function computeCareerReadiness(
     );
   }
 
+  // Saying "0 projects documented" to a student who has documented three would
+  // be false, and leaving it out would be worse: they would see a component at
+  // zero with no explanation of what happened to their evidence.
+  if (unverifiedProjectCount > 0) {
+    explanation.push(
+      `${unverifiedProjectCount} project(s) are on your profile but not human-verified, so they do not contribute to this score` +
+        (pendingProjectCount > 0
+          ? `; ${pendingProjectCount} of those are awaiting an administrator's decision.`
+          : ". Attach evidence and submit them for review to have them counted."),
+    );
+  }
+
+  if (unverifiedExperienceMonths > 0) {
+    explanation.push(
+      `${unverifiedExperienceMonths} month(s) of recorded experience are not human-verified, so they do not contribute to this score` +
+        (pendingExperienceMonths > 0
+          ? `; ${pendingExperienceMonths} of those are awaiting an administrator's decision.`
+          : ". Attach evidence and submit it for review to have it counted."),
+    );
+  }
+
   return {
     trackId: track.id,
     trackLabel: track.label,
@@ -348,6 +427,10 @@ export function computeCareerReadiness(
     recommendedExperienceMonths,
     projectCount,
     unverifiedCertifications,
+    unverifiedExperienceMonths,
+    unverifiedProjectCount,
+    pendingExperienceMonths,
+    pendingProjectCount,
     explanation,
   };
 }
@@ -381,6 +464,93 @@ export function computeCareerReadiness(
  * This is an estimate of what the listed items are worth, not a prediction
  * that the student will complete them, and not a forecast of a future score.
  */
+/**
+ * A change a student could make to their evidence.
+ *
+ * Used to answer "what would this actually be worth?" by running the
+ * authoritative calculation again rather than estimating.
+ */
+export type ReadinessChange =
+  | { kind: "SKILL"; skillId: string | null; name: string; toLevel: number }
+  | { kind: "CERTIFICATION"; certificationId: string | null; name: string }
+  | { kind: "EXPERIENCE_MONTHS"; months: number }
+  | { kind: "PROJECTS"; count: number };
+
+/** Evidence as it would be after the changes. Pure; the input is not mutated. */
+export function applyReadinessChanges(
+  evidence: ReadinessEvidenceInput,
+  changes: readonly ReadinessChange[],
+): ReadinessEvidenceInput {
+  const skills = evidence.skills.map((entry) => ({ ...entry }));
+  const certifications = evidence.certifications.map((entry) => ({ ...entry }));
+  let experienceMonths = evidence.experienceMonths;
+  let projectCount = evidence.projectCount;
+
+  for (const change of changes) {
+    if (change.kind === "SKILL") {
+      const existing = skills.find(
+        (entry) =>
+          (change.skillId !== null && entry.skillId === change.skillId) ||
+          normalizeSkillName(entry.name) === normalizeSkillName(change.name),
+      );
+      if (existing) existing.level = Math.max(existing.level, change.toLevel);
+      else skills.push({ skillId: change.skillId, name: change.name, level: change.toLevel });
+      continue;
+    }
+
+    if (change.kind === "CERTIFICATION") {
+      const existing = certifications.find(
+        (entry) =>
+          (change.certificationId !== null && entry.certificationId === change.certificationId) ||
+          normalizeSkillName(entry.name) === normalizeSkillName(change.name),
+      );
+      // Earning it means a human verifies it; that is what makes it count.
+      if (existing) existing.verified = true;
+      else certifications.push({ certificationId: change.certificationId, name: change.name, verified: true });
+      continue;
+    }
+
+    if (change.kind === "EXPERIENCE_MONTHS") {
+      experienceMonths += Math.max(0, change.months);
+      continue;
+    }
+
+    projectCount += Math.max(0, change.count);
+  }
+
+  return { ...evidence, skills, certifications, experienceMonths, projectCount };
+}
+
+/**
+ * Points a set of changes would actually add, according to the same engine
+ * that produced the current score.
+ *
+ * This replaces a per-recommendation estimate that was derived from a priority
+ * ranking rather than from the score: it read `priorityScore / 5`, and
+ * `priorityScore` folds in employer demand for the skill. A student was
+ * therefore told that a widely-requested skill was worth more *readiness*
+ * points than a rarely-requested one of the same weight, which the readiness
+ * model does not say and cannot support - readiness measures evidence against
+ * a career track and does not consider demand at all.
+ *
+ * Computing the difference directly also makes the totals honest. Component
+ * gains are not additive: two skills inside the same component share one
+ * weighting, so summing their individual values overstates the pair. Passing
+ * every change at once returns what they are jointly worth.
+ *
+ * It is a projection of the model, not a forecast about the student.
+ */
+export function projectedReadinessGain(
+  evidence: ReadinessEvidenceInput,
+  track: ReadinessTrackInput,
+  changes: readonly ReadinessChange[],
+): number {
+  if (changes.length === 0) return 0;
+  const current = computeCareerReadiness(evidence, track).score;
+  const projected = computeCareerReadiness(applyReadinessChanges(evidence, changes), track).score;
+  return Math.max(0, projected - current);
+}
+
 export function readinessHeadroom(currentScore: number, expectedImpacts: readonly number[]): number {
   const remaining = Math.max(0, 100 - currentScore);
   const claimed = expectedImpacts.reduce((total, impact) => total + Math.max(0, impact), 0);

@@ -35,7 +35,7 @@ export default async function SupportAdminPage({ searchParams }: { searchParams:
   };
 
   return <main className="page-shell"><span className="eyebrow">Customer operations</span><h1 className="page-title">Support queue</h1>
-    <p className="muted">Every enquiry and complaint raised from any portal. Ordered by an automated read of how serious and how time-critical each one is — advisory only, and every ticket says why it was ranked where it is.</p>
+    <p className="muted">Every enquiry and complaint raised from any portal. Ordered by an automated read of how serious and how time-critical each one is. It is advisory only, and every ticket says why it was ranked where it is.</p>
 
     <div className="dsr-summary">
       <div className={`dsr-summary-tile${openTickets.length ? " is-active" : ""}`}><span>Open</span><b>{openTickets.length}</b></div>

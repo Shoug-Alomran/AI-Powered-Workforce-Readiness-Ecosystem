@@ -23,16 +23,27 @@ async function main() {
   }
 
   // A brand-new account: no evidence, no career chosen.
+  //
+  // The removal is in a `finally` because this account is a fixture living in
+  // the same database the university cohort figures are computed from: if the
+  // check between creation and deletion ever threw, the fixture would survive
+  // as a student listing no institution, and the next run would leave another.
+  // Test data that outlives its test becomes somebody's analytics.
   const email = `landing-check-${Date.now()}@example.test`;
   const created = await prisma.user.create({
     data: { role: "STUDENT", name: "Brand New", email, student: { create: { targetCareer: "undecided" } } },
     include: { student: true },
   });
-  const newPath = await studentLandingPath(created.student!.id);
-  console.log(`\nBrand-new account            evidence= 0 track=undecided             → ${newPath}`);
 
-  await prisma.user.delete({ where: { id: created.id } });
-  console.log("(temporary account removed)");
+  try {
+    const newPath = await studentLandingPath(created.student!.id);
+    console.log(`\nBrand-new account            evidence= 0 track=undecided             → ${newPath}`);
+  } finally {
+    await prisma.user.delete({ where: { id: created.id } }).catch((error) => {
+      console.error("Failed to remove the temporary account; remove it manually:", email, error);
+    });
+    console.log("(temporary account removed)");
+  }
 
   console.log(`\nExpected order: /student/profile?setup=passport → /student/interests?setup=career → /student/dashboard`);
 }

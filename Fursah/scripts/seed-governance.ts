@@ -82,17 +82,25 @@ async function reset() {
 function contextIdFor(
   contextType: string,
   student: { id: string; certifications: { certificationId: string }[]; projects: { id: string }[]; experiences: { id: string }[] },
-): string {
-  if (contextType === "CERTIFICATION") return student.certifications[0]?.certificationId ?? student.id;
-  if (contextType === "PROJECT") return student.projects[0]?.id ?? student.id;
-  if (contextType === "EXPERIENCE") return student.experiences[0]?.id ?? student.id;
+): string | null {
+  // Returning the student id as a fallback produced a document that was
+  // evidence for nothing: approving it updated no record, so the demo showed a
+  // decision with no consequence — the exact failure this seed exists to
+  // disprove. A student with no such record is skipped instead.
+  if (contextType === "CERTIFICATION") return student.certifications[0]?.certificationId ?? null;
+  if (contextType === "PROJECT") return student.projects[0]?.id ?? null;
+  if (contextType === "EXPERIENCE") return student.experiences[0]?.id ?? null;
   return student.id;
 }
 
 async function seedEvidence() {
+  // The hand-written scenario students come first; the window is wide enough
+  // that a template needing a particular kind of record (a still-pending
+  // credential, say) can find one instead of being skipped.
   const students = await prisma.student.findMany({
     include: { user: true, certifications: { include: { certification: true } }, projects: true, experiences: true },
-    take: 6,
+    orderBy: { createdAt: "asc" },
+    take: 12,
   });
   if (!students.length) {
     console.log("No students found — run the main seed first. Skipping evidence.");
@@ -188,12 +196,34 @@ async function seedEvidence() {
       reviewNote: null,
       ageDays: 1,
       analysis: null,
+      // This template is the "automated analysis failed, a human still has to
+      // decide" case, so it has to sit on a credential that is genuinely still
+      // pending. Attached to an already-approved one, approving it would change
+      // nothing and demonstrate nothing.
+      requiresPendingRecord: true,
     },
   ];
 
   let created = 0;
   for (const [i, template] of templates.entries()) {
-    const student = students[i % students.length];
+    // Pick a student who actually holds the kind of record this document is
+    // evidence for, rather than whoever falls at this index.
+    const wantsPending = "requiresPendingRecord" in template && template.requiresPendingRecord === true;
+    const rotated = students.map((_, offset) => students[(i + offset) % students.length]);
+    const student =
+      rotated.find(
+        (candidate) =>
+          contextIdFor(template.contextType, candidate) !== null &&
+          (!wantsPending || candidate.certifications.some((entry) => entry.verificationStatus === "PENDING")),
+      ) ?? null;
+    if (!student) {
+      console.log(`Skipping ${template.originalName}: no student in the demo window holds a suitable ${template.contextType.toLowerCase()} record to attach it to.`);
+      continue;
+    }
+    const contextId = wantsPending
+      ? student.certifications.find((entry) => entry.verificationStatus === "PENDING")?.certificationId ?? null
+      : contextIdFor(template.contextType, student);
+    if (!contextId) continue;
     const createdAt = daysAgo(template.ageDays);
     const storageKey = `${DEMO_PREFIX}${student.userId}/${template.contextType.toLowerCase()}/${i}-${template.originalName}`;
 
@@ -209,7 +239,7 @@ async function seedEvidence() {
         // document updates the StudentCertification with that certificationId.
         // Seeding the student id here meant an approved document propagated to
         // nothing, so the demo showed an approval that changed no record.
-        contextId: contextIdFor(template.contextType, student),
+        contextId,
         purpose: `Supporting evidence for ${template.contextType.toLowerCase()}`,
         storageKey,
         originalName: template.originalName,
@@ -321,6 +351,11 @@ function take<T>(items: readonly T[], share: number): T[] {
 }
 
 async function seedCohortStudents() {
+  // Decisions are attributed to the real administrator account so the archive
+  // resolves to a name rather than a dangling identifier.
+  const reviewer = await prisma.user.findFirst({ where: { role: "ADMIN" } });
+  const reviewerUserId = reviewer?.id ?? null;
+
   const trackById = new Map(CAREER_TRACKS.map(track => [track.id, track]));
   const skills = await prisma.skill.findMany();
   const skillIdByName = new Map(skills.map(skill => [skill.name.toLowerCase(), skill.id]));
@@ -391,14 +426,60 @@ async function seedCohortStudents() {
           });
         }
 
-        for (const certName of take(track.certifications, profile.certShare)) {
+        for (const [certIndex, certName] of take(track.certifications, profile.certShare).entries()) {
           const certificationId = certIdByName.get(certName.toLowerCase());
           if (!certificationId) continue;
           // Only human-approved evidence counts toward readiness, so seeded
           // certifications are approved explicitly rather than left pending.
+          //
+          // The decision is written out in full — reviewer, note and timestamp
+          // — because approving with a bare status produced an archive of
+          // "Unknown reviewer / Not recorded / No review note" rows: a history
+          // that proves an approval happened but not that anybody made it.
+          // The dates are staggered so the archive reads as an operating
+          // record rather than one bulk action.
+          const reviewedAt = daysAgo(9 + ((index + certIndex) % 40));
           await prisma.studentCertification.create({
-            data: { studentId: student.id, certificationId, verificationStatus: "APPROVED" },
+            data: {
+              studentId: student.id,
+              certificationId,
+              verificationStatus: "APPROVED",
+              reviewNote: `${DEMO_TAG} Certificate checked against the issuer's public verification service; holder name and issue date match the account.`,
+              reviewedAt,
+              reviewedBy: reviewerUserId,
+              earnedAt: reviewedAt,
+            },
           });
+        }
+
+        /*
+         * One rejection per institution, so the archive shows both outcomes.
+         * A rejection is a document-quality decision, not a judgement about
+         * whether the student holds the credential, and the note says so.
+         */
+        if (index === 1) {
+          const rejectedCertName = track.certifications.find(
+            (name) => !take(track.certifications, profile.certShare).includes(name),
+          ) ?? track.certifications[track.certifications.length - 1];
+          const rejectedId = rejectedCertName ? certIdByName.get(rejectedCertName.toLowerCase()) : null;
+          if (rejectedId) {
+            const existing = await prisma.studentCertification.findUnique({
+              where: { studentId_certificationId: { studentId: student.id, certificationId: rejectedId } },
+            });
+            if (!existing) {
+              await prisma.studentCertification.create({
+                data: {
+                  studentId: student.id,
+                  certificationId: rejectedId,
+                  verificationStatus: "REJECTED",
+                  reviewNote: `${DEMO_TAG} The uploaded scan is cropped: the credential number and issue date are not legible. Re-upload a full-page copy and this can be reviewed again.`,
+                  reviewedAt: daysAgo(4),
+                  reviewedBy: reviewerUserId,
+                  earnedAt: daysAgo(6),
+                },
+              });
+            }
+          }
         }
 
         const months = Math.round(track.recommendedExperienceMonths * profile.experienceShare);
@@ -677,6 +758,222 @@ async function seedRightsAndAppeals() {
   return created;
 }
 
+
+/**
+ * Backfill for cohorts seeded before decisions were recorded.
+ *
+ * Earlier runs wrote `verificationStatus: "APPROVED"` and nothing else, so the
+ * certificate archive listed dozens of approvals with no reviewer, no note and
+ * no timestamp — an audit trail that cannot answer who decided, when, or why.
+ * Reruns are cheap because only rows still missing a decision are touched.
+ */
+/**
+ * Brings existing scenario students in line with the one evidence-trust model.
+ *
+ * Experience and portfolio entries used to score whatever their verification
+ * state, so the seed never had a reason to record one and most entries sat at
+ * SELF_REPORTED while still counting. Now that only approved evidence scores,
+ * those same rows would read as a platform where nobody has any verified
+ * experience at all, which is neither true nor a useful demonstration.
+ *
+ * This assigns the states the scenario is meant to show: verified evidence that
+ * scores, pending evidence that is visibly waiting, self-reported evidence the
+ * student can still record, and one rejection that must never contribute.
+ * Idempotent: a row already carrying a decision is left alone.
+ */
+async function repairEvidenceVerificationStates() {
+  const reviewer = await prisma.user.findFirst({ where: { role: "ADMIN" } });
+  if (!reviewer) return 0;
+
+  const decided = {
+    reviewedAt: daysAgo(30),
+    reviewedBy: reviewer.id,
+  };
+
+  /** email -> what each scenario student is meant to demonstrate. */
+  const intent: Record<string, { experience?: string; project?: string }> = {
+    // Strong: a reviewer has seen everything.
+    "sara.aldosari@example.com": { experience: "APPROVED", project: "APPROVED" },
+    // Developing, but with verified evidence behind the score.
+    "abdullah.alghamdi@example.com": { experience: "APPROVED", project: "APPROVED" },
+    "omar.alrashid@example.com": { experience: "APPROVED", project: "APPROVED" },
+    "reem.alanazi@example.com": { experience: "APPROVED", project: "APPROVED" },
+    "maha.alotaibi@example.com": { experience: "APPROVED", project: "APPROVED" },
+    "yousef.alshehri@example.com": { experience: "APPROVED" },
+    // Awaiting a human decision: recorded, shown, and correctly not scored.
+    "khalid.alharbi@example.com": { experience: "PENDING" },
+    "faris.alqahtani@example.com": { experience: "PENDING" },
+    // Rejected evidence, which must never contribute to a score.
+    "lina.alzahrani@example.com": { experience: "REJECTED", project: "APPROVED" },
+    // Left entirely self-reported on purpose: the profile whose readiness moves
+    // when the administrator decides on the certificate in the review queue.
+    "dana.alharbi@example.com": {},
+  };
+
+  let changed = 0;
+
+  for (const [email, wanted] of Object.entries(intent)) {
+    const student = await prisma.student.findFirst({ where: { user: { email } } });
+    if (!student) continue;
+
+    if (wanted.experience) {
+      const note =
+        wanted.experience === "REJECTED"
+          ? `${DEMO_TAG} The uploaded letter is too low-resolution to read the issuing signature, and the stated duration conflicts with the profile entry. A clearer copy can be reviewed again.`
+          : `${DEMO_TAG} Employer letter inspected and the dates confirmed with the organisation.`;
+      const result = await prisma.experience.updateMany({
+        where: { studentId: student.id, verificationStatus: "SELF_REPORTED" },
+        data:
+          wanted.experience === "PENDING"
+            ? { verificationStatus: "PENDING" }
+            : { verificationStatus: wanted.experience, reviewNote: note, ...decided },
+      });
+      changed += result.count;
+    }
+
+    if (wanted.project) {
+      const result = await prisma.project.updateMany({
+        where: { studentId: student.id, verificationStatus: "SELF_REPORTED" },
+        data: {
+          verificationStatus: wanted.project,
+          reviewNote: `${DEMO_TAG} Repository and contribution history inspected; the student's own contribution is identifiable.`,
+          ...decided,
+        },
+      });
+      changed += result.count;
+    }
+  }
+
+  if (changed) console.log(`Evidence verification states aligned: ${changed} record(s)`);
+  return changed;
+}
+
+async function repairUnattributedDecisions() {
+  const reviewer = await prisma.user.findFirst({ where: { role: "ADMIN" } });
+  if (!reviewer) return 0;
+
+  const orphaned = await prisma.studentCertification.findMany({
+    where: { verificationStatus: { in: ["APPROVED", "REJECTED"] }, reviewedAt: null },
+    select: { id: true },
+  });
+
+  for (const [index, row] of orphaned.entries()) {
+    const reviewedAt = daysAgo(9 + (index % 40));
+    await prisma.studentCertification.update({
+      where: { id: row.id },
+      data: {
+        reviewedAt,
+        reviewedBy: reviewer.id,
+        reviewNote:
+          `${DEMO_TAG} Certificate checked against the issuer's public verification service; holder name and issue date match the account.`,
+      },
+    });
+  }
+
+  if (orphaned.length) console.log(`Unattributed certificate decisions repaired: ${orphaned.length}`);
+  return orphaned.length;
+}
+
+/**
+ * A rejected certificate, so the archive shows both outcomes.
+ *
+ * Approval history alone demonstrates only half of the review workflow; a
+ * reviewer needs to be able to see what a refusal looks like and what reason
+ * was given. Rejection here is a document-quality decision — the credential
+ * may well be genuine — and the note says exactly that, because a rejection
+ * note that reads as an accusation is the wrong model to demonstrate.
+ */
+/**
+ * Re-dates checkpoint reviews written before they carried a date.
+ *
+ * A 30-day, a 90-day and a 180-day review of the same placement were all
+ * stamped with the moment the seed ran, so the interface showed three
+ * checkpoints of one hire on a single afternoon. The review dates are the only
+ * thing that makes the outcome loop legible as a sequence.
+ */
+/**
+ * One account with nothing in it.
+ *
+ * Every other demo student arrives fully evidenced, which demonstrates the
+ * platform at its richest and hides the question a reviewer will actually ask:
+ * what does a person see on their first day? This account exists so that can be
+ * shown — no skills, no credentials, no target career, and therefore no
+ * readiness score, no roadmap and no recommendations. The point of the scenario
+ * is that Fursah declines to invent any of them and asks for evidence instead.
+ */
+async function seedEmptyStudentAccount() {
+  const email = "new.starter@example.com";
+  if (await prisma.user.findUnique({ where: { email } })) return 0;
+
+  await prisma.user.create({
+    data: {
+      role: "STUDENT",
+      name: "Noor Al-Faisal",
+      email,
+      student: {
+        create: {
+          targetCareer: "undecided",
+          bio: `${DEMO_TAG} Empty account, kept deliberately bare to demonstrate onboarding and the absence of fabricated intelligence.`,
+        },
+      },
+    },
+  });
+
+  console.log("Empty starter account created: 1");
+  return 1;
+}
+
+async function repairFeedbackDates() {
+  const reviews = await prisma.feedback.findMany({ select: { id: true, checkpointDays: true, createdAt: true } });
+  const sameDay = new Set(reviews.map((review) => review.createdAt.toISOString().slice(0, 10)));
+  if (sameDay.size > 1) return 0;
+
+  for (const review of reviews) {
+    const date = new Date();
+    date.setDate(date.getDate() - (185 - review.checkpointDays));
+    date.setHours(11, 0, 0, 0);
+    await prisma.feedback.update({ where: { id: review.id }, data: { createdAt: date } });
+  }
+
+  if (reviews.length) console.log(`Checkpoint review dates repaired: ${reviews.length}`);
+  return reviews.length;
+}
+
+async function seedRejectedCertification() {
+  const reviewer = await prisma.user.findFirst({ where: { role: "ADMIN" } });
+  if (!reviewer) return 0;
+
+  const existing = await prisma.studentCertification.count({ where: { verificationStatus: "REJECTED" } });
+  if (existing > 0) return 0;
+
+  // A generated cohort member, so no hand-written scenario student is altered.
+  const student = await prisma.student.findFirst({
+    where: { bio: { contains: COHORT_BIO_TAG }, university: "King Saud University" },
+    include: { certifications: true },
+  });
+  if (!student) return 0;
+
+  const heldIds = new Set(student.certifications.map((entry) => entry.certificationId));
+  const certification = await prisma.certification.findFirst({ where: { id: { notIn: [...heldIds] } } });
+  if (!certification) return 0;
+
+  await prisma.studentCertification.create({
+    data: {
+      studentId: student.id,
+      certificationId: certification.id,
+      verificationStatus: "REJECTED",
+      reviewNote:
+        `${DEMO_TAG} The uploaded scan is cropped: the credential number and the issue date are not legible. This is a document-quality decision, not a finding about whether the credential was earned — a full-page copy can be reviewed again.`,
+      reviewedAt: daysAgo(4),
+      reviewedBy: reviewer.id,
+      earnedAt: daysAgo(7),
+    },
+  });
+
+  console.log("Rejected certificate history created: 1");
+  return 1;
+}
+
 async function main() {
   console.log(RESET ? "Removing demo governance data...\n" : "Seeding governance demo data...\n");
   if (RESET) {
@@ -685,6 +982,11 @@ async function main() {
   }
 
   await seedCohortStudents();
+  await repairUnattributedDecisions();
+  await repairEvidenceVerificationStates();
+  await seedRejectedCertification();
+  await repairFeedbackDates();
+  await seedEmptyStudentAccount();
   await seedEvidence();
   await seedMonitoring();
   await seedScenarios();
@@ -711,7 +1013,7 @@ async function main() {
       `  ${target.institution}: ${total} students; tracks below the ${MIN_COHORT} floor and therefore suppressed: ${below.length ? below.join(", ") : "none"}`,
     );
   }
-  console.log("\nNote: seeded evidence rows have no object in R2, so 'download original' will not resolve.");
+  console.log("\nNote: seeded evidence rows have no stored object behind them, so 'download original' will not resolve for those four. Documents uploaded through the app do resolve, via R2 when configured and local disk otherwise.");
 }
 
 main()

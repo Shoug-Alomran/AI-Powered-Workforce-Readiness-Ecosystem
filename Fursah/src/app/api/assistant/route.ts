@@ -100,10 +100,16 @@ export async function POST(request: Request) {
   }
 
   if (!assistantConfigured()) {
+    // The operator needs the variable names; the person on the page does not.
+    // Naming environment variables in a user-facing string turns a deployment
+    // detail into something a visitor reads as an error they caused.
+    console.error(
+      "Assistant is not configured: ASSISTANT_AI_URL is required (the secret falls back to EVIDENCE_AI_SECRET unless ASSISTANT_AI_SECRET is set).",
+    );
     return NextResponse.json(
       {
         error:
-          "The assistant is not configured on this environment. ASSISTANT_AI_URL is required (the secret is reused from EVIDENCE_AI_SECRET unless ASSISTANT_AI_SECRET is set).",
+          "The assistant is not available on this environment. Every figure it would quote is already shown on the page itself.",
       },
       { status: 503 },
     );
