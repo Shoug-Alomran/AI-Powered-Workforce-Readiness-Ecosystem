@@ -8,6 +8,18 @@ const nextConfig: NextConfig = {
   cacheComponents: true,
   experimental: {
     serverActions: { bodySizeLimit: "30mb" },
+    // Next writes `.next/lock` while building and deliberately leaks its file
+    // descriptor, leaving the file to be removed when the build process exits.
+    // On a build machine that is a race against whatever collects the output
+    // directory next: Vercel enumerated `.next`, saw `lock`, and by the time it
+    // called lstat the exiting build had taken the file away, which surfaces as
+    // ENOENT on `.next/lock` reported after "Build Completed" even though the
+    // build itself succeeded.
+    //
+    // The lock exists to stop two concurrent `next build` runs sharing one
+    // directory, which cannot happen in a single-purpose build container. Not
+    // creating it removes the race rather than hoping to win it.
+    lockDistDir: false,
     // Portal routes intentionally block on the viewer's session and database
     // record. Validate instant navigation only for routes that explicitly opt in.
     instantInsights: { validationLevel: "manual-warning" },

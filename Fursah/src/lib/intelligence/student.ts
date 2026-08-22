@@ -500,7 +500,16 @@ export async function getStudentIntelligence(
                 reasons,
             };
         })
-        .sort((a, b) => b.recommendationScore - a.recommendationScore);
+        // Ties are broken by track label so the order is a property of the
+        // data rather than of the row order the database happened to return.
+        // Two careers on the same score used to rank differently on SQLite and
+        // on Firestore, because JavaScript's sort is stable and simply kept
+        // whatever order the rows arrived in.
+        .sort(
+            (a, b) =>
+                b.recommendationScore - a.recommendationScore ||
+                a.careerTrackLabel.localeCompare(b.careerTrackLabel)
+        );
 
     const currentCareer =
         careerRecommendations.find(
@@ -801,7 +810,16 @@ export async function getStudentIntelligence(
             seen.add(key);
             return true;
         })
-        .sort((a, b) => b.recommendationScore - a.recommendationScore);
+        // Ties are broken by track label so the order is a property of the
+        // data rather than of the row order the database happened to return.
+        // Two careers on the same score used to rank differently on SQLite and
+        // on Firestore, because JavaScript's sort is stable and simply kept
+        // whatever order the rows arrived in.
+        .sort(
+            (a, b) =>
+                b.recommendationScore - a.recommendationScore ||
+                a.careerTrackLabel.localeCompare(b.careerTrackLabel)
+        );
 
     // Every recommended change applied at once. Summing the per-item figures
     // would overstate the total: two skill gaps inside the same component share

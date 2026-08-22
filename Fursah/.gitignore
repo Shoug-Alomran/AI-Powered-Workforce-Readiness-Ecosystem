@@ -65,3 +65,7 @@ next-env.d.ts
 * [0-9].css
 *.d [0-9].ts
 .data/
+
+# Firestore emulator debug output
+firestore-debug.log
+firebase-debug.log

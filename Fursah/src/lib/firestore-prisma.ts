@@ -248,8 +248,36 @@ export function createFirestorePrisma(metadataClient: PrismaClient): PrismaClien
     const include = args?.include as Row | undefined;
     const select = args?.select as Row | undefined;
     const result: Row = select ? {} : { ...row };
-    if (select) for (const [key, config] of Object.entries(select)) if (config === true && key in row) result[key] = row[key];
-    const relations = { ...(include ?? {}), ...Object.fromEntries(Object.entries(select ?? {}).filter(([, value]) => value && typeof value === "object")) };
+
+    /*
+     * A relation can be requested from `select` two ways: `skills: { include }`
+     * and, just as validly, `experiences: true`. Only the first was treated as
+     * a relation here; the second fell through to the scalar copy below, found
+     * no such key on the stored document, and produced `undefined` rather than
+     * an array. Every caller then did `.filter` on it and threw.
+     *
+     * `select: { experiences: true, projects: true }` is exactly the shape the
+     * cohort rollup uses, so on Firestore the university readiness and analytics
+     * pages - the privacy-sensitive ones - failed outright.
+     */
+    const isRelationKey = (key: string) =>
+      model.fields.some((item) => item.name === key && item.kind === "object");
+
+    if (select) {
+      for (const [key, config] of Object.entries(select)) {
+        if (config !== true) continue;
+        // Relations are resolved below; only scalars are copied off the row.
+        if (isRelationKey(key)) continue;
+        if (key in row) result[key] = row[key];
+      }
+    }
+
+    const relations = {
+      ...(include ?? {}),
+      ...Object.fromEntries(
+        Object.entries(select ?? {}).filter(([key, value]) => Boolean(value) && isRelationKey(key)),
+      ),
+    };
     for (const [key, config] of Object.entries(relations)) {
       if (key === "_count") continue;
       const field = model.fields.find((item) => item.name === key && item.kind === "object");
