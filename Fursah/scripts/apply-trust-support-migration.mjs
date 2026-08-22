@@ -4,27 +4,63 @@ import { createClient } from "@libsql/client";
 const url = process.env.DATABASE_URL;
 const authToken = process.env.TURSO_AUTH_TOKEN;
 
-// This migration only applies to the hosted libsql (Turso) database. Local and
-// CI builds run against a file-backed SQLite database whose schema comes from
-// `prisma migrate deploy`, so there is nothing to do and the build must not
-// fail here.
-if (!url || !url.startsWith("libsql:")) {
+/*
+ * Runs against whatever DATABASE_URL points at, hosted or file-backed.
+ *
+ * It used to return early for anything that was not a `libsql:` URL, on the
+ * reasoning that file-backed databases get their schema from
+ * `prisma migrate deploy`. That reasoning is sound and the consequence was not:
+ * it meant no local run and no CI run ever executed this file, so the only
+ * environment that exercised it was production, on a deploy. A column added to
+ * the schema could therefore reach production having never once been through
+ * the runner that is supposed to add it.
+ *
+ * Every step below is guarded on the current shape of the table, so running it
+ * against an already-migrated database does nothing at all. Being a no-op is
+ * exactly what makes it safe to put on the default build path, which is where
+ * it now lives: Vercel invokes `npm run build`, not `build:production`, so the
+ * migration step was never reached on a deploy either.
+ */
+if (!url) {
   console.log(
-    "Skipping trust/support migration: DATABASE_URL is not a libsql URL."
+    "Skipping schema migration: DATABASE_URL is not set."
   );
   process.exit(0);
 }
 
-if (!authToken) {
+const isHosted = url.startsWith("libsql:");
+
+if (isHosted && !authToken) {
   throw new Error(
-    "TURSO_AUTH_TOKEN is required"
+    "TURSO_AUTH_TOKEN is required for a libsql DATABASE_URL"
   );
 }
 
-const client = createClient({
-  url,
-  authToken,
-});
+const client = createClient(
+  isHosted ? { url, authToken } : { url }
+);
+
+/*
+ * A database with no tables yet is not a database this script can migrate: the
+ * schema is created by `prisma migrate deploy`, which has not run. Adding
+ * columns to a table that does not exist would fail the build for a state that
+ * is simply "not ready yet", so it stops instead.
+ */
+const bootstrapped = await client.execute(
+  "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'Job'"
+);
+
+if (bootstrapped.rows.length === 0) {
+  console.log(
+    "Skipping schema migration: no schema present yet (run `prisma migrate deploy` first)."
+  );
+  client.close();
+  process.exit(0);
+}
+
+console.log(
+  `Checking schema against ${isHosted ? "the hosted database" : url}...`
+);
 
 try {
   // =========================================================
@@ -338,76 +374,69 @@ try {
   // =========================================================
   // The role form has always collected department, employment type, location,
   // work arrangement, education level and languages. None of them had a column,
-  // so every answer was discarded on submit. Additive and nullable: existing
-  // roles keep working and simply carry no detail.
+  // so every answer was discarded on submit. All additive and nullable, so
+  // existing roles keep working and simply carry no detail.
+  //
+  // Each column is checked and added on its own rather than the whole set being
+  // gated behind one sentinel column. A partially-applied table is a real state
+  // to be in - an interrupted run, or a column added to the file later - and an
+  // all-or-nothing guard handles it in the worst possible way: it either skips
+  // the columns that are genuinely missing, or fails on "duplicate column name"
+  // for the ones already there. Per-column is idempotent from any starting
+  // state, which is the only property that matters for a migration that runs on
+  // every deploy.
 
-  const jobColumns = await client.execute(
-    "PRAGMA table_info('Job')"
+  const jobDetailColumns = [
+    ["department", "TEXT"],
+    ["employmentType", "TEXT"],
+    ["location", "TEXT"],
+    ["arrangement", "TEXT"],
+    ["educationLevel", "TEXT"],
+    ["languages", "TEXT"],
+  ];
+
+  const existingJobColumns = new Set(
+    (
+      await client.execute(
+        "PRAGMA table_info('Job')"
+      )
+    ).rows.map((row) => row.name)
   );
 
-  const hasPostingDetails = jobColumns.rows.some(
-    (row) => row.name === "arrangement"
-  );
+  const addedJobColumns = [];
 
-  if (!hasPostingDetails) {
-    console.log(
-      "Applying job posting detail migration..."
+  for (const [column, type] of jobDetailColumns) {
+    if (existingJobColumns.has(column)) {
+      continue;
+    }
+
+    // Identifiers come from the fixed list above, never from input.
+    await client.execute(
+      `ALTER TABLE "Job" ADD COLUMN "${column}" ${type}`
     );
 
-    const jobDetailMigration = await readFile(
-      new URL(
-        "../prisma/migrations/20260823090000_job_posting_details/migration.sql",
-        import.meta.url
-      ),
-      "utf8"
-    );
-
-    await client.executeMultiple(jobDetailMigration);
-
-    console.log(
-      "Job posting detail migration applied."
-    );
+    addedJobColumns.push(column);
   }
 
-  const hasEducationLevel = (
-    await client.execute("PRAGMA table_info('Job')")
-  ).rows.some((row) => row.name === "educationLevel");
-
-  if (!hasEducationLevel) {
+  if (addedJobColumns.length > 0) {
     console.log(
-      "Applying job education/language migration..."
-    );
-
-    const educationMigration = await readFile(
-      new URL(
-        "../prisma/migrations/20260823140000_job_education_languages/migration.sql",
-        import.meta.url
-      ),
-      "utf8"
-    );
-
-    await client.executeMultiple(educationMigration);
-
-    console.log(
-      "Job education/language migration applied."
+      `Job posting detail migration applied: added ${addedJobColumns.join(", ")}.`
     );
   }
 
   // Verification: every column the application writes must now exist, so a
-  // deploy fails loudly here rather than at the first employer who posts a role.
+  // deploy fails here with a readable message rather than part way through
+  // prerendering with "no such column: main.Job.department".
   const jobCheck = await client.execute(
     "PRAGMA table_info('Job')"
   );
 
-  for (const column of [
-    "department",
-    "employmentType",
-    "location",
-    "arrangement",
-    "educationLevel",
-    "languages",
-  ]) {
-    if (!jobCheck.rows.some((row) => row.name === column)) {
+  for (const [column] of jobDetailColumns) {
+    if (
+      !jobCheck.rows.some(
+        (row) => row.name === column
+      )
+    ) {
       throw new Error(
         `Job posting detail migration verification failed: ${column} column missing`
       );

@@ -3,12 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "engines": {
-    "node": ">=20.19.0 <21"
+    "node": ">=24.0.0 <25"
   },
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "next build --webpack",
-    "build:production": "npm run db:migrate:production && npm run build",
+    "build": "npm run db:migrate:production && next build --webpack",
+    "build:production": "npm run build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint && npm run check:design && npm run check:content",
