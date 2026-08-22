@@ -41,7 +41,7 @@ export const graduateTrend: { earlier: Stat; latest: Stat } = {
     display: "238,603",
     value: 238_603,
     period: "2023",
-    source: "Council of Universities Affairs (مجلس شؤون الجامعات)",
+    source: "Council of Universities Affairs",
     sourceUrl: "https://www.cua.gov.sa/",
     confidence: "reported",
     note: "Bachelor 170,503 · associate diploma 40,378 · master's 12,467 · higher diploma 10,263 · partner diploma 3,619 · doctorate 1,373.",

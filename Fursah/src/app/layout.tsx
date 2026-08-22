@@ -5,7 +5,6 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import PreferencesControls from "@/components/PreferencesControls";
-import AccessibleViewControls from "@/components/AccessibleViewControls";
 import ContextualWalkthrough from "@/components/ContextualWalkthrough";
 import { getCurrentUser } from "@/lib/session";
 
@@ -18,7 +17,7 @@ export const metadata: Metadata = {
     description: "Connecting Saudi talent, education and employers through explainable AI.",
     siteName: "Fursah",
     type: "website",
-    images: [{ url: "/banner.jpg", width: 1448, height: 1086, alt: "Fursah — AI-Powered Workforce Readiness Ecosystem for Saudi Arabia" }],
+    images: [{ url: "/banner.jpg", width: 1448, height: 1086, alt: "Fursah: AI-Powered Workforce Readiness Ecosystem for Saudi Arabia" }],
   },
   twitter: {
     card: "summary_large_image",
@@ -69,7 +68,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col"><Suspense fallback={<NavbarPlaceholder />}><Navbar /></Suspense>{children}<Suspense fallback={null}><Walkthrough /></Suspense><Suspense fallback={null}><AccessibleViewControls /></Suspense><PreferencesControls /><Analytics /><SpeedInsights /></body>
+      <body className="min-h-full flex flex-col"><Suspense fallback={<NavbarPlaceholder />}><Navbar /></Suspense>{children}<Suspense fallback={null}><Walkthrough /></Suspense><PreferencesControls /><Analytics /><SpeedInsights /></body>
     </html>
   );
 }

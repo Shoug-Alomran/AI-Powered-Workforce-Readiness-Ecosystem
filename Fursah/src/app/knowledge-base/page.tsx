@@ -7,7 +7,7 @@ import { KNOWLEDGE_AREAS, KNOWLEDGE_BASE, knowledgeByArea } from "@/lib/knowledg
 export const metadata: Metadata = {
   title: "Knowledge Base | Fursah",
   description:
-    "The authentic public documents Fursah is built on: ITU Recommendations and reports, Saudi regulatory instruments, national statistics and international frameworks, each linked to the original and to the code that depends on it.",
+    "The public standards, regulations, statistics, and governance documents that inform Fursah.",
 };
 
 const AREA_ID: Record<string, string> = {
@@ -20,15 +20,15 @@ const AREA_ID: Record<string, string> = {
 
 const AREA_NOTE: Record<string, string> = {
   "ITU standards and reports":
-    "The material this project is assessed against. Y.3172 clause 8.1 supplies the architecture vocabulary; the AI Ready Report supplies the readiness dimensions and the gap taxonomy.",
+    "These documents provide the architecture, readiness dimensions, and gap framework used to assess Fursah.",
   "Saudi regulatory instruments":
-    "Binding national instruments. These are the documents that decide what Fursah is permitted to collect, who may see it, and what a person can require of us.",
+    "These national instruments define what Fursah may collect, who may access it, and the rights available to each person.",
   "National strategy and statistics":
-    "The evidence base for the problem statement. Every figure on the National Impact page traces back to one of these, dated and attributed.",
+    "These sources support the problem statement. Each figure on the National Impact page includes a date and source.",
   "International frameworks":
-    "Voluntary frameworks the governance design follows, used to structure risk assessment and management rather than to claim certification.",
+    "These voluntary frameworks guide risk assessment and management. Their use does not imply certification.",
   "Fursah governance documents":
-    "Written by this project rather than cited by it, and listed here because they are the assessment a reader needs in order to check the claims the other documents are used to support.",
+    "These project documents explain how Fursah applies and reviews the external sources listed here.",
 };
 
 export default function KnowledgeBasePage() {
@@ -42,7 +42,7 @@ export default function KnowledgeBasePage() {
       <section className="imp-hero">
         <span className="imp-eyebrow">Knowledge base</span>
         <h1 className="imp-title">The documents this is built on.</h1>
-        <p className="imp-lead">Every instrument, standard and statistical source Fursah depends on, linked to the original publication. The rule for inclusion is that a document must be publicly checkable and actually load-bearing: a standard we merely admire is not on this list. Where a document constrains code, the file it constrains is named.</p>
+        <p className="imp-lead">This register lists the standards, regulations, and statistical sources used by Fursah. Each entry links to the original publication. When a source informs the code, the relevant file is also listed.</p>
         <div className="imp-strip">
           <article><b>{KNOWLEDGE_BASE.length}</b><small>Public documents, each linked to its publisher</small></article>
           <article><b>{withCode}</b><small>Traced to the specific file in this repository that depends on them</small></article>
@@ -63,34 +63,37 @@ export default function KnowledgeBasePage() {
           <p>{AREA_NOTE[area]}</p>
         </header>
         <div className="kb-list">
-          {knowledgeByArea(area).map(entry => <article className="kb-entry" key={entry.id}>
+          {knowledgeByArea(area).map((entry, index) => {
+            const concernsAi = /\b(?:AI|artificial intelligence|machine learning|ML)\b/i.test(`${entry.title} ${entry.about}`);
+            return <article className={`kb-entry${concernsAi ? " kb-entry-ai" : ""}`} key={entry.id}>
             <div className="kb-head">
-              <div>
+              <span className="kb-index" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+              <div className="kb-identity">
                 <h3>{entry.title}</h3>
-                <p className="kb-meta">{entry.publisher} · {entry.edition}{entry.language ? ` · published in ${entry.language}` : ""}</p>
+                <div className="kb-meta"><span>{entry.publisher}</span><span>{entry.edition}</span>{entry.language && <span>{entry.language}</span>}{concernsAi && <span className="kb-ai-tag">AI related</span>}</div>
               </div>
-              <a href={entry.url} target="_blank" rel="noreferrer">Open original ↗</a>
+              <a className="kb-source-link" href={entry.url} target="_blank" rel="noreferrer">View source <span aria-hidden="true">↗</span></a>
             </div>
             <div className="kb-body">
-              <div><span className="imp-kicker">What it is</span><p>{entry.about}</p></div>
-              <div><span className="imp-kicker">What depends on it</span><p>{entry.usedFor}</p></div>
+              <div className="kb-summary"><span className="imp-kicker">In brief</span><p>{entry.about}</p></div>
+              <div className="kb-use"><span className="imp-kicker">How Fursah uses it</span><p>{entry.usedFor}</p></div>
             </div>
-            {entry.appliedIn && <ul className="std-files">{entry.appliedIn.map(file => <li key={file}><code>{file}</code></li>)}</ul>}
-          </article>)}
+            {entry.appliedIn && <div className="kb-implementation"><span>Implemented in</span><ul className="std-files">{entry.appliedIn.map(file => <li key={file}><code>{file}</code></li>)}</ul></div>}
+          </article>})}
         </div>
       </section>)}
 
       <section className="imp-section">
         <header>
           <span className="imp-kicker">A note on sourcing</span>
-          <h2>Where a figure came through a second party, both are named</h2>
-          <p>Some national figures are published by an authority and carried by a news outlet before appearing in a downloadable bulletin. Where that is the case, the National Impact page names the authority and the outlet, and marks the figure as reported rather than primary, so the chain can be followed back. Documents issued in Arabic are cited in Arabic; no figure here is translated from a secondary English summary without the original being linked.</p>
+          <h2>Each source is clearly identified</h2>
+          <p>Some national figures reach the public through a news outlet before the official bulletin is available. In these cases, the National Impact page names both the authority and the outlet. It also labels the figure as reported. Arabic documents link to the original publication.</p>
         </header>
       </section>
 
       <section className="imp-end">
         <h2>See how these documents shaped the build.</h2>
-        <p>The standards page maps Fursah onto ITU-T Y.3172 clause 8.1 node by node, self-assesses against the 13 AI Readiness dimensions, and sets out the policy gaps this project identified.</p>
+        <p>The standards page maps Fursah to ITU-T Y.3172 clause 8.1. It also assesses the platform against 13 AI readiness dimensions and records identified policy gaps.</p>
         <div><Link href="/standards">Standards conformance</Link><Link href="/impact" className="secondary">National impact</Link></div>
       </section>
     </div>

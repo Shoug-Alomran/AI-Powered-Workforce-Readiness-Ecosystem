@@ -48,7 +48,7 @@ export default function PipelineDiagram() {
         Node names and their order are those defined in ITU-T Y.3172 clause 8.1; the text beneath
         each names what Fursah runs at that node and the policy governing it. The M node is split:
         the deterministic engine produces every score that affects a person, and the language model
-        only reads documents and explains results — it never ranks anyone.
+        only reads documents and explains results. It never ranks anyone.
       </figcaption>
     </figure>
   );

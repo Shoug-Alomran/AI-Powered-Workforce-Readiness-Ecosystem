@@ -67,8 +67,8 @@ export default async function UniversityActionsPage() {
     </section>
     <section className="cap-metrics">
       <div><span className="blue">⌁</span><i>{intelligence.openRoleCount} roles</i><small>Demand coverage</small><strong>{intelligence.weightedDemandCoverage}%</strong><em>of weighted employer demand taught</em></div>
-      <div><span className="violet">♧</span><i>{cohort.reportable ? "reported" : "withheld"}</i><small>Students in cohort</small><strong>{cohort.reportable ? cohort.students : "—"}</strong><em>{cohort.reportable ? `avg readiness ${cohort.averageScore}/100` : `withheld below ${MIN_COHORT} students`}</em></div>
-      <div><span className="orange-icon">◷</span><i className="delay">not recorded</i><small>Average completion time</small><strong>—</strong><em>No initiative completion durations are stored</em></div>
+      <div><span className="violet">♧</span><i>{cohort.reportable ? "reported" : "withheld"}</i><small>Students in cohort</small><strong>{cohort.reportable ? cohort.students : "Withheld"}</strong><em>{cohort.reportable ? `avg readiness ${cohort.averageScore}/100` : `withheld below ${MIN_COHORT} students`}</em></div>
+      <div><span className="orange-icon">◷</span><i className="delay">not recorded</i><small>Average completion time</small><strong>Not available</strong><em>No initiative completion durations are stored</em></div>
       <div><span className="green-icon">◎</span><i>{intelligence.compoundedGaps.length} compounded</i><small>Curriculum gaps</small><strong>{intelligence.gaps.length}</strong><em>Requested by employers, untaught here</em></div>
     </section>
     <section className="cap-lower">

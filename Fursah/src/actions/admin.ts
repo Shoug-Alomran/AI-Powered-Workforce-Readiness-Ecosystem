@@ -25,6 +25,15 @@ export async function reviewCertification(formData: FormData) {
     where: { ownerUserId: submission.student.user.id, contextType: "CERTIFICATION", contextId: submission.certificationId },
     data: { reviewStatus: decision, reviewNote, reviewedAt: new Date(), reviewedBy: ctx.user.id },
   });
+  await prisma.auditEvent.create({
+    data: {
+      actorUserId: ctx.user.id,
+      action: `CERTIFICATE_${decision}`,
+      entityType: "STUDENT_CERTIFICATION",
+      entityId: submission.id,
+      explanation: `${submission.certification.name} for ${submission.student.user.name}: ${reviewNote}`,
+    },
+  });
   if (firebaseAdminConfigured) {
     try {
       await getFirebaseAdminDb().collection("users").doc(submission.student.user.id).collection("certifications").doc(id).set({
@@ -34,7 +43,7 @@ export async function reviewCertification(formData: FormData) {
       console.error("Firestore mirror of certification review failed", error);
     }
   }
-  revalidatePath("/admin/dashboard"); revalidatePath("/student/profile"); revalidatePath("/student/dashboard");
+  revalidatePath("/admin/dashboard"); revalidatePath("/admin/governance"); revalidatePath("/student/profile"); revalidatePath("/student/dashboard");
 }
 
 export async function reviewEmployer(formData: FormData) {

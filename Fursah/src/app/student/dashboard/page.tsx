@@ -196,7 +196,7 @@ export default async function StudentDashboard() {
   const nextActions = [
     ...(topGap ? [{ title: `Build evidence for ${topGap.skillName}`, reason: topGap.openRoleCount > 0 ? `${topGap.openRoleCount} open role${topGap.openRoleCount === 1 ? "" : "s"} currently request this skill.` : `This is a high-impact gap for ${track.label}.`, href: "/student/roadmap", action: "Open recommended pathway", priority: "high" as const, meta: "Readiness impact shown before acceptance" }] : []),
     ...(student.certifications.some(item => item.verificationStatus !== "APPROVED") ? [{ title: "Complete evidence verification", reason: "Unverified certifications remain visible but cannot contribute to your readiness score.", href: "/student/evidence", action: "Review evidence status", priority: "high" as const, meta: "Human approval required" }] : []),
-    ...(matches[0] ? [{ title: `Review your closest opportunity`, reason: `${matches[0].job.title} currently matches ${matches[0].match.score}% of your available evidence.`, href: "/student/jobs", action: "Inspect requirements", priority: "medium" as const, meta: "Advisory match—not an employment prediction" }] : []),
+    ...(matches[0] ? [{ title: `Review your closest opportunity`, reason: `${matches[0].job.title} currently matches ${matches[0].match.score}% of your available evidence.`, href: "/student/jobs", action: "Inspect requirements", priority: "medium" as const, meta: "Advisory match, not an employment prediction" }] : []),
   ].slice(0, 3);
 
   return (
@@ -522,6 +522,7 @@ export default async function StudentDashboard() {
             <Link
               className="link"
               href="/student/roadmap"
+              aria-label="View roadmap"
             >
               View roadmap
             </Link>
@@ -926,9 +927,11 @@ export default async function StudentDashboard() {
               );
 
               return (
-                <div
-                  className="data-row"
+                <Link
+                  className="data-row student-feedback-link"
                   key={feedback.id}
+                  href={`/student/jobs?job=${feedback.job.id}&application=submitted#feedback-${feedback.id}`}
+                  aria-label={`View ${feedback.checkpointDays}-day feedback for ${feedback.job.title}`}
                 >
                   <div>
                     <strong>
@@ -936,17 +939,15 @@ export default async function StudentDashboard() {
                     </strong>
 
                     <div className="muted">
-                      {feedback.job.employer.company}
+                      {feedback.job.employer.company} · {feedback.checkpointDays}-day review · {feedback.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                       {feedback.notes
                         ? ` · ${feedback.notes}`
                         : ""}
                     </div>
                   </div>
 
-                  <span className="pill">
-                    {average}% overall
-                  </span>
-                </div>
+                  <span className="student-feedback-link-result"><b>{average}% overall</b><small>View full review →</small></span>
+                </Link>
               );
             })
           ) : (

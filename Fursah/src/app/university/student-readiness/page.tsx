@@ -95,7 +95,7 @@ export default async function StudentReadiness() {
               </>
             ) : (
               <>
-                <div className="metric">—</div>
+                <div className="metric">Withheld</div>
                 <SuppressedFigure />
               </>
             );

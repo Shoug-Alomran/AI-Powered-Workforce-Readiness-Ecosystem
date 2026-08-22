@@ -257,13 +257,13 @@ export const standards: Record<string, string> = {
   // --- /knowledge-base: document titles ------------------------------------
   "Architectural framework for machine learning in future networks including IMT-2020":
     "الإطار المعماري لتعلُّم الآلة في الشبكات المستقبلية بما فيها IMT-2020",
-  "AI Ready — Analysis Towards a Standardized Readiness Framework, Report 2.0":
-    "الجاهزية للذكاء الاصطناعي — تحليل نحو إطار جاهزية معياري، التقرير 2.0",
+  "AI Ready: Analysis Towards a Standardized Readiness Framework, Report 2.0":
+    "الجاهزية للذكاء الاصطناعي: تحليل نحو إطار جاهزية معياري، التقرير 2.0",
   "Architectural framework for machine learning sandbox in future networks including IMT-2020":
     "الإطار المعماري للبيئة المعزولة لتعلُّم الآلة في الشبكات المستقبلية بما فيها IMT-2020",
   "Machine learning marketplace integration in future networks including IMT-2020":
     "تكامل سوق تعلُّم الآلة في الشبكات المستقبلية بما فيها IMT-2020",
-  "Personal Data Protection Law (نظام حماية البيانات الشخصية)": "نظام حماية البيانات الشخصية",
+  "Personal Data Protection Law": "نظام حماية البيانات الشخصية",
   "AI Ethics Principles": "مبادئ أخلاقيات الذكاء الاصطناعي",
   "National Data Management and Personal Data Protection Standards":
     "معايير إدارة البيانات الوطنية وحماية البيانات الشخصية",
@@ -273,7 +273,7 @@ export const standards: Record<string, string> = {
   "Saudi Vision 2030 and the Human Capability Development Program":
     "رؤية السعودية 2030 وبرنامج تنمية القدرات البشرية",
   "Labour Force Survey": "مسح القوى العاملة",
-  "Graduate statistics (إحصاءات الخريجين)": "إحصاءات الخريجين",
+  "Graduate statistics": "إحصاءات الخريجين",
   "Global Education Monitoring Report — Saudi Arabia country case study":
     "التقرير العالمي لرصد التعليم — دراسة حالة المملكة العربية السعودية",
   "ISO/IEC 42001:2023 — Artificial intelligence management system":
@@ -363,14 +363,12 @@ export const standards: Record<string, string> = {
   "ITU-T Study Group 13": "لجنة الدراسات 13 بقطاع تقييس الاتصالات",
   "ITU": "الاتحاد الدولي للاتصالات",
   "Kingdom of Saudi Arabia": "المملكة العربية السعودية",
-  "SDAIA — Saudi Data and Artificial Intelligence Authority":
-    "سدايا — الهيئة السعودية للبيانات والذكاء الاصطناعي",
-  "NDMO — National Data Management Office, SDAIA":
-    "مكتب إدارة البيانات الوطنية — سدايا",
-  "NCA — National Cybersecurity Authority": "الهيئة الوطنية للأمن السيبراني",
-  "DGA — Digital Government Authority": "هيئة الحكومة الرقمية",
-  "GASTAT — General Authority for Statistics (الهيئة العامة للإحصاء)": "الهيئة العامة للإحصاء",
-  "Council of Universities Affairs (مجلس شؤون الجامعات)": "مجلس شؤون الجامعات",
+  "SDAIA, Saudi Data and Artificial Intelligence Authority": "سدايا، الهيئة السعودية للبيانات والذكاء الاصطناعي",
+  "NDMO, National Data Management Office at SDAIA": "مكتب إدارة البيانات الوطنية، سدايا",
+  "NCA, National Cybersecurity Authority": "الهيئة الوطنية للأمن السيبراني",
+  "DGA, Digital Government Authority": "هيئة الحكومة الرقمية",
+  "GASTAT, General Authority for Statistics": "الهيئة العامة للإحصاء",
+  "Council of Universities Affairs": "مجلس شؤون الجامعات",
   "UNESCO": "اليونسكو",
   "ISO/IEC": "المنظمة الدولية للتقييس واللجنة الكهرتقنية الدولية",
   "Royal Decree M/19 of 1443H, as amended by M/148, with Implementing Regulations":

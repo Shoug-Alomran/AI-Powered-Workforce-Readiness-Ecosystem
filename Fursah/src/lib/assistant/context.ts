@@ -360,7 +360,7 @@ export async function buildUniversityContext(universityId: string): Promise<Assi
       privacy: {
         minimumCohortSize: MIN_COHORT,
         cohortReportable: cohort.reportable,
-        note: `All student figures are aggregates. No individual student record is available on this surface. Suppression applies to every reporting group, not only the cohort total: any band, career track, skill gap or certification gap holding fewer than ${MIN_COHORT} students is withheld and appears below as {withheld: true}. A withheld group is not zero — its value is unknown to you. Say it is withheld for privacy; never estimate it.`,
+        note: `All student figures are aggregates. No individual student record is available on this surface. Suppression applies to every reporting group, not only the cohort total. Any band, career track, skill gap or certification gap holding fewer than ${MIN_COHORT} students is withheld and appears below as {withheld: true}. A withheld group is not zero. Its value is unknown to you. Say it is withheld for privacy; never estimate it.`,
         suppressedGroupCount: cohort.suppressedGroupCount,
       },
 

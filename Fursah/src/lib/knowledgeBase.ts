@@ -57,21 +57,21 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
     edition: "Recommendation ITU-T Y.3172 (06/2019)",
     url: "https://www.itu.int/rec/T-REC-Y.3172-201906-I/en",
     about:
-      "Defines the ML pipeline as a set of named nodes — SRC, C, PP, M, P, D and SINK — together with the overlay that manages them. Clause 8.1 is the pipeline definition itself.",
+      "Defines the ML pipeline through named nodes: SRC, C, PP, M, P, D and SINK. It also defines the layer that manages them. Clause 8.1 contains the pipeline definition.",
     usedFor:
       "The platform's architecture is described in these seven nodes, and each node names the component implementing it and the policy governing it. This is the primary conformance reference.",
     appliedIn: ["src/lib/standards.ts", "src/components/PipelineDiagram.tsx"],
   },
   {
     id: "ai-ready-2",
-    title: "AI Ready — Analysis Towards a Standardized Readiness Framework, Report 2.0",
+    title: "AI Ready: Analysis Towards a Standardized Readiness Framework, Report 2.0",
     publisher: "ITU",
     edition: "January 2026 · ISBN 978-92-61-41911-0",
     url: "https://aiforgood.itu.int/event/ai-readiness-hackathon-kingdom-of-saudi-arabia/",
     about:
-      "Derives 13 AI-readiness dimensions bottom-up from Plugfest projects, with metrics under each, and sets out a three-part gap taxonomy in chapter 4.",
+      "Defines 13 dimensions of AI readiness and a three-part framework for identifying gaps.",
     usedFor:
-      "Fursah self-assesses against all 13 dimensions, and the policy gaps this project identified are structured on the report's own gap taxonomy. The report names skills gap analysis as a desired framework output under Dimension 9, which is Fursah's primary function.",
+      "Fursah assesses its work against all 13 dimensions. It also uses the report's framework to organise policy gaps. Dimension 9 identifies skills gap analysis as a desired output, which is a central function of Fursah.",
     appliedIn: ["src/lib/standards.ts"],
   },
   {
@@ -101,34 +101,34 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   // -------------------------------------------------------------------------
   {
     id: "pdpl",
-    title: "Personal Data Protection Law (نظام حماية البيانات الشخصية)",
+    title: "Personal Data Protection Law",
     publisher: "Kingdom of Saudi Arabia",
     edition: "Royal Decree M/19 of 1443H, as amended by M/148, with Implementing Regulations",
     url: "https://sdaia.gov.sa/en/SDAIA/about/Documents/Personal%20Data%20English%20V2-23April2023-%20Reviewed-.pdf",
     about:
-      "The Kingdom's personal data law: lawful basis, data minimisation, the rights of the data subject, and the conditions on transfer outside the Kingdom.",
+      "The national law for lawful processing, data minimisation, individual rights, and transfers outside the Kingdom.",
     usedFor:
-      "The privacy policy is written against it clause by clause. It is the reason no protected characteristic is collected, the reason consent is purpose-specific and separately withdrawable, and the source of the four data-request types implemented.",
+      "The privacy policy follows this law clause by clause. Fursah does not collect protected characteristics. Consent is specific to each purpose and can be withdrawn. The platform also supports four data-rights requests.",
     appliedIn: ["src/lib/policies.ts", "src/app/student/data-rights/page.tsx", "docs/DPIA.md"],
     language: "Arabic and English",
   },
   {
     id: "sdaia-ethics",
     title: "AI Ethics Principles",
-    publisher: "SDAIA — Saudi Data and Artificial Intelligence Authority",
+    publisher: "SDAIA, Saudi Data and Artificial Intelligence Authority",
     edition: "Version 1.0",
     url: "https://sdaia.gov.sa/en/SDAIA/about/Documents/ai-principles.pdf",
     about:
       "Seven principles for AI in the Kingdom, including fairness, transparency and explainability, accountability, and human oversight.",
     usedFor:
-      "The explainability requirement is why every score is reconstructible from published weights rather than produced by a trained model, and the human-oversight principle is why a named reviewer can override any automated result.",
+      "Every score can be reconstructed from published weights. A named reviewer can also override any automated result. These controls support explainability and human oversight.",
     appliedIn: ["src/lib/ai.ts", "src/lib/policies.ts"],
     language: "Arabic and English",
   },
   {
     id: "ndmo",
     title: "National Data Management and Personal Data Protection Standards",
-    publisher: "NDMO — National Data Management Office, SDAIA",
+    publisher: "NDMO, National Data Management Office at SDAIA",
     edition: "Current issue",
     url: "https://sdaia.gov.sa/ndmo/Files/PoliciesEn.pdf",
     about: "Data classification, quality, retention and governance controls for data held in the Kingdom.",
@@ -140,7 +140,7 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   {
     id: "nca-ecc",
     title: "Essential Cybersecurity Controls (ECC) and Cloud Cybersecurity Controls (CCC)",
-    publisher: "NCA — National Cybersecurity Authority",
+    publisher: "NCA, National Cybersecurity Authority",
     edition: "ECC-1:2018 · CCC-1:2020",
     url: "https://nca.gov.sa/en/regulatory-documents/controls-list/",
     about: "Baseline cybersecurity controls for national organisations and for workloads hosted in cloud environments.",
@@ -152,7 +152,7 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   {
     id: "dga-accessibility",
     title: "Digital Accessibility Standards and Guidelines",
-    publisher: "DGA — Digital Government Authority",
+    publisher: "DGA, Digital Government Authority",
     edition: "Current issue",
     url: "https://dga.gov.sa/en/policies-and-regulations",
     about: "Accessibility and interoperability requirements for digital services, referencing WCAG 2.1 Level AA.",
@@ -179,7 +179,7 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   {
     id: "gastat",
     title: "Labour Force Survey",
-    publisher: "GASTAT — General Authority for Statistics (الهيئة العامة للإحصاء)",
+    publisher: "GASTAT, General Authority for Statistics",
     edition: "Q3 2024 and Q2 2025 releases",
     url: "https://www.stats.gov.sa/en/w/news/6",
     about: "The official quarterly labour statistics: unemployment, participation, and employment-to-population ratios.",
@@ -190,8 +190,8 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   },
   {
     id: "cua",
-    title: "Graduate statistics (إحصاءات الخريجين)",
-    publisher: "Council of Universities Affairs (مجلس شؤون الجامعات)",
+    title: "Graduate statistics",
+    publisher: "Council of Universities Affairs",
     edition: "2023",
     url: "https://www.cua.gov.sa/",
     about: "Annual graduate totals by degree level across the Kingdom's universities.",
@@ -201,7 +201,7 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   },
   {
     id: "unesco-gem",
-    title: "Global Education Monitoring Report — Saudi Arabia country case study",
+    title: "Global Education Monitoring Report: Saudi Arabia country case study",
     publisher: "UNESCO",
     edition: "2026 edition",
     url: "https://www.unesco.org/gem-report/en/2026-gem-report-country-case-studies/saudi-arabia",
@@ -214,7 +214,7 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   // -------------------------------------------------------------------------
   {
     id: "iso42001",
-    title: "ISO/IEC 42001:2023 — Artificial intelligence management system",
+    title: "ISO/IEC 42001:2023: Artificial intelligence management system",
     publisher: "ISO/IEC",
     edition: "2023",
     url: "https://www.iso.org/standard/81230.html",
@@ -225,7 +225,7 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   },
   {
     id: "iso23894",
-    title: "ISO/IEC 23894:2023 — Guidance on risk management for AI",
+    title: "ISO/IEC 23894:2023: Guidance on risk management for AI",
     publisher: "ISO/IEC",
     edition: "2023",
     url: "https://www.iso.org/standard/77304.html",
@@ -237,7 +237,7 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   {
     id: "dpia",
     title: "Data Protection Impact Assessment",
-    publisher: "Fursah AI — Trust & Safety",
+    publisher: "Fursah AI, Trust and Safety",
     edition: "Version 1.1 · 21 August 2026 · prototype assessment",
     url: "https://github.com/Shoug-Alomran/AI-Powered-Workforce-Readiness-Ecosystem/blob/main/docs/DPIA.md",
     about:
@@ -248,7 +248,7 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   },
   {
     id: "sdgs",
-    title: "Sustainable Development Goals — targets 4.4, 5.5, 8.5, 8.6 and 10.3",
+    title: "Sustainable Development Goals: targets 4.4, 5.5, 8.5, 8.6 and 10.3",
     publisher: "United Nations",
     edition: "2030 Agenda",
     url: "https://sdgs.un.org/goals",

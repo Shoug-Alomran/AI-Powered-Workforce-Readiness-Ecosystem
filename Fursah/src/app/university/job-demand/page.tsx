@@ -1,4 +1,5 @@
 import Link from "next/link";
+import WdiIcon from "@/components/WdiIcon";
 import { redirect } from "next/navigation";
 import { getCurrentUniversity } from "@/lib/session";
 import { getEcosystemIntelligence, getUniversityIntelligence } from "@/lib/intelligence";
@@ -32,17 +33,17 @@ export default async function UniversityJobDemand() {
         <div>
           <h1>Workforce Demand Intelligence</h1>
           <p>
-            ◷ Generated {ecosystem.generatedAt.toLocaleString()}　 ·　 ♙ {ecosystem.employerCount} verified employer(s)
-            analysed　 ·　 ▣ {ecosystem.openRoleCount} open posting(s)　 ·　 ⌾ Model {ecosystem.modelVersion}
+            <WdiIcon name="clock" /> Generated {ecosystem.generatedAt.toLocaleString()} · <WdiIcon name="employers" /> {ecosystem.employerCount} verified employer(s)
+            analysed · <WdiIcon name="posting" /> {ecosystem.openRoleCount} open posting(s) · <WdiIcon name="model" /> Model {ecosystem.modelVersion}
           </p>
         </div>
         <div>
-          <a href="/api/university/export">⚑ Generate Report</a>
+          <a href="/api/university/export"><WdiIcon name="report" /> Generate Report</a>
         </div>
       </header>
 
       <section className="wdi-summary">
-        <b>✦　EXECUTIVE SUMMARY</b>
+        <b><WdiIcon name="spark" /> EXECUTIVE SUMMARY</b>
         <p>
           {ecosystem.summary.join(" ")} Figures on this page are counts over the platform&apos;s current records. No
           growth rate or forecast is shown, because no historical demand series is stored.
@@ -72,9 +73,9 @@ export default async function UniversityJobDemand() {
 
       <div className="wdi-layout">
         <div>
-          <section className="wdi-skills">
+          <section className="wdi-skills" id="skill-intelligence">
             <header>
-              <h2>ϟ　Skill Intelligence</h2>
+              <h2><WdiIcon name="bolt" /> Skill Intelligence</h2>
               <Link href="/university/curriculum">Curriculum workspace →</Link>
             </header>
             <div>
@@ -155,7 +156,7 @@ export default async function UniversityJobDemand() {
                   <div>
                     <small>PRIORITY SCORE</small>
                     <p>
-                      {Math.round(gap.priorityScore)} — derived from employer demand points, requesting role count, and
+                      {Math.round(gap.priorityScore)}. This score uses employer demand points, requesting role count, and
                       the share of your reported cohort missing the skill.
                     </p>
                     <small>DECISION</small>
@@ -180,91 +181,11 @@ export default async function UniversityJobDemand() {
               </article>
             )}
           </section>
-
-          <section className="wdi-bottom">
-            <article className="wdi-employers">
-              <h2>♙ Employer Demand Breakdown</h2>
-              <small>CAREER TRACKS WITH OPEN ROLES</small>
-              <div className="companies">
-                {ecosystem.careerTracks
-                  .filter((track) => track.openRoleCount > 0)
-                  .slice(0, 4)
-                  .map((track) => (
-                    <span key={track.careerTrackId}>
-                      {track.careerTrackLabel} ({track.openRoleCount})
-                    </span>
-                  ))}
-                {ecosystem.careerTracks.every((track) => track.openRoleCount === 0) && <span>No open roles</span>}
-              </div>
-              <div className="sectors">
-                <span>
-                  ROLES BY DIFFICULTY
-                  {employerSectors.length ? (
-                    employerSectors.map(([track, count]) => (
-                      <label key={track}>
-                        {track.replaceAll("-", " ")} <b>{count}</b>
-                        <i>
-                          <em
-                            style={{
-                              width: `${Math.round((count / Math.max(1, employerSectors[0][1])) * 100)}%`,
-                            }}
-                          />
-                        </i>
-                      </label>
-                    ))
-                  ) : (
-                    <label>No structured requirements recorded</label>
-                  )}
-                </span>
-                <strong>
-                  {ecosystem.hardToFillRoles.filter((role) => role.qualifiedStudents === 0).length}
-                  <small>Roles with no fully qualified profile</small>
-                </strong>
-              </div>
-            </article>
-
-            <article className="wdi-trends">
-              <h2>⌁ Talent supply against demand</h2>
-              <div className="growth">
-                <b>♧　WIDEST SUPPLY GAPS</b>
-                <p>
-                  {ecosystem.supplyGaps.length
-                    ? ecosystem.supplyGaps
-                        .slice(0, 3)
-                        .map(
-                          (skill) =>
-                            `${skill.name}: ${skill.studentsWithSkill} student(s) evidence it against ${skill.openRoleCount} requesting role(s)`,
-                        )
-                        .join("; ")
-                    : "No requested skill currently has fewer evidencing students than requesting roles."}
-                </p>
-              </div>
-              <div className="decline">
-                <b>⌁　NOT MEASURED</b>
-                <p>
-                  Growth, decline, and forecast figures are not published: the platform records no historical demand
-                  snapshots, so change over time cannot be evidenced.
-                </p>
-              </div>
-              {ecosystem.skills.slice(0, 3).map((skill) => (
-                <label key={skill.id}>
-                  {skill.name}
-                  <i>
-                    <em
-                      style={{
-                        width: `${Math.round((skill.demandPoints / Math.max(1, ecosystem.skills[0].demandPoints)) * 100)}%`,
-                      }}
-                    />
-                  </i>
-                </label>
-              ))}
-            </article>
-          </section>
         </div>
 
         <aside className="wdi-aside">
           <section className="wdi-action">
-            <h2>ϟ Action Center</h2>
+            <h2><WdiIcon name="bolt" /> Action Center</h2>
             <small>HIGHEST PRIORITY</small>
             {intelligence.recommendations[0] ? (
               <article>
@@ -286,7 +207,7 @@ export default async function UniversityJobDemand() {
             {ecosystem.certifications.length ? (
               ecosystem.certifications.slice(0, 2).map((certification) => (
                 <article key={certification.certificationId}>
-                  <h3>▣　{certification.name}</h3>
+                  <h3><WdiIcon name="certificate" /> {certification.name}</h3>
                   <p>
                     {certification.openRoleCount} open role(s) require it · {certification.verifiedHolders} student(s)
                     hold it with verified evidence ·{" "}
@@ -330,6 +251,86 @@ export default async function UniversityJobDemand() {
           </section>
         </aside>
       </div>
+
+      <section className="wdi-bottom">
+        <article className="wdi-employers">
+          <h2><WdiIcon name="employers" /> Employer Demand Breakdown</h2>
+          <small>CAREER TRACKS WITH OPEN ROLES</small>
+          <div className="companies">
+            {ecosystem.careerTracks
+              .filter((track) => track.openRoleCount > 0)
+              .slice(0, 4)
+              .map((track) => (
+                <span key={track.careerTrackId}>
+                  {track.careerTrackLabel} ({track.openRoleCount})
+                </span>
+              ))}
+            {ecosystem.careerTracks.every((track) => track.openRoleCount === 0) && <span>No open roles</span>}
+          </div>
+          <div className="sectors">
+            <span>
+              ROLES BY DIFFICULTY
+              {employerSectors.length ? (
+                employerSectors.map(([track, count]) => (
+                  <label key={track}>
+                    {track.replaceAll("-", " ")} <b>{count}</b>
+                    <i>
+                      <em
+                        style={{
+                          width: `${Math.round((count / Math.max(1, employerSectors[0][1])) * 100)}%`,
+                        }}
+                      />
+                    </i>
+                  </label>
+                ))
+              ) : (
+                <label>No structured requirements recorded</label>
+              )}
+            </span>
+            <strong>
+              {ecosystem.hardToFillRoles.filter((role) => role.qualifiedStudents === 0).length}
+              <small>Roles with no fully qualified profile</small>
+            </strong>
+          </div>
+        </article>
+
+        <article className="wdi-trends">
+          <h2>⌁ Talent supply against demand</h2>
+          <div className="growth">
+            <b>♧ WIDEST SUPPLY GAPS</b>
+            <p>
+              {ecosystem.supplyGaps.length
+                ? ecosystem.supplyGaps
+                    .slice(0, 3)
+                    .map(
+                      (skill) =>
+                        `${skill.name}: ${skill.studentsWithSkill} student(s) evidence it against ${skill.openRoleCount} requesting role(s)`,
+                    )
+                    .join("; ")
+                : "No requested skill currently has fewer evidencing students than requesting roles."}
+            </p>
+          </div>
+          <div className="decline">
+            <b>⌁ NOT MEASURED</b>
+            <p>
+              Growth, decline, and forecast figures are not published: the platform records no historical demand
+              snapshots, so change over time cannot be evidenced.
+            </p>
+          </div>
+          {ecosystem.skills.slice(0, 3).map((skill) => (
+            <label key={skill.id}>
+              {skill.name}
+              <i>
+                <em
+                  style={{
+                    width: `${Math.round((skill.demandPoints / Math.max(1, ecosystem.skills[0].demandPoints)) * 100)}%`,
+                  }}
+                />
+              </i>
+            </label>
+          ))}
+        </article>
+      </section>
     </main>
   );
 }

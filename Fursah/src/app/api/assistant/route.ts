@@ -65,7 +65,7 @@ async function rateLimit(userId: string) {
   ]);
 
   if (hourly >= PER_USER_HOURLY_LIMIT) {
-    return `You have asked the assistant ${PER_USER_HOURLY_LIMIT} questions in the past hour, which is this account's limit. It resets within the hour — every figure the assistant quotes is also on the page itself.`;
+    return `You have asked the assistant ${PER_USER_HOURLY_LIMIT} questions in the past hour, which is this account's limit. It resets within the hour. Every figure the assistant quotes is also on the page itself.`;
   }
 
   if (daily >= PER_USER_DAILY_LIMIT) {
@@ -192,7 +192,7 @@ export async function POST(request: Request) {
       return NextResponse.json(
         {
           error:
-            "Today's free Cloudflare Workers AI allocation is used up. The assistant will work again after the daily reset — everything else on this page still works.",
+            "Today's free Cloudflare Workers AI allocation is used up. The assistant will work again after the daily reset. Everything else on this page still works.",
         },
         { status: 429 },
       );

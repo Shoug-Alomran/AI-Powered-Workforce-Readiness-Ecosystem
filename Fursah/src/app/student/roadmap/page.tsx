@@ -21,6 +21,14 @@ const SOURCE_LABEL: Record<string, string> = {
   UNIVERSITY_OFFERING: "University offering",
 };
 
+const CATEGORY_LABEL: Record<string, string> = {
+  SKILL: "Skill development",
+  CERTIFICATION: "Certification",
+  EXPERIENCE: "Work experience",
+  PORTFOLIO: "Portfolio",
+  COURSE: "Course",
+};
+
 export default async function RoadmapPage() {
   const ctx = await getCurrentStudent();
   if (!ctx) redirect("/login");
@@ -189,52 +197,46 @@ export default async function RoadmapPage() {
       )}
 
       <section className="card student-milestones" id="milestones">
-        <h2>Milestones and alternatives</h2>
+        <div className="student-milestones-heading">
+          <div><span className="eyebrow">YOUR ACTION PLAN</span><h2>Roadmap milestones</h2></div>
+          <p>Work through these steps in any order. Update the status when your progress changes.</p>
+        </div>
         {active.length ? (
           active.map((item, index) => (
-            <div className="data-row" key={item.id} style={{ alignItems: "end" }}>
-              <i className="milestone-number">{String(index + 1).padStart(2, "0")}</i>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                  <span className="pill">{item.category}</span>
-                  <span className="pill">{item.source}</span>
-                  {item.careerTrackId && <span className="pill">{item.careerTrackId.replaceAll("-", " ")}</span>}
-                  {item.alternativeForId && <span className="pill">Alternative route</span>}
-                </div>
-                <strong style={{ display: "block", marginTop: 8 }}>{item.title}</strong>
-                <div className="muted">
-                  Expected impact: +{item.expectedImpact} · {LABEL[item.status] ?? item.status}
-                  {item.generatedAt ? ` · generated ${item.generatedAt.toLocaleDateString()}` : ""}
-                </div>
-                {item.recommendationReason && (
-                  <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-                    {item.recommendationReason}
+            <article className="student-milestone-card" key={item.id}>
+              <div className="student-milestone-summary">
+                <i className="milestone-number">{String(index + 1).padStart(2, "0")}</i>
+                <div className="student-milestone-copy">
+                  <div className="student-milestone-tags">
+                    <span>{CATEGORY_LABEL[item.category] ?? item.category.toLowerCase().replaceAll("_", " ")}</span>
+                    <span className="ai">AI recommendation</span>
+                    {item.alternativeForId && <span>Alternative step</span>}
                   </div>
-                )}
-                <form action={updateRoadmapItem} className="data-row" style={{ alignItems: "end", marginTop: 8 }}>
+                  <h3>{item.title}</h3>
+                  {item.recommendationReason && <p>{item.recommendationReason}</p>}
+                </div>
+                <span className={`student-milestone-status status-${item.status.toLowerCase().replaceAll("_", "-")}`}>{LABEL[item.status] ?? item.status}</span>
+              </div>
+
+              <dl className="student-milestone-details">
+                <div><dt>Purpose</dt><dd>{item.careerTrackId ? `Supports your ${item.careerTrackId.replaceAll("-", " ")} goal` : "Supports your target career"}</dd></div>
+                <div><dt>Readiness value</dt><dd>Worth up to {item.expectedImpact} points</dd></div>
+                {item.generatedAt && <div><dt>Added to your plan</dt><dd>{item.generatedAt.toLocaleDateString()}</dd></div>}
+              </dl>
+
+              <div className="student-milestone-controls">
+                <form action={updateRoadmapItem} className="student-milestone-update">
                   <input type="hidden" name="itemId" value={item.id} />
-                  <input
-                    className="input"
-                    name="note"
-                    defaultValue={item.studentNote ?? ""}
-                    placeholder="Optional progress note"
-                    style={{ flex: 1 }}
-                  />
-                  <select className="input" name="status" defaultValue={item.status}>
-                    {Object.entries(LABEL).map(([value, label]) => (
-                      <option value={value} key={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                  <button className="button secondary">Save</button>
+                  <label>Progress status<select className="input" name="status" defaultValue={item.status}>{Object.entries(LABEL).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label>
+                  <label>Progress note <span>(optional)</span><input className="input" name="note" defaultValue={item.studentNote ?? ""} placeholder="Add a short note about your progress" /></label>
+                  <button className="button primary">Save progress</button>
+                </form>
+                <form action={dismissRoadmapItem} className="student-milestone-dismiss">
+                  <input type="hidden" name="itemId" value={item.id} />
+                  <button className="button secondary">Remove from plan</button>
                 </form>
               </div>
-              <form action={dismissRoadmapItem}>
-                <input type="hidden" name="itemId" value={item.id} />
-                <button className="button secondary">Not interested</button>
-              </form>
-            </div>
+            </article>
           ))
         ) : (
           <div className="notice">Refresh recommendations to create your first persistent roadmap.</div>

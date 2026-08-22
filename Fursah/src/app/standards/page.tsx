@@ -103,7 +103,7 @@ export default function StandardsPage() {
         <header>
           <span className="imp-kicker">AI Ready Report 2.0 · January 2026</span>
           <h2>Self-assessment against the 13 dimensions</h2>
-          <p>The report derives its dimensions bottom-up from Plugfest projects, so partial coverage is the expected result for any single application. Each row below is marked addressed, partial or out of scope, and a dimension Fursah does not reach states the reason rather than claiming credit. Dimension 9 is the one to read first — the report names skills gap analysis as a desired output of the framework, and that is precisely what Fursah computes.</p>
+          <p>The report defines its dimensions from Plugfest projects, so one application is not expected to cover every dimension. Each row is marked addressed, partial, or out of scope. Dimension 9 is most relevant because it identifies skills gap analysis as a desired output.</p>
         </header>
         <div className="std-dims">
           {ITU_DIMENSIONS.map(dimension => <article className={`std-dim cov-${dimension.coverage}`} key={dimension.number}>
@@ -125,7 +125,7 @@ export default function StandardsPage() {
         <header>
           <span className="imp-kicker">Chapter 4 gap taxonomy</span>
           <h2>Policy gaps this project ran into</h2>
-          <p>Structured on the three gap types the AI Ready Report sets out. These are constraints encountered while building Fursah, not a literature survey — each one is a thing the platform cannot resolve on its own, with what would close it.</p>
+          <p>These implementation gaps follow the three categories in the AI Ready Report. Each gap records a constraint that Fursah cannot resolve alone and states what is needed to close it.</p>
         </header>
         {GAP_CATEGORIES.map(category => {
           const gaps = POLICY_GAPS.filter(gap => gap.category === category);

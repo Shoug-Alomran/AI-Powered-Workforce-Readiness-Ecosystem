@@ -23,7 +23,7 @@ export default function JobDeleteControl({ jobId, jobTitle, applicantCount }: { 
       <section className="pjob-preview job-delete-dialog" role="dialog" aria-modal="true" aria-labelledby="job-delete-title" onMouseDown={(event) => event.stopPropagation()}>
         <header><span>DELETE OPPORTUNITY</span><button type="button" onClick={close} aria-label="Cancel deletion">×</button></header>
         <h2 id="job-delete-title">Delete “{jobTitle}”?</h2>
-        <p className="muted">This permanently removes the role, its requirements, and any uploaded requirement documents{applicantCount > 0 ? <>, along with <strong>{applicantCount} candidate application{applicantCount === 1 ? "" : "s"}</strong> and their match history</> : null}. This cannot be undone — close the role instead if you only want to stop receiving applications.</p>
+        <p className="muted">This permanently removes the role, its requirements, and any uploaded requirement documents{applicantCount > 0 ? <>, along with <strong>{applicantCount} candidate application{applicantCount === 1 ? "" : "s"}</strong> and their match history</> : null}. This cannot be undone. Close the role instead if you only want to stop receiving applications.</p>
         <form action={formAction}>
           <input type="hidden" name="jobId" value={jobId} />
           <label className="job-delete-confirm">Type <strong>{jobTitle}</strong> to confirm

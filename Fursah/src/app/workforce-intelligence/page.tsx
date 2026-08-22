@@ -54,7 +54,7 @@ export default async function Intelligence() {
       <div className="grid-3" style={{ marginTop: 26 }}>
         <div className="card">
           <span className="muted">Average readiness</span>
-          <div className="metric">{ecosystem.readinessReportable ? `${ecosystem.averageReadiness}/100` : "—"}</div>
+          <div className="metric">{ecosystem.readinessReportable ? `${ecosystem.averageReadiness}/100` : "Withheld"}</div>
           <span className="pill">
             {ecosystem.readinessReportable
               ? `Across ${ecosystem.scoredStudentCount} scored profiles`
@@ -71,7 +71,7 @@ export default async function Intelligence() {
         <div className="card">
           <span className="muted">University coverage</span>
           <div className="metric">
-            {ecosystem.universityCoveragePct === null ? "—" : `${ecosystem.universityCoveragePct}%`}
+            {ecosystem.universityCoveragePct === null ? "Not available" : `${ecosystem.universityCoveragePct}%`}
           </div>
           <span className="muted">of weighted demand taught by {ecosystem.offeringCount} offering(s)</span>
         </div>

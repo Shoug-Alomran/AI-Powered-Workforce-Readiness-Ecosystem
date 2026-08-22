@@ -7,6 +7,7 @@ import { reviewCertification, reviewCurriculumCompletion, reviewEmployer, toggle
 import PageToc from "@/components/PageToc";
 import AZStrip from "@/components/AZStrip";
 import ActionQueue from "@/components/ActionQueue";
+import CertificateReviewHistory from "@/components/CertificateReviewHistory";
 
 const ROLE_LABEL: Record<string, string> = {
   STUDENT: "Students",
@@ -45,6 +46,7 @@ export default async function AdminDashboard({
   ]);
 
   const pendingCerts = submissions.filter((item) => item.verificationStatus === "PENDING" && item.evidencePath);
+  const reviewedCerts = submissions.filter((item) => ["APPROVED", "REJECTED"].includes(item.verificationStatus));
   const pendingEmployers = employers.filter((e) => e.verificationStatus === "PENDING");
   const roleCounts = users.reduce<Record<string, number>>((acc, u) => {
     acc[u.role] = (acc[u.role] ?? 0) + 1;
@@ -94,6 +96,7 @@ export default async function AdminDashboard({
         items={[
           { id: "employer-verification", label: `Employer verification (${pendingEmployers.length})` },
           { id: "certificate-review", label: `Certificate review (${pendingCerts.length})` },
+          { id: "certificate-history", label: `Certificate history (${reviewedCerts.length})` },
           { id: "curriculum-review", label: `Curriculum completion (${curriculumReviews.length})` },
           { id: "user-directory", label: `User directory (${users.length})` },
         ]}
@@ -157,6 +160,21 @@ export default async function AdminDashboard({
           )) : <div className="notice">There are no pending certificate submissions.</div>}
         </div>
       </section>
+
+      <CertificateReviewHistory
+        items={reviewedCerts.map((item) => ({
+          id: item.id,
+          certification: item.certification.name,
+          studentName: item.student.user.name,
+          studentEmail: item.student.user.email,
+          status: item.verificationStatus,
+          reviewNote: item.reviewNote ?? "No review note recorded",
+          reviewedAt: item.reviewedAt?.toISOString() ?? null,
+          reviewerName: users.find((user) => user.id === item.reviewedBy)?.name ?? "Unknown reviewer",
+          evidenceName: item.evidenceName,
+          hasEvidence: Boolean(item.evidencePath),
+        }))}
+      />
 
       <section className="card" id="curriculum-review" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">Human-in-the-loop review</span>

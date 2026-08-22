@@ -10,7 +10,7 @@ import { assistantConfigured } from "@/lib/assistant/llm";
 
 /** Renders a figure the database can support, or an explicit unknown state. */
 function value(input: number | string | null, suffix = "") {
-  if (input === null) return "—";
+  if (input === null) return "Not available";
   return `${input}${suffix}`;
 }
 
@@ -206,8 +206,8 @@ export default async function UniversityDashboard() {
                     <strong>No open role currently lists a required skill.</strong>
                     <i />
                     <b>0</b>
-                    <span>—</span>
-                    <span>—</span>
+                    <span>Not available</span>
+                    <span>Not available</span>
                   </div>
                 )}
               </div>
@@ -234,17 +234,16 @@ export default async function UniversityDashboard() {
 
                 <h3>IDENTIFIED CURRICULUM GAPS</h3>
                 {intelligence.recommendations.length ? (
-                  intelligence.recommendations.slice(0, 4).map((recommendation) => (
-                    <article key={`${recommendation.type}-${recommendation.skillId}`}>
+                intelligence.recommendations.slice(0, 4).map((recommendation) => (
+                    <article className="ud-gap-card" key={`${recommendation.type}-${recommendation.skillId}`}>
                       <header>
                         <div>
-                          <b className={recommendation.priorityScore >= 40 ? "" : "medium"}>
-                            {recommendation.type.replaceAll("_", " ")}: {recommendation.skillName}
-                          </b>
+                          <small>{recommendation.type.replaceAll("_", " ")}</small>
+                          <h4>{recommendation.skillName}</h4>
                           <p>{recommendation.reason}</p>
                         </div>
                         <span className={recommendation.priorityScore >= 40 ? "" : "medium"}>
-                          Priority: {Math.round(recommendation.priorityScore)}
+                          Priority {Math.round(recommendation.priorityScore)}
                         </span>
                       </header>
                       <div>
@@ -266,9 +265,11 @@ export default async function UniversityDashboard() {
                         </label>
                       </div>
                       <aside>
-                        ✦　Decision support only. A curriculum change is made by the institution; Fursah records the
-                        evidence behind the recommendation.
+                        <span>✦</span><p><strong>AI-supported recommendation.</strong> The institution decides whether to proceed. Fursah keeps the supporting evidence with the action plan.</p>
                       </aside>
+                      <footer>
+                        <Link href={recommendation.alreadyPlanned ? "/university/actions#initiative-tracker" : { pathname: "/university/actions/new", query: { source: "advisor", skill: recommendation.skillName, type: recommendation.type, priority: Math.round(recommendation.priorityScore), roles: recommendation.relatedOpenRoles, cohort: recommendation.cohortMissingSharePct ?? "withheld", reason: recommendation.reason } }}>{recommendation.alreadyPlanned ? "Review existing initiative" : "Prepare action plan"}</Link>
+                      </footer>
                     </article>
                   ))
                 ) : (
@@ -324,7 +325,7 @@ export default async function UniversityDashboard() {
                 </section>
                 <section>
                   <small>TIME TO EMPLOYMENT</small>
-                  <strong>—</strong>
+                  <strong>Not available</strong>
                   <span>Not recorded: the platform stores no employment start dates.</span>
                 </section>
               </div>
@@ -421,7 +422,8 @@ export default async function UniversityDashboard() {
                     <small>{index === 0 ? "HIGHEST PRIORITY ACTION" : recommendation.type.replaceAll("_", " ")}</small>
                     <h3>{recommendation.skillName}</h3>
                     <p>{recommendation.reason}</p>
-                    <Link className={index ? "outline" : ""} href="/university/actions/new">
+                    <div className="ud-advisor-evidence"><span>{recommendation.relatedOpenRoles} requesting role{recommendation.relatedOpenRoles === 1 ? "" : "s"}</span><span>{recommendation.cohortMissingSharePct === null ? "Cohort figure withheld" : `${recommendation.cohortMissingSharePct}% of cohort missing`}</span><span>Priority {Math.round(recommendation.priorityScore)}</span></div>
+                    <Link className={index ? "outline" : ""} href={recommendation.alreadyPlanned ? "/university/actions#initiative-tracker" : { pathname: "/university/actions/new", query: { source: "advisor", skill: recommendation.skillName, type: recommendation.type, priority: Math.round(recommendation.priorityScore), roles: recommendation.relatedOpenRoles, cohort: recommendation.cohortMissingSharePct ?? "withheld", reason: recommendation.reason } }}>
                       {recommendation.alreadyPlanned ? "Review initiative" : "Open an initiative"}
                     </Link>
                   </article>

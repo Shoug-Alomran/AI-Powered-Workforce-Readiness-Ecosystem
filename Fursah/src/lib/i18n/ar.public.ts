@@ -15,6 +15,7 @@ export const publicSite: Record<string, string> = {
   "Prototype": "النموذج الأولي",
   "Sign In": "تسجيل الدخول",
   "Sign in": "تسجيل الدخول",
+  "Fursah helps students prove readiness. Employers can identify qualified applicants, and universities can address curriculum gaps. Every result links to inspectable evidence.": "تساعد فرصة الطلاب على إثبات جاهزيتهم. وتساعد أصحاب العمل على تحديد المتقدمين المؤهلين، والجامعات على معالجة فجوات المناهج. وترتبط كل نتيجة بأدلة قابلة للفحص.",
   "Platform": "المنصة",
   "Skill Mapping": "خرائط المهارات",
   "Our Team": "فريقنا",
@@ -33,6 +34,9 @@ export const publicSite: Record<string, string> = {
 
   // Landing: principles
   "Explainable AI": "ذكاء اصطناعي قابل للتفسير",
+  "Explainable AI as a Foundation for Trust": "الذكاء الاصطناعي القابل للتفسير أساس للثقة",
+  "Fursah provides a reasoning card for each recommendation. The card explains the evidence and rules behind the result.": "تقدم فرصة بطاقة تفسير لكل توصية. وتوضح البطاقة الأدلة والقواعد التي أدت إلى النتيجة.",
+  "Gender, nationality, age and GPA are not collected. They cannot affect a score.": "لا تجمع المنصة الجنس أو الجنسية أو العمر أو المعدل التراكمي. لذلك لا يمكن أن تؤثر في الدرجة.",
   "No black boxes. Every recommendation includes clear reasoning based on evidence-based data points.": "لا صناديق سوداء. كل توصية تتضمن تفسيراً واضحاً مبنياً على مؤشرات وأدلة حقيقية.",
   "Human Oversight": "إشراف بشري",
   "AI acts as a co-pilot. Decisions are reviewed and validated by university career advisors and hiring managers.": "الذكاء الاصطناعي مساعد وليس بديلاً. يراجع مرشدو الجامعات ومسؤولو التوظيف كل قرار ويعتمدونه.",
@@ -69,7 +73,7 @@ export const publicSite: Record<string, string> = {
   // Landing: ethics band
   "Explainable AI: The Foundation of Trust": "الذكاء الاصطناعي القابل للتفسير: أساس الثقة",
   "Unlike traditional algorithms, Fursah provides “Reasoning Cards” for every recommendation. AI should be a tool for empowerment, not a black box for exclusion.": "بخلاف الخوارزميات التقليدية، تقدّم فرصة «بطاقات تفسير» لكل توصية. الذكاء الاصطناعي أداة للتمكين لا صندوق أسود للإقصاء.",
-  "▤ Read the AI Readiness Report (PDF)": "▤ اقرأ تقرير الجاهزية للذكاء الاصطناعي (PDF)",
+  "Read the AI Readiness Report (PDF)": "اقرأ تقرير الجاهزية للذكاء الاصطناعي (PDF)",
   "AI RECOMMENDATION LOGIC": "منطق توصية الذكاء الاصطناعي",
   "Confidence: 94%": "الثقة: 94%",
   "Candidate ID: #88219": "رقم المرشح: #88219",

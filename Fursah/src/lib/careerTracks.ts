@@ -723,6 +723,118 @@ export const CAREER_TRACKS: CareerTrack[] = [
     certifications: ["NACADA Academic Advising Certificate"],
     recommendedExperienceMonths: 6,
   },
+
+  // --- Tourism & Hospitality ----------------------------------------------
+  {
+    id: "hotel-operations-manager", label: "Hotel Operations Manager",
+    technicalSkills: [{ name: "Hotel Operations", weight: 3 }, { name: "Revenue Management", weight: 2 }, { name: "Guest Services", weight: 3 }],
+    softSkills: [{ name: "Leadership", weight: 3 }, { name: "Communication", weight: 3 }, { name: "Problem Solving", weight: 2 }],
+    certifications: ["Hospitality Management Certificate"], recommendedExperienceMonths: 12,
+  },
+  {
+    id: "tourism-development-specialist", label: "Tourism Development Specialist",
+    technicalSkills: [{ name: "Destination Planning", weight: 3 }, { name: "Tourism Research", weight: 3 }, { name: "Project Management", weight: 2 }],
+    softSkills: [{ name: "Communication", weight: 3 }, { name: "Critical Thinking", weight: 2 }, { name: "Collaboration", weight: 2 }],
+    certifications: ["Sustainable Tourism Certificate"], recommendedExperienceMonths: 8,
+  },
+
+  // --- Energy & Sustainability --------------------------------------------
+  {
+    id: "renewable-energy-specialist", label: "Renewable Energy Specialist",
+    technicalSkills: [{ name: "Renewable Energy Systems", weight: 3 }, { name: "Energy Analysis", weight: 3 }, { name: "Solar Technology", weight: 2 }],
+    softSkills: [{ name: "Problem Solving", weight: 3 }, { name: "Critical Thinking", weight: 3 }, { name: "Teamwork", weight: 2 }],
+    certifications: ["Certified Energy Manager"], recommendedExperienceMonths: 8,
+  },
+  {
+    id: "sustainability-analyst", label: "Sustainability Analyst",
+    technicalSkills: [{ name: "ESG Reporting", weight: 3 }, { name: "Carbon Accounting", weight: 3 }, { name: "Data Analysis", weight: 2 }],
+    softSkills: [{ name: "Critical Thinking", weight: 3 }, { name: "Communication", weight: 3 }, { name: "Attention to Detail", weight: 2 }],
+    certifications: ["GRI Sustainability Reporting Certificate"], recommendedExperienceMonths: 6,
+  },
+
+  // --- Logistics & Transport ----------------------------------------------
+  {
+    id: "logistics-coordinator", label: "Logistics Coordinator",
+    technicalSkills: [{ name: "Logistics Planning", weight: 3 }, { name: "Inventory Management", weight: 3 }, { name: "ERP Systems", weight: 2 }],
+    softSkills: [{ name: "Organization", weight: 3 }, { name: "Communication", weight: 2 }, { name: "Problem Solving", weight: 3 }],
+    certifications: ["Certified in Logistics, Transportation and Distribution"], recommendedExperienceMonths: 5,
+  },
+  {
+    id: "aviation-operations-specialist", label: "Aviation Operations Specialist",
+    technicalSkills: [{ name: "Airport Operations", weight: 3 }, { name: "Aviation Safety", weight: 3 }, { name: "Operations Planning", weight: 2 }],
+    softSkills: [{ name: "Attention to Detail", weight: 3 }, { name: "Communication", weight: 3 }, { name: "Decision Making", weight: 2 }],
+    certifications: ["IATA Airport Operations Certificate"], recommendedExperienceMonths: 6,
+  },
+
+  // --- Media & Communications ---------------------------------------------
+  {
+    id: "public-relations-specialist", label: "Public Relations Specialist",
+    technicalSkills: [{ name: "Media Relations", weight: 3 }, { name: "Campaign Planning", weight: 3 }, { name: "Content Strategy", weight: 2 }],
+    softSkills: [{ name: "Communication", weight: 3 }, { name: "Creativity", weight: 2 }, { name: "Relationship Building", weight: 3 }],
+    certifications: ["Professional Public Relations Certificate"], recommendedExperienceMonths: 5,
+  },
+  {
+    id: "digital-journalist", label: "Digital Journalist",
+    technicalSkills: [{ name: "Digital Journalism", weight: 3 }, { name: "Media Production", weight: 2 }, { name: "Content Verification", weight: 3 }],
+    softSkills: [{ name: "Communication", weight: 3 }, { name: "Critical Thinking", weight: 3 }, { name: "Integrity", weight: 3 }],
+    certifications: ["Digital Journalism Certificate"], recommendedExperienceMonths: 4,
+  },
+
+  // --- Agriculture & Food --------------------------------------------------
+  {
+    id: "agricultural-engineer", label: "Agricultural Engineer",
+    technicalSkills: [{ name: "Agricultural Systems", weight: 3 }, { name: "Irrigation Design", weight: 3 }, { name: "Precision Agriculture", weight: 2 }],
+    softSkills: [{ name: "Problem Solving", weight: 3 }, { name: "Teamwork", weight: 2 }, { name: "Critical Thinking", weight: 2 }],
+    certifications: ["Saudi Council of Engineers Registration"], recommendedExperienceMonths: 8,
+  },
+  {
+    id: "food-quality-specialist", label: "Food Quality Control Specialist",
+    technicalSkills: [{ name: "Food Safety", weight: 3 }, { name: "Quality Control", weight: 3 }, { name: "Laboratory Testing", weight: 2 }],
+    softSkills: [{ name: "Attention to Detail", weight: 3 }, { name: "Integrity", weight: 3 }, { name: "Communication", weight: 2 }],
+    certifications: ["HACCP Food Safety Certificate"], recommendedExperienceMonths: 5,
+  },
+
+  // --- Science & Research --------------------------------------------------
+  {
+    id: "research-scientist", label: "Research Scientist",
+    technicalSkills: [{ name: "Research Methods", weight: 3 }, { name: "Statistical Analysis", weight: 3 }, { name: "Scientific Writing", weight: 3 }],
+    softSkills: [{ name: "Critical Thinking", weight: 3 }, { name: "Attention to Detail", weight: 3 }, { name: "Collaboration", weight: 2 }],
+    certifications: ["Good Clinical Practice Certificate"], recommendedExperienceMonths: 12,
+  },
+  {
+    id: "environmental-scientist", label: "Environmental Scientist",
+    technicalSkills: [{ name: "Environmental Assessment", weight: 3 }, { name: "GIS", weight: 2 }, { name: "Environmental Monitoring", weight: 3 }],
+    softSkills: [{ name: "Critical Thinking", weight: 3 }, { name: "Communication", weight: 2 }, { name: "Problem Solving", weight: 2 }],
+    certifications: ["Environmental Management Certificate"], recommendedExperienceMonths: 8,
+  },
+
+  // --- Construction & Real Estate -----------------------------------------
+  {
+    id: "quantity-surveyor", label: "Quantity Surveyor",
+    technicalSkills: [{ name: "Cost Estimation", weight: 3 }, { name: "Contract Management", weight: 3 }, { name: "Construction Measurement", weight: 3 }],
+    softSkills: [{ name: "Attention to Detail", weight: 3 }, { name: "Negotiation", weight: 2 }, { name: "Communication", weight: 2 }],
+    certifications: ["RICS Quantity Surveying Certificate"], recommendedExperienceMonths: 8,
+  },
+  {
+    id: "real-estate-analyst", label: "Real Estate Analyst",
+    technicalSkills: [{ name: "Real Estate Valuation", weight: 3 }, { name: "Financial Modeling", weight: 3 }, { name: "Market Research", weight: 2 }],
+    softSkills: [{ name: "Critical Thinking", weight: 3 }, { name: "Communication", weight: 2 }, { name: "Attention to Detail", weight: 2 }],
+    certifications: ["Real Estate Valuation Certificate"], recommendedExperienceMonths: 6,
+  },
+
+  // --- Sports & Entertainment ---------------------------------------------
+  {
+    id: "sports-management-specialist", label: "Sports Management Specialist",
+    technicalSkills: [{ name: "Sports Operations", weight: 3 }, { name: "Event Management", weight: 3 }, { name: "Sponsorship Management", weight: 2 }],
+    softSkills: [{ name: "Leadership", weight: 3 }, { name: "Communication", weight: 3 }, { name: "Teamwork", weight: 2 }],
+    certifications: ["Sports Management Certificate"], recommendedExperienceMonths: 6,
+  },
+  {
+    id: "game-producer", label: "Game Producer",
+    technicalSkills: [{ name: "Game Production", weight: 3 }, { name: "Agile Project Management", weight: 3 }, { name: "Quality Assurance", weight: 2 }],
+    softSkills: [{ name: "Leadership", weight: 3 }, { name: "Creativity", weight: 3 }, { name: "Communication", weight: 2 }],
+    certifications: ["Certified ScrumMaster"], recommendedExperienceMonths: 8,
+  },
 ];
 
 /** Static fallback lookup, used only before the DB taxonomy is seeded. */

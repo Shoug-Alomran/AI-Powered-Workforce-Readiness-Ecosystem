@@ -8,15 +8,16 @@ import { dismissCareerSuggestion, exploreSuggestedCareer, setPrimaryCareerTrack,
 import { getStudentIntelligence } from "@/lib/intelligence";
 import PageToc from "@/components/PageToc";
 import CareerMajorSelector from "@/components/CareerMajorSelector";
+import { careerCategoryFor } from "@/lib/careerCategories";
 
 export default async function StudentInterests({
   searchParams,
 }: {
-  searchParams: Promise<{ trackQ?: string; companyQ?: string; setup?: string }>;
+  searchParams: Promise<{ trackQ?: string; companyQ?: string; companyLetter?: string; setup?: string; careerView?: string; trackCategory?: string; trackStatus?: string }>;
 }) {
   const ctx = await getCurrentStudent();
   if (!ctx) redirect("/login");
-  const { trackQ = "", companyQ = "", setup = "" } = await searchParams;
+  const { trackQ = "", companyQ = "", companyLetter = "", setup = "", careerView = "", trackCategory = "", trackStatus = "all" } = await searchParams;
 
   const [student, tracks, employers, offerings, intelligence] = await Promise.all([
     prisma.student.findUniqueOrThrow({
@@ -48,7 +49,12 @@ export default async function StudentInterests({
   ]);
 
   const directionSuggestion = intelligence.directionSuggestion;
-  const careerMatches = intelligence.careerMatches.slice(0, 5);
+  const careerMatches = intelligence.careerMatches;
+  const visibleCareerMatches = trackQ
+    ? careerMatches.filter((career) => career.careerTrackLabel.toLowerCase().includes(trackQ.trim().toLowerCase()))
+    : careerMatches;
+  const showAllCareers = careerView === "all" || Boolean(trackQ);
+  const displayedCareerMatches = showAllCareers ? visibleCareerMatches : visibleCareerMatches.slice(0, 6);
 
   const trackById = new Map(tracks.map((t) => [t.id, t]));
   const favoriteTrackIds = new Set(student.favoriteCareerTracks.map((f) => f.careerTrackId));
@@ -60,12 +66,24 @@ export default async function StudentInterests({
   const primaryTrack = hasPrimaryCareer ? trackById.get(student.targetCareer) : undefined;
   const primaryReadiness = primaryTrack ? computeReadinessScore(student, primaryTrack) : null;
 
-  const visibleTracks = trackQ
-    ? tracks.filter((t) => t.label.toLowerCase().includes(trackQ.trim().toLowerCase()))
-    : tracks;
-  const visibleEmployers = companyQ
-    ? employers.filter((e) => e.company.toLowerCase().includes(companyQ.trim().toLowerCase()))
-    : employers;
+  const trackCategories = [...new Set(tracks.map((track) => careerCategoryFor(track.label)))].sort();
+  const visibleTracks = tracks.filter((track) => {
+    const matchesSearch = !trackQ || track.label.toLowerCase().includes(trackQ.trim().toLowerCase());
+    const matchesCategory = !trackCategory || careerCategoryFor(track.label) === trackCategory;
+    const matchesStatus = trackStatus === "following" ? favoriteTrackIds.has(track.id) : trackStatus === "available" ? !favoriteTrackIds.has(track.id) : true;
+    return matchesSearch && matchesCategory && matchesStatus;
+  });
+  const companyLetters = [...new Set(employers.map((employer) => employer.company.charAt(0).toUpperCase()))].sort();
+  const visibleEmployers = employers.filter((employer) => {
+    const matchesSearch = !companyQ || employer.company.toLowerCase().includes(companyQ.trim().toLowerCase());
+    const matchesLetter = !companyLetter || employer.company.charAt(0).toUpperCase() === companyLetter.toUpperCase();
+    return matchesSearch && matchesLetter;
+  });
+  const employersByLetter = visibleEmployers.reduce((groups, employer) => {
+    const letter = employer.company.charAt(0).toUpperCase();
+    groups.set(letter, [...(groups.get(letter) ?? []), employer]);
+    return groups;
+  }, new Map<string, typeof visibleEmployers>());
 
   return (
     <main className="page-shell student-career-interests">
@@ -119,56 +137,47 @@ export default async function StudentInterests({
         </section>
       )}
 
-      <section className="card" style={{ marginTop: 18 }}>
-        <span className="eyebrow">CAREER MATCHING</span>
-        <h2>Careers your evidence currently points to</h2>
-        <p className="muted">
-          Ranked from readiness against each career track, demonstrated interest in your own activity, and how often
-          employers currently request the skills that career needs.
-        </p>
+      <section className="card student-career-explorer" id="career-explorer" style={{ marginTop: 18, scrollMarginTop: 80 }}>
+        <div className="student-career-explorer-head"><div><span className="eyebrow">CAREER EXPLORER</span><h2>Explore every career path</h2><p className="muted">Compare readiness, demonstrated interest, and current employer demand. Fit is guidance, not a prediction.</p></div><div className="student-career-legend" aria-label="Career readiness color key"><span className="strong">Strong</span><span className="developing">Developing</span><span className="early">Early</span></div></div>
+        <form action="/student/interests#career-explorer" className="filter-bar student-career-filter">
+          <label htmlFor="career-search">Find a career</label>
+          <input className="input" id="career-search" type="search" name="trackQ" placeholder="Search all careers" defaultValue={trackQ}/>
+          <button className="button secondary" type="submit">Search</button>
+          {trackQ && <a className="link" href="/student/interests">Clear</a>}
+          <span>{trackQ ? `${visibleCareerMatches.length} matches` : `${careerMatches.length} careers available`}</span>
+        </form>
         {careerMatches.length ? (
-          careerMatches.map((career, index) => (
-            <div className="data-row" key={career.careerTrackId}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-                  <span className="pill">#{index + 1}</span>
-                  <strong>{career.careerTrackLabel}</strong>
-                  {career.careerTrackId === student.targetCareer && <span className="pill">Current target</span>}
-                </div>
-                <div className="muted" style={{ fontSize: 12, marginTop: 6 }}>
-                  Readiness {career.readinessScore}% · Interest {career.interestScore}% · Employer demand{" "}
-                  {career.marketDemandScore}%
-                </div>
-                <div className="muted" style={{ fontSize: 12, marginTop: 4 }}>
-                  {career.reasons.join(" ")}
-                </div>
-              </div>
-              <div className="actions" style={{ flexDirection: "column", alignItems: "flex-end" }}>
-                <span className="pill">{career.recommendationScore}% fit</span>
-                {career.careerTrackId !== student.targetCareer && (
-                  <form action={setPrimaryCareerTrack}>
-                    <input type="hidden" name="careerTrackId" value={career.careerTrackId} />
-                    <button className="button secondary">Set as target</button>
-                  </form>
-                )}
-              </div>
-            </div>
-          ))
+          <div className="student-career-grid">
+          {displayedCareerMatches.map((career) => {
+            const level = career.readinessScore >= 70 ? "strong" : career.readinessScore >= 40 ? "developing" : "early";
+            return <article className={`student-career-card ${level}`} key={career.careerTrackId}>
+              <header><span className="student-career-rank">#{careerMatches.findIndex(item => item.careerTrackId === career.careerTrackId) + 1}</span><span className="student-career-fit">{career.recommendationScore}% fit</span></header>
+              <h3>{career.careerTrackLabel}</h3>
+              {career.careerTrackId === student.targetCareer && <span className="student-current-target">Current target</span>}
+              <div className="student-career-score"><span><b>{career.readinessScore}%</b><small>Readiness</small></span><span><b>{career.interestScore}%</b><small>Interest</small></span><span><b>{career.marketDemandScore}%</b><small>Demand</small></span></div>
+              <div className="student-career-bar" aria-label={`${career.readinessScore}% readiness`}><i style={{width:`${career.readinessScore}%`}}/></div>
+              <p>{career.reasons.join(" ") || "Complete more profile evidence to improve this comparison."}</p>
+              {career.careerTrackId !== student.targetCareer && <form action={setPrimaryCareerTrack}><input type="hidden" name="careerTrackId" value={career.careerTrackId}/><button className="button secondary">Set as target</button></form>}
+            </article>;
+          })}
+          {visibleCareerMatches.length === 0 && <div className="notice">No careers match &ldquo;{trackQ}&rdquo;.</div>}
+          </div>
         ) : (
           <div className="notice">
             Career matching appears once career tracks are configured and your passport has structured evidence.
           </div>
         )}
-        <p className="muted" style={{ fontSize: 12, marginTop: 10 }}>
+        <p className="student-career-model muted">
           Model {intelligence.modelVersion}. Recommendations only; Fursah never changes your target career for you.
         </p>
+        {!trackQ && careerMatches.length > 6 && <div className="student-career-more">{showAllCareers ? <Link aria-label="Show top careers" className="button secondary" href="/student/interests#career-explorer">Show top careers</Link> : <Link aria-label={`View all ${careerMatches.length} careers`} className="button secondary" href="/student/interests?careerView=all#career-explorer">View all {careerMatches.length} careers</Link>}</div>}
       </section>
 
       <section className="card student-ai-section" id="recommendations" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">AI career interest matching</span>
         <h2>Your matches & recommendations</h2>
 
-        {favoriteTracks.length === 0 && favoriteEmployers.length === 0 && (
+        {favoriteTracks.length === 0 && (
           <div className="notice">Follow a career track or a company below to get personalized matches and recommendations.</div>
         )}
 
@@ -212,11 +221,11 @@ export default async function StudentInterests({
               {openJobsForTrack.length > 0 && (
                 <div style={{ marginTop: 10 }}>
                   <strong>Open roles in this track</strong>
-                  {openJobsForTrack.slice(0, 3).map(({ job, employer, match }) => (
-                    <div className="data-row" key={job.id}>
+                  {openJobsForTrack.map(({ job, employer, match }) => (
+                    <Link className="data-row student-recommended-role" href={`/student/jobs?job=${job.id}`} key={job.id}>
                       <div><strong>{job.title}</strong><div className="muted">{employer.company}</div></div>
-                      <span className="pill">{match.score}% match</span>
-                    </div>
+                      <div className="student-recommended-role-actions"><span className="pill">{match.score}% match</span><span className="button secondary">View details</span></div>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -243,73 +252,18 @@ export default async function StudentInterests({
           );
         })}
 
-        {favoriteEmployers.map((employer) => {
-          const jobMatches = employer.jobs
-            .map((job) => ({ job, match: computeJobMatch(student, job) }))
-            .sort((a, b) => b.match.score - a.match.score);
-          const best = jobMatches[0];
-          const isReady = best && best.match.score >= 70;
-          const gaps = best
-            ? { missingSkillNames: best.match.missingSkills, missingCertNames: best.match.missingCerts }
-            : { missingSkillNames: [], missingCertNames: [] };
-          const recommendedOfferings = !isReady && best ? matchOfferingsToGaps(gaps, offerings).slice(0, 3) : [];
-
-          return (
-            <article className="card" key={employer.id} style={{ marginTop: 14, boxShadow: "none", border: "1px solid #e0e7e3" }}>
-              <div className="data-row">
-                <div>
-                  <strong>{employer.company}</strong>
-                  <div className="muted">{employer.jobs.length} open role(s)</div>
-                </div>
-                {best && <span className="pill">{best.match.score}% best match</span>}
-              </div>
-
-              {!best && <div className="notice" style={{ marginTop: 10 }}>No open roles right now. You&apos;ll be notified here the moment one is posted.</div>}
-
-              {best && isReady && (
-                <div className="notice" style={{ marginTop: 10 }}>
-                  You&apos;re a strong match for &ldquo;{best.job.title}&rdquo; ({best.match.score}%). <Link className="link" href="/student/jobs">Apply now →</Link>
-                </div>
-              )}
-
-              {best && !isReady && (
-                <div style={{ marginTop: 10 }}>
-                  <strong>Closest role: {best.job.title} ({best.match.score}% match)</strong>
-                  <p className="muted">{[...gaps.missingSkillNames, ...gaps.missingCertNames].join(", ") || "Minor gaps only."}</p>
-                </div>
-              )}
-
-              {recommendedOfferings.length > 0 && (
-                <div style={{ marginTop: 10 }}>
-                  <strong>Recommended to close the gap</strong>
-                  {recommendedOfferings.map(({ offering, coveredSkillNames, coversCertification }) => (
-                    <div className="data-row" key={offering.id}>
-                      <div>
-                        <strong>{offering.title}</strong>
-                        <div className="muted">
-                          {offering.university.institution} · {offering.type}
-                          {coveredSkillNames.length ? ` · covers ${coveredSkillNames.join(", ")}` : ""}
-                          {coversCertification ? " · grants the required certification" : ""}
-                        </div>
-                      </div>
-                      {offering.url ? <a className="link" href={offering.url} target="_blank" rel="noreferrer">View →</a> : <span className="pill">No link</span>}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </article>
-          );
-        })}
       </section>
 
       <section className="card student-interest-list-card" id="career-tracks" style={{ marginTop: 18, scrollMarginTop: 80 }}>
         <span className="eyebrow">Career tracks</span>
         <h2>Favorite career tracks</h2>
         <p className="muted">Beyond your primary target career, follow any track you&apos;re curious about.</p>
-        <form className="filter-bar" style={{ marginTop: 12 }}>
-          <label>Search tracks<input className="input" type="text" name="trackQ" placeholder="e.g. Data" defaultValue={trackQ} /></label>
-          <button className="button secondary" type="submit">Search</button>
-          {trackQ && <a className="link" href="/student/interests#career-tracks" style={{ alignSelf: "center" }}>Clear</a>}
+        <form action="/student/interests#career-tracks" className="student-track-filter" style={{ marginTop: 16 }}>
+          <label>Category<select className="input" name="trackCategory" defaultValue={trackCategory}><option value="">All categories</option>{trackCategories.map(category=><option value={category} key={category}>{category}</option>)}</select></label>
+          <label>Career search<input className="input" type="search" name="trackQ" placeholder="Search careers" defaultValue={trackQ}/></label>
+          <label>Status<select className="input" name="trackStatus" defaultValue={trackStatus}><option value="all">All careers</option><option value="following">Following</option><option value="available">Not followed</option></select></label>
+          <div className="student-track-filter-action"><span aria-hidden="true">Action</span><button className="button secondary" type="submit">Apply filters</button></div>
+          <div className="student-track-filter-summary"><span>{visibleTracks.length} careers</span>{(trackQ || trackCategory || trackStatus !== "all") && <a className="link" href="/student/interests#career-tracks">Clear filters</a>}</div>
         </form>
         <div className="stack student-interest-list" style={{ marginTop: 12 }}>
           {visibleTracks.length === 0 && <div className="notice">No career tracks match &ldquo;{trackQ}&rdquo;.</div>}
@@ -317,7 +271,7 @@ export default async function StudentInterests({
             const isFavorite = favoriteTrackIds.has(track.id);
             return (
               <div className="data-row student-interest-list-row" key={track.id}>
-                <span>{track.label}{track.id === student.targetCareer ? " (primary)" : ""}</span>
+                <div className="student-track-identity"><small>{careerCategoryFor(track.label)}</small><span>{track.label}{track.id === student.targetCareer ? " (primary)" : ""}</span></div>
                 <div className="student-track-actions">{track.id !== student.targetCareer && <form action={setPrimaryCareerTrack}><input type="hidden" name="careerTrackId" value={track.id}/><button className="button secondary">Set as target</button></form>}<form action={toggleFavoriteCareerTrack}>
                   <input type="hidden" name="careerTrackId" value={track.id} />
                   <button className={`button ${isFavorite ? "secondary" : "primary"}`}>{isFavorite ? "Following ✓" : "Follow"}</button>
@@ -332,14 +286,21 @@ export default async function StudentInterests({
         <span className="eyebrow">Companies</span>
         <h2>Favorite companies</h2>
         <p className="muted">Follow a company to get matched against every role they post, not just the ones you happen to see.</p>
-        <form className="filter-bar" style={{ marginTop: 12 }}>
-          <label>Search companies<input className="input" type="text" name="companyQ" placeholder="e.g. Nexariya" defaultValue={companyQ} /></label>
-          <button className="button secondary" type="submit">Search</button>
-          {companyQ && <a className="link" href="/student/interests#companies" style={{ alignSelf: "center" }}>Clear</a>}
+        <p className="muted student-company-disclaimer">Company directory listings support exploration and do not imply a partnership with Fursah or an active vacancy.</p>
+        <nav className="student-company-letters" aria-label="Browse companies by first letter">
+          <Link className={!companyLetter ? "active" : ""} href="/student/interests#companies">All</Link>
+          {companyLetters.map((letter) => <Link className={companyLetter === letter ? "active" : ""} href={`/student/interests?companyLetter=${letter}#companies`} key={letter}>{letter}</Link>)}
+        </nav>
+        <form action="/student/interests#companies" className="student-company-filter">
+          {companyLetter && <input type="hidden" name="companyLetter" value={companyLetter} />}
+          <label>Search companies<input className="input" type="search" name="companyQ" placeholder="Search by company name" defaultValue={companyQ} /></label>
+          <div className="student-company-filter-action"><span aria-hidden="true">Action</span><button className="button secondary" type="submit">Search</button></div>
+          {(companyQ || companyLetter) && <a className="link" href="/student/interests#companies">Clear filters</a>}
+          <span className="student-company-count">{visibleEmployers.length} companies</span>
         </form>
         <div className="stack student-interest-list" style={{ marginTop: 12 }}>
           {visibleEmployers.length === 0 && <div className="notice">No companies match &ldquo;{companyQ}&rdquo;.</div>}
-          {visibleEmployers.map((employer) => {
+          {[...employersByLetter.entries()].map(([letter, letterEmployers]) => <section className="student-company-letter-group" key={letter} aria-labelledby={`companies-${letter}`}><h3 id={`companies-${letter}`}>{letter}</h3>{letterEmployers.map((employer) => {
             const isFavorite = favoriteEmployerIds.has(employer.id);
             return (
               <div className="data-row student-interest-list-row" key={employer.id}>
@@ -350,7 +311,7 @@ export default async function StudentInterests({
                 </form>
               </div>
             );
-          })}
+          })}</section>)}
         </div>
       </section>
     </main>

@@ -131,7 +131,7 @@ const PRIVACY: PolicyDocument = {
         "Two features send personal data to a language model, and we describe them specifically rather than under a general reference to “AI processing”.",
       ],
       bullets: [
-        "Evidence extraction: when you upload a certificate, project, or experience document, its contents are sent for structured extraction — document type, title, issuer, the name the document was issued to, dates, and the skills it evidences, each with a confidence value and the text supporting it. The result is a proposal for a human reviewer, never an automatic approval.",
+        "Evidence extraction: when you upload a certificate, project, or experience document, its contents are sent for structured extraction. This includes the document type, title, issuer, recipient name, dates, supported skills, confidence values, and supporting text. The result is a proposal for a human reviewer. It is never an automatic approval.",
         "The in-platform assistant: when you ask it a question, it receives a prepared set of facts scoped to your own role, together with your question and up to six previous turns of that conversation.",
       ],
     },
@@ -163,7 +163,7 @@ const PRIVACY: PolicyDocument = {
       paragraphs: [
         "Fursah is designed to be operated from a hosting region inside the Kingdom, consistent with national data-classification and cloud-hosting rules and with the Regulations on Personal Data Transfers outside the Kingdom.",
         "We state plainly that the current prototype deployment uses infrastructure providers whose storage and hosting regions are not yet pinned to the Kingdom. This is a known limitation of the prototype and is disclosed here rather than omitted. Before the platform processes real student records at any scale, hosting and storage will be bound to a compliant in-Kingdom region, and any residual transfer will be assessed and documented as the Regulations require.",
-        "The same applies, and applies most sharply, to the language-model processing in clause 6a: inference runs on the provider's distributed network rather than in a region we currently pin. Evidence documents are the most sensitive data the platform holds, so this is the first transfer we will bring inside the Kingdom. Until it is, the extraction feature can be disabled for any institution that requires it, and the platform continues to function without it — evidence is then reviewed by a human without a machine-generated proposal.",
+        "The same rule applies to the language-model processing in clause 6a. Inference runs on the provider's distributed network rather than in a region that we currently select. Evidence documents are the platform's most sensitive data, so this is the first transfer planned for localisation within the Kingdom. Until then, an institution may disable extraction. Evidence is then reviewed by a person without a machine-generated proposal.",
       ],
     },
     {
@@ -248,7 +248,7 @@ const RESPONSIBLE_AI: PolicyDocument = {
       heading: "2. What the system actually is",
       paragraphs: [
         "Honesty about the mechanism is part of explainability, so we state it plainly. Fursah has two distinct components, and the boundary between them is the most important design decision in the platform.",
-        "Everything that produces a number about a person — the Career Readiness Score, the gap analysis, and the candidate–role match — is a deterministic, rule-based scoring system with published weights. It is not a machine-learning model trained on historical hiring decisions.",
+        "Every score about a person uses deterministic rules with published weights. This includes the Career Readiness Score, gap analysis, and candidate-to-role match. These scores do not use a machine-learning model trained on past hiring decisions.",
         "This is a deliberate architectural choice. A model trained on past hiring outcomes learns past hiring preference, including its inequities. A weighted rule engine cannot silently acquire a bias from history, because it has no history to learn from; its inputs are the skills, certifications, experience, and projects a candidate can evidence, and its weights are visible, versioned, and auditable.",
         "The trade-off is that the engine cannot discover patterns nobody encoded. We accept that limitation in exchange for a system whose every output can be reconstructed and challenged.",
       ],
@@ -260,7 +260,7 @@ const RESPONSIBLE_AI: PolicyDocument = {
         "The model does two things: it extracts structured details from evidence documents you upload, and it answers questions in the in-platform assistant. It does not compute any score, does not rank candidates, and does not decide whether evidence is accepted.",
         "Both uses are grounded. The model is given facts already produced by the deterministic engine and is instructed to answer only from them; it is not asked to reason about a person from raw data. Its extraction output is a proposal carrying a confidence value and the supporting text, submitted to a human reviewer who accepts or rejects it.",
         "This division is deliberate. Language models are well suited to reading a document and explaining a result, and poorly suited to being the reason a person did or did not get an opportunity. Placing the model on the explanatory side of the boundary keeps every consequential number reconstructible, which is the property the rest of this policy depends on.",
-        "The assistant's access to data is scoped by role before any request leaves our systems, and that boundary is enforced by an automated verification run against the context builder — including an assertion that a university's assistant can never be supplied with an individual student's record. We test the boundary rather than trusting the instruction.",
+        "The assistant's data access is limited by role before a request leaves our systems. An automated test verifies this boundary. It confirms that a university assistant cannot receive an individual student's record.",
         "Any future introduction of a learned component into scoring itself would require bias auditing and a published impact assessment before deployment.",
       ],
     },

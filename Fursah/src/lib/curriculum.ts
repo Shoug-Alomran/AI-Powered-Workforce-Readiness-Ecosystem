@@ -79,6 +79,8 @@ export type CertificationInsight = {
   /** Whether one of the institution's offerings grants it. */
   offered: boolean;
   offeringTitle: string | null;
+  /** Id of the catalogue offering that grants it, for deep-linking. */
+  offeringId: string | null;
 };
 
 export type CurriculumIntelligence = {
@@ -153,9 +155,9 @@ export function computeCurriculumIntelligence(input: {
       certDemand.set(key, (certDemand.get(key) ?? 0) + 1);
     }
   }
-  const offeredCerts = new Map<string, string>();
+  const offeredCerts = new Map<string, { id: string; title: string }>();
   for (const offering of offerings) {
-    if (offering.certification) offeredCerts.set(normalize(offering.certification.name), offering.title);
+    if (offering.certification) offeredCerts.set(normalize(offering.certification.name), { id: offering.id, title: offering.title });
   }
   const certificationInsights: CertificationInsight[] = certifications
     .map((certification) => {
@@ -165,7 +167,8 @@ export function computeCurriculumIntelligence(input: {
         org: certification.org,
         demandCount: certDemand.get(key) ?? 0,
         offered: offeredCerts.has(key),
-        offeringTitle: offeredCerts.get(key) ?? null,
+        offeringTitle: offeredCerts.get(key)?.title ?? null,
+        offeringId: offeredCerts.get(key)?.id ?? null,
       };
     })
     .filter((entry) => entry.demandCount > 0 || entry.offered)

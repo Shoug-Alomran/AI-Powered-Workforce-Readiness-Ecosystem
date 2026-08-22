@@ -145,7 +145,7 @@ export default function FursahAssistant({
 
       {limited ? (
         <p className="muted" style={{ fontSize: 13, marginTop: 14 }}>
-          The assistant is paused for this account. Everything it reports is already on this page — the assistant
+          The assistant is paused for this account. Everything it reports is already on this page. The assistant
           explains those figures, it does not produce them.
         </p>
       ) : (

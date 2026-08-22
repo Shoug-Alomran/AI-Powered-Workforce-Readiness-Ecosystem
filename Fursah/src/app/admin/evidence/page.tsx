@@ -626,7 +626,7 @@ export default async function EvidencePage() {
 
                 <div>
                   <span
-                    className={`pill status-${statusClass}`}
+                    className={`pill ai-status-pill status-${statusClass}`}
                   >
                     AI{" "}
                     {document.aiStatus
@@ -673,7 +673,7 @@ export default async function EvidencePage() {
 
                   {analysis && (
                     <div
-                      className="muted"
+                      className="muted document-analysis ai-box"
                       style={{
                         marginTop: 10,
                         display: "grid",

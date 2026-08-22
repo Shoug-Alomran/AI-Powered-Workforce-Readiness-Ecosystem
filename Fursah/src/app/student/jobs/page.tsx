@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import RouteSkeleton from "@/components/RouteSkeleton";
@@ -15,7 +16,7 @@ import DocumentUpload from "@/components/DocumentUpload";
 export default function Jobs({
   searchParams,
 }: {
-  searchParams: Promise<{ track?: string; q?: string }>;
+  searchParams: Promise<{ track?: string; q?: string; job?: string; sort?: string; application?: string }>;
 }) {
   return (
     <Suspense fallback={<RouteSkeleton />}>
@@ -27,16 +28,17 @@ export default function Jobs({
 async function JobsContent({
   searchParams,
 }: {
-  searchParams: Promise<{ track?: string; q?: string }>;
+  searchParams: Promise<{ track?: string; q?: string; job?: string; sort?: string; application?: string }>;
 }) {
   const ctx = await getCurrentStudent();
   if (!ctx) redirect("/login");
 
-  const { track: trackFilter = "", q = "" } = await searchParams;
+  const { track: trackFilter = "", q = "", job: selectedJobId = "", sort = "recommended", application = "available" } = await searchParams;
+  const applicationView = application === "submitted" ? "submitted" : "available";
 
   const where: Prisma.JobWhereInput = {
-    status: "open",
     employer: { verificationStatus: "APPROVED" },
+    ...(selectedJobId ? { id: selectedJobId } : {}),
     ...(trackFilter ? { careerTrack: trackFilter } : {}),
     ...(q
       ? {
@@ -59,6 +61,7 @@ async function JobsContent({
         experiences: true,
         projects: true,
         applications: true,
+        feedbacks: { orderBy: { checkpointDays: "asc" } },
         bookmarks: true,
       },
     }),
@@ -95,21 +98,58 @@ async function JobsContent({
   ).length;
 
   const unverifiedCertificationCount = student.certifications.length - verifiedCertificationCount;
+  const rankedJobs = jobs
+    .map((job) => ({ job, match: computeJobMatch(student, job) }))
+    .sort((a, b) => {
+      if (sort === "least-recommended") return a.match.score - b.match.score;
+      if (sort === "newest") return b.job.createdAt.getTime() - a.job.createdAt.getTime();
+      if (sort === "least-experience") return a.job.minExperience - b.job.minExperience;
+      if (sort === "most-experience") return b.job.minExperience - a.job.minExperience;
+      return b.match.score - a.match.score;
+    });
+  const appliedJobIds = new Set(student.applications.map((entry) => entry.jobId));
+  const availableJobs = rankedJobs.filter(({ job }) => job.status === "open" && !appliedJobIds.has(job.id));
+  const submittedJobs = rankedJobs.filter(({ job }) => appliedJobIds.has(job.id));
+  const displayedJobs = selectedJobId
+    ? rankedJobs
+    : applicationView === "submitted"
+      ? submittedJobs
+      : availableJobs;
+
+  const experienceLabel = (months: number) => {
+    if (months === 0) return "No minimum experience";
+    if (months < 12) return `${months} month${months === 1 ? "" : "s"} minimum experience`;
+    const years = Math.floor(months / 12);
+    const remainingMonths = months % 12;
+    return `${years} year${years === 1 ? "" : "s"}${remainingMonths ? ` and ${remainingMonths} month${remainingMonths === 1 ? "" : "s"}` : ""} minimum experience`;
+  };
 
   return (
     <main className="page-shell student-job-discovery">
       <span className="eyebrow">Explainable matching</span>
       <h1 className="page-title">Opportunities matched to you</h1>
-      <p className="muted">Scores show both strengths and gaps, never a black-box rejection.</p>
+      <p className="muted student-jobs-intro">Explore open roles, compare your strongest matches, and review the requirements you can still develop.</p>
       <p className="muted" style={{ fontSize: 13 }}>
-        Matching counts {verifiedCertificationCount} human-verified certification(s).
+        Your match scores include {verifiedCertificationCount} human-verified certification{verifiedCertificationCount === 1 ? "" : "s"}.
         {unverifiedCertificationCount > 0
           ? ` ${unverifiedCertificationCount} submitted certification(s) are still awaiting review and do not yet count towards a match.`
           : ""}
       </p>
 
-      <form className="card" style={{ marginTop: 26, display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 12, alignItems: "end" }}>
-        <label style={{ fontSize: 13, fontWeight: 650, color: "#43564f" }}>
+      {selectedJobId && <Link className="button secondary student-job-back" href={`/student/jobs?application=${applicationView}#opportunity-results`}>← View all opportunities</Link>}
+
+      {!selectedJobId && <nav className="student-application-tabs" aria-label="Application views">
+        <Link className={applicationView === "available" ? "is-active" : ""} href="/student/jobs?application=available#opportunity-results">
+          <span><strong>Available opportunities</strong><small>Roles you have not applied to</small></span><b>{availableJobs.length}</b>
+        </Link>
+        <Link className={applicationView === "submitted" ? "is-active" : ""} href="/student/jobs?application=submitted#opportunity-results">
+          <span><strong>Submitted applications</strong><small>Review your application status</small></span><b>{submittedJobs.length}</b>
+        </Link>
+      </nav>}
+
+      {!selectedJobId && <form action="/student/jobs#opportunity-results" className="card student-job-filters">
+        <input type="hidden" name="application" value={applicationView} />
+        <label>
           Career track
           <select className="input" name="track" defaultValue={trackFilter}>
             <option value="">All career tracks</option>
@@ -118,38 +158,75 @@ async function JobsContent({
             ))}
           </select>
         </label>
-        <label style={{ fontSize: 13, fontWeight: 650, color: "#43564f" }}>
+        <label>
           Search
           <input className="input" name="q" placeholder="Job title or company" defaultValue={q} />
         </label>
-        <button className="button secondary" type="submit">Filter</button>
-      </form>
+        <label>
+          Sort opportunities
+          <select className="input" name="sort" defaultValue={sort}>
+            <option value="recommended">Most recommended</option>
+            <option value="least-recommended">Least recommended</option>
+            <option value="newest">Newest first</option>
+            <option value="least-experience">Lowest experience requirement</option>
+            <option value="most-experience">Highest experience requirement</option>
+          </select>
+        </label>
+        <div className="student-job-filter-action"><span aria-hidden="true">Action</span><button className="button secondary" type="submit">Apply filters</button></div>
+        <div className="student-job-filter-summary"><span>{displayedJobs.length} {applicationView === "submitted" ? "submitted application" : "available opportunit"}{displayedJobs.length === 1 ? (applicationView === "submitted" ? "" : "y") : (applicationView === "submitted" ? "s" : "ies")}</span>{(trackFilter || q || sort !== "recommended") && <Link className="link" href={`/student/jobs?application=${applicationView}#opportunity-results`}>Clear filters</Link>}</div>
+      </form>}
 
-      <div className="stack" style={{ marginTop: 18 }}>
-        {jobs.length === 0 && <div className="notice">No open opportunities match this filter yet.</div>}
-        {jobs.map((job) => {
-          const m = computeJobMatch(student, job);
-          const applied = student.applications.some((a) => a.jobId === job.id);
+      <div className="stack student-job-results" id="opportunity-results" style={{ marginTop: 18 }}>
+        {displayedJobs.length === 0 && <div className="notice">{applicationView === "submitted" ? "You have no submitted applications that match these filters." : "No available opportunities match these filters."}</div>}
+        {displayedJobs.map(({ job, match: m }) => {
+          const applicationRecord = student.applications.find((entry) => entry.jobId === job.id);
+          const applied = Boolean(applicationRecord);
           const saved = student.bookmarks.some((b) => b.jobId === job.id);
+          const jobFeedbacks = student.feedbacks.filter((feedback) => feedback.jobId === job.id);
+          const matchLevel = m.score >= 70 ? "strong" : m.score >= 40 ? "developing" : "early";
+          const remainingRequirements = [...m.missingSkills, ...m.missingCerts, m.experienceGapMonths ? `${m.experienceGapMonths} additional month${m.experienceGapMonths === 1 ? "" : "s"} of relevant experience` : ""].filter(Boolean);
           return (
             <article className="card student-job-card" key={job.id}>
-              <header className="student-job-card-header"><div><span className="pill">{m.score}% match</span><h2>{job.title}</h2><p>{job.employer.company} · {job.minExperience} months minimum experience</p></div><span className="student-job-status">{applied ? "Application submitted" : saved ? "Saved opportunity" : "Open opportunity"}</span></header>
-              <p className="student-job-description">{job.description}</p>
+              <header className="student-job-card-header"><div><span className={`student-job-match ${matchLevel}`}>{m.score}% match</span><h2>{job.title}</h2><p><strong>{job.employer.company}</strong><span>{experienceLabel(job.minExperience)}</span></p></div><span className={`student-job-status${applied ? " is-submitted" : ""}`}>{applicationRecord ? ({ applied: "Submitted", shortlisted: "Shortlisted", hired: "Offer received", rejected: "Not selected" }[applicationRecord.status] ?? "Submitted") : saved ? "Saved" : "Open"}</span></header>
+              <section className="student-job-about"><h3>About this opportunity</h3><p className="student-job-description">{job.description}</p></section>
               <div className="grid-2 student-job-match-grid">
                 <div>
-                  <strong>Matches</strong>
-                  <p className="muted">{m.matchedSkills.join(", ") || "Build your profile to reveal matches"}</p>
+                  <strong>What already matches</strong>
+                  {m.matchedSkills.length ? <ul>{m.matchedSkills.map((skill) => <li key={skill}>{skill}</li>)}</ul> : <p className="muted">No required skills are verified yet. Add evidence to your Skills Passport to improve this comparison.</p>}
                 </div>
                 <div>
-                  <strong>Next gaps to close</strong>
-                  <p className="muted">
-                    {[...m.missingSkills, ...m.missingCerts, m.experienceGapMonths ? `${m.experienceGapMonths} more experience month(s)` : ""]
-                      .filter(Boolean)
-                      .join(", ") || "No major gaps detected"}
-                  </p>
+                  <strong>Requirements to work on</strong>
+                  {remainingRequirements.length ? <ul>{remainingRequirements.map((requirement) => <li key={requirement}>{requirement}</li>)}</ul> : <p className="muted">Your verified profile meets the main listed requirements.</p>}
                 </div>
               </div>
-              <div className="notice student-job-explanation">{m.explanation}</div>
+              <div className="notice student-job-explanation"><strong>Why you received this score</strong><p>{m.explanation}</p></div>
+
+              {applied && <section className="student-employment-details" aria-labelledby={`employment-${job.id}`}>
+                <header>
+                  <div><span className="eyebrow">Application and employment record</span><h3 id={`employment-${job.id}`}>Your history with this opportunity</h3></div>
+                  <span className="student-employment-count">{jobFeedbacks.length} employer review{jobFeedbacks.length === 1 ? "" : "s"}</span>
+                </header>
+                <dl className="student-application-metadata">
+                  <div><dt>Application status</dt><dd>{applicationRecord ? ({ applied: "Submitted", shortlisted: "Shortlisted", hired: "Hired", rejected: "Not selected" }[applicationRecord.status] ?? "Submitted") : "Submitted"}</dd></div>
+                  <div><dt>Applied on</dt><dd>{applicationRecord?.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</dd></div>
+                  <div><dt>Role status</dt><dd>{job.status === "open" ? "Open" : "Closed"}</dd></div>
+                  <div><dt>Recorded match</dt><dd>{applicationRecord?.matchScore ?? m.score}%</dd></div>
+                </dl>
+                {applicationRecord?.decisionReason && <div className="student-application-note"><strong>Employer decision</strong><p>{applicationRecord.decisionReason}</p></div>}
+                {applicationRecord?.note && <div className="student-application-note"><strong>Application note</strong><p>{applicationRecord.note}</p></div>}
+                {jobFeedbacks.length > 0 ? <div className="student-employer-reviews">
+                  {jobFeedbacks.map((feedback) => {
+                    const average = Math.round(((feedback.technical + feedback.communication + feedback.teamwork + feedback.problemSolving + feedback.adaptability + feedback.overall) / 6) * 20);
+                    return <article id={`feedback-${feedback.id}`} key={feedback.id}>
+                      <header><div><strong>{feedback.checkpointDays}-day employer review</strong><small>Submitted {feedback.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}</small></div><span>{average}% overall</span></header>
+                      <div className="student-feedback-score-grid">
+                        {[{ label: "Technical", value: feedback.technical }, { label: "Communication", value: feedback.communication }, { label: "Teamwork", value: feedback.teamwork }, { label: "Problem solving", value: feedback.problemSolving }, { label: "Adaptability", value: feedback.adaptability }, { label: "Overall", value: feedback.overall }].map((score) => <div key={score.label}><span>{score.label}</span><strong>{score.value}/5</strong></div>)}
+                      </div>
+                      <div className="student-feedback-notes"><strong>Employer comments</strong><p>{feedback.notes || "No written comments were provided for this review."}</p></div>
+                    </article>;
+                  })}
+                </div> : <p className="muted student-feedback-empty">No employer performance review has been submitted for this opportunity yet.</p>}
+              </section>}
 
               {m.missingSkills.length > 0 && (
                 <div className="student-job-skills">
@@ -186,12 +263,12 @@ async function JobsContent({
                     })}
                 </div>
               )}
-              <footer className="student-job-card-footer">
-                <form action={applyToJob} className="student-job-apply-form">
+              <footer className={`student-job-card-footer${applied ? " student-application-footer" : ""}`}>
+                {applicationRecord ? <div className="student-application-summary"><span>Application status</span><strong>{({ applied: "Submitted", shortlisted: "Shortlisted", hired: "Offer received", rejected: "Not selected" }[applicationRecord.status] ?? "Submitted")}</strong><small>Submitted {applicationRecord.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</small></div> : <form action={applyToJob} className="student-job-apply-form">
                   <input type="hidden" name="jobId" value={job.id} />
-                  {!applied&&<DocumentUpload label="Application documents" compact/>}
-                  <button className="button primary student-job-apply-button" disabled={applied}>{applied ? "Applied ✓" : "Apply now"}</button>
-                </form>
+                  <DocumentUpload label="Application documents" compact/>
+                  <button className="button primary student-job-apply-button">Apply now</button>
+                </form>}
                 <form action={toggleBookmark} className="student-job-save-form">
                   <input type="hidden" name="jobId" value={job.id} />
                   <button className="button secondary">{saved ? "Saved ✓" : "Save"}</button>

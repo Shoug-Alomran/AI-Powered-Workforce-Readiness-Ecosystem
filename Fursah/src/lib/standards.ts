@@ -127,7 +127,7 @@ export const Y3172_EXTENSIONS: {
     label: "Sandbox",
     reference: "ITU-T Y.3181, architectural framework for ML sandbox",
     fursah:
-      "Governance scenarios are evaluated against the safeguards before a control is activated, and the human decision — including an override — is recorded.",
+      "Governance scenarios are evaluated against safeguards before a control is activated. The human decision, including any override, is recorded.",
     implementation: ["src/actions/governance.ts", "src/app/admin/governance/page.tsx"],
     status: "Prototype",
   },
@@ -190,7 +190,7 @@ export const ITU_DIMENSIONS: Dimension[] = [
     measures: "Similarities and patterns across domain workflows, and opportunities to integrate AI across them.",
     coverage: "partial",
     fursah:
-      "The platform correlates two domains that are normally measured separately — higher education and labour demand — and publishes the coverage gap between them as a single figure.",
+      "The platform compares higher education with labour demand. It publishes the coverage gap between them as one figure.",
     evidence: "src/lib/intelligence/ecosystem.ts",
   },
   {
@@ -210,7 +210,7 @@ export const ITU_DIMENSIONS: Dimension[] = [
       "How well AI is integrated into a domain workflow and what benefit it delivers; interoperability of the interfaces involved.",
     coverage: "addressed",
     fursah:
-      "AI sits at four defined points in the education-to-employment workflow — evidence extraction, readiness scoring, role matching, curriculum alignment — rather than as a single bolt-on feature. Each point has a named input, a named output and a human decision downstream of it.",
+      "AI supports four defined points in the education-to-employment workflow: evidence extraction, readiness scoring, role matching, and curriculum alignment. Each point has a named input, a named output, and a later human decision.",
     evidence: "src/lib/intelligence/",
   },
   {
@@ -227,7 +227,7 @@ export const ITU_DIMENSIONS: Dimension[] = [
     number: 7,
     title: "Strategy Alignment",
     measures:
-      "Coordination of AI integration strategy across distributed entities — industry, academia, government.",
+      "Coordination of AI integration across industry, academia, and government.",
     coverage: "addressed",
     fursah:
       "The three stakeholder groups the report names are the platform's three portals, and the intelligence layer is the coordination mechanism between them. Alignment to the Human Capability Development Program is stated against specific commitments.",
@@ -246,7 +246,7 @@ export const ITU_DIMENSIONS: Dimension[] = [
     number: 9,
     title: "Impacts of Humans in AI Integration",
     measures:
-      "Skill distribution and levels, ecosystem ability to develop AI talent, and — named explicitly in the report — skills gap analysis identifying what skills are currently lacking.",
+      "Skill levels, talent development capacity, and analysis of the skills that are currently lacking.",
     coverage: "addressed",
     fursah:
       "This is the platform's primary output. Fursah computes the skills gap at three resolutions: per student against a target role, per institution against employer demand, and per ecosystem as the set of requested skills no university offering covers.",
@@ -288,7 +288,7 @@ export const ITU_DIMENSIONS: Dimension[] = [
       "Availability of devices, computing capability, connectivity and energy, including the nodes identified in ITU-T Y.3172.",
     coverage: "partial",
     fursah:
-      "The Y.3172 nodes are identified and mapped above. Infrastructure readiness itself is a national measure rather than an application one, and the prototype's own hosting is a declared gap — see the implementation gaps below.",
+      "The Y.3172 nodes are identified and mapped above. Infrastructure readiness is a national measure rather than an application measure. The prototype's hosting remains a declared implementation gap.",
     evidence: "src/lib/standards.ts",
   },
 ];
@@ -412,7 +412,7 @@ export const POLICY_GAPS: PolicyGap[] = [
     why:
       "The distinction between decision support and automated decision-making is stated in principle but has no operational test. A platform can satisfy every disclosure requirement while its output is used exactly as an automated decision.",
     recommendation:
-      "An operational test for effective automation — pass-through rate, override rate, or a mandated minimum review — so the obligation attaches to how output is used rather than how it is described.",
+      "An operational test for effective automation, such as pass-through rate, override rate, or a required minimum review. The obligation should depend on how the output is used.",
     owner: "Ministry of Human Resources and Social Development with SDAIA",
     trigger: "A score, rank or recommendation is used to exclude, shortlist or materially prioritise a candidate.",
     metric: "Documented human review for every exclusion, monitored override and appeal rates, and suspension when review evidence is missing.",

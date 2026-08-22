@@ -4,6 +4,7 @@ import { PrismaClient } from "../src/generated/prisma/client";
 import { PrismaLibSql } from "@prisma/adapter-libsql";
 import { CAREER_TRACKS, allSkillNames, allCertificationNames } from "../src/lib/careerTracks";
 import { computeJobMatch } from "../src/lib/ai";
+import { companyDirectoryEmail, SAUDI_COMPANY_DIRECTORY } from "../src/lib/saudiCompanies";
 
 const adapter = new PrismaLibSql({
   url: process.env.DATABASE_URL ?? "file:./prisma/dev.db",
@@ -99,6 +100,15 @@ async function main() {
       data: { userId: user.id, company: e.company, industry: e.industry, verificationStatus: "APPROVED" },
     });
     employers.push(employer);
+  }
+
+  for (const entry of SAUDI_COMPANY_DIRECTORY) {
+    const user = await prisma.user.create({
+      data: { role: "EMPLOYER", name: `${entry.company} directory`, email: companyDirectoryEmail(entry.company) },
+    });
+    await prisma.employer.create({
+      data: { userId: user.id, company: entry.company, industry: entry.industry, verificationStatus: "APPROVED" },
+    });
   }
 
   // An unverified employer, to demo the admin approval queue.

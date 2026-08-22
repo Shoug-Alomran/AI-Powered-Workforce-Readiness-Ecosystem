@@ -85,15 +85,16 @@ function OfferingCard({ insight }: { insight: OfferingInsight }) {
             <i>No professional certifications mapped yet</i>
           )}
         </span>
-        <Link href="#certification-mapping">Manage mappings</Link>
+        <Link href={`/university/offerings/${offering.id}`}>Manage offering</Link>
       </footer>
     </article>
   );
 }
 
-export default async function UniversityCurriculum() {
+export default async function UniversityCurriculum({ searchParams }: { searchParams: Promise<{ removed?: string }> }) {
   const ctx = await getCurrentUniversity();
   if (!ctx) redirect("/login");
+  const query = await searchParams;
 
   const [offerings, jobs, tracks, students, certifications] = await Promise.all([
     prisma.offering.findMany({
@@ -125,6 +126,7 @@ export default async function UniversityCurriculum() {
 
   return (
     <main className="cc-page">
+      {query.removed === "1" && <div className="uo-success" role="status">✓ Offering removed. Curriculum and certification mapping have been updated.</div>}
       <section className="cc-overview">
         <div className="cc-executive">
           <b>
@@ -297,7 +299,11 @@ export default async function UniversityCurriculum() {
                 </p>
                 <footer>
                   <span>●　{cert.offered ? "Mapped" : "Update recommended"}</span>
-                  <Link href="/university/offerings">{cert.offered ? "Manage offering" : "Add offering"}</Link>
+                  {cert.offered && cert.offeringId ? (
+                    <Link href={`/university/offerings/${cert.offeringId}`}>Manage offering</Link>
+                  ) : (
+                    <Link href="/university/offerings">Add offering</Link>
+                  )}
                 </footer>
               </article>
             ))
