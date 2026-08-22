@@ -1,0 +1,19 @@
+title: AI-Powered Workforce Readiness Ecosystem
+description: Fursah — an AI-powered workforce readiness ecosystem.
+theme: jekyll-theme-primer
+
+# This repository is an application, not a Jekyll site. Only the top-level
+# Markdown is published; everything else is excluded so the Pages build never
+# walks build output, dependency trees, or broken symlinks such as
+# tmp/presentation-build/node_modules.
+exclude:
+  - .github/
+  - Fursah/
+  - fursa/
+  - node_modules/
+  - submission/
+  - tmp/
+  - vendor/
+  - workers/
+  - "**/node_modules"
+  - "**/.next"

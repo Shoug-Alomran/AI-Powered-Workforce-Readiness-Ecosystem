@@ -31,6 +31,9 @@ jobs:
     timeout-minutes: 15
     env:
       CI: true
+      # A throwaway SQLite file so build-time prerendering has real tables to
+      # query instead of failing on "no such table".
+      DATABASE_URL: file:./prisma/ci.db
 
     steps:
       - name: Check out repository
@@ -51,6 +54,9 @@ jobs:
 
       - name: Generate Prisma client
         run: npx prisma generate
+
+      - name: Create CI database schema
+        run: npx prisma migrate deploy
 
       - name: Lint
         run: npm run lint

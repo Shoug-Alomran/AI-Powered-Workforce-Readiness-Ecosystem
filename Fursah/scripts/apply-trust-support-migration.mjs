@@ -4,10 +4,15 @@ import { createClient } from "@libsql/client";
 const url = process.env.DATABASE_URL;
 const authToken = process.env.TURSO_AUTH_TOKEN;
 
+// This migration only applies to the hosted libsql (Turso) database. Local and
+// CI builds run against a file-backed SQLite database whose schema comes from
+// `prisma migrate deploy`, so there is nothing to do and the build must not
+// fail here.
 if (!url || !url.startsWith("libsql:")) {
-  throw new Error(
-    "A production libsql DATABASE_URL is required"
+  console.log(
+    "Skipping trust/support migration: DATABASE_URL is not a libsql URL."
   );
+  process.exit(0);
 }
 
 if (!authToken) {

@@ -1,0 +1,9 @@
+# Stray lowercase build directory (node_modules/.next/generated Prisma client).
+# Not source - the real app lives in Fursah/.
+/fursa/
+
+.DS_Store
+node_modules/
+.next/
+*.tsbuildinfo
+.vercel

@@ -1,4 +1,9 @@
+<<<<<<< HEAD:Fursah/src/app/workforce-intelligence/page.tsx
 import { cacheLife } from "next/cache";
+=======
+import { connection } from "next/server";
+
+>>>>>>> 4a492a0 (feat: enhance CI workflow with SQLite database setup and trust/support migration handling):fursa/src/app/workforce-intelligence/page.tsx
 import PageToc from "@/components/PageToc";
 import { getEcosystemIntelligence, MIN_ECOSYSTEM_SAMPLE } from "@/lib/intelligence";
 
@@ -24,7 +29,16 @@ function generatedAtLabel(value: Date) {
 }
 
 export default async function Intelligence() {
+<<<<<<< HEAD:Fursah/src/app/workforce-intelligence/page.tsx
   const ecosystem = await getEcosystem();
+=======
+  // Every figure on this page is a live count over current rows, so the page is
+  // rendered per request rather than prerendered at build time (where no
+  // database exists in CI).
+  await connection();
+
+  const ecosystem = await getEcosystemIntelligence();
+>>>>>>> 4a492a0 (feat: enhance CI workflow with SQLite database setup and trust/support migration handling):fursa/src/app/workforce-intelligence/page.tsx
 
   const topSkills = ecosystem.skills.slice(0, 6);
   const peakDemand = topSkills[0]?.demandPoints ?? 1;
