@@ -423,7 +423,8 @@ The bundled SQLite file (`prisma/dev.db`) is used by default, so the demo runs o
 | Command | Purpose |
 |---|---|
 | `npm run dev` | Start the local development server |
-| `npm run build` | Apply production migrations, then build |
+| `npm run build` | Build the production application |
+| `npm run build:production` | Apply production migrations, then build |
 | `npm start` | Serve the production build |
 | `npm run lint` | Run ESLint |
 | `npm run create-admin` | Create an `ADMIN` account from `ADMIN_*` env vars |
