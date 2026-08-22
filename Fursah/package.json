@@ -7,7 +7,8 @@
   },
   "scripts": {
     "dev": "next dev --webpack",
-    "build": "npm run db:migrate:production && next build --webpack",
+    "build": "next build --webpack",
+    "build:production": "npm run db:migrate:production && npm run build",
     "postinstall": "prisma generate",
     "start": "next start",
     "lint": "eslint && npm run check:design && npm run check:content",
