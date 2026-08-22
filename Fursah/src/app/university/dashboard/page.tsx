@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { getCurrentUniversity } from "@/lib/session";
 import { getUniversityIntelligence } from "@/lib/intelligence";
 import { MIN_COHORT } from "@/lib/cohort";
+import Ic from "@/components/Ic";
 import FursahAssistant from "@/components/FursahAssistant";
 import ActionQueue from "@/components/ActionQueue";
 import { assistantConfigured } from "@/lib/assistant/llm";
@@ -448,7 +449,7 @@ export default async function UniversityDashboard() {
                   .slice(0, 3)
                   .map((entry) => (
                     <article key={entry.skillId}>
-                      <i>▣</i>
+                      <i><Ic name="award" /></i>
                       <div>
                         <b>{entry.skillName}</b>
                         <small>{entry.relatedOpenRoles} open role(s) require it</small>
@@ -458,7 +459,7 @@ export default async function UniversityDashboard() {
                   ))
               ) : (
                 <article>
-                  <i>▣</i>
+                  <i><Ic name="award" /></i>
                   <div>
                     <b>No unmet certification demand</b>
                     <small>Every certification employers request is granted by an offering here.</small>

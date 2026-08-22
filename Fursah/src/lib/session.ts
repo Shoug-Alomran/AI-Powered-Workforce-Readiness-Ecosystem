@@ -42,6 +42,14 @@ function signSession(userId: string): string {
   return `${userId}.${signature(userId)}`;
 }
 
+/**
+ * Signed cookie value for a user id, for callers that write the cookie onto a
+ * NextResponse themselves rather than through `setSessionUserId`.
+ */
+export function signSessionValue(userId: string): string {
+  return signSession(userId);
+}
+
 /** Returns the user id only when the signature verifies. */
 function readSession(value: string | undefined): string | null {
   if (!value) return null;

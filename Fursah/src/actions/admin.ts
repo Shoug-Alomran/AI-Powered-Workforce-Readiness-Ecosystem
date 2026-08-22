@@ -55,12 +55,35 @@ export async function reviewEmployer(formData: FormData) {
   if (!employerId || !["APPROVED", "REJECTED"].includes(decision)) throw new Error("Invalid review decision");
   if (decision === "REJECTED" && !reviewNote) throw new Error("A reason is required when rejecting an employer");
 
-  await prisma.employer.update({
+  const employer = await prisma.employer.update({
     where: { id: employerId },
     data: { verificationStatus: decision, reviewNote: reviewNote || null, reviewedAt: new Date(), reviewedBy: ctx.user.id },
+    include: { user: true },
+  });
+
+  // Approving an employer unlocks candidate data, so it is exactly the kind of
+  // decision the audit trail exists for. It was the only review action here
+  // that recorded nothing, and the employer was never told the outcome.
+  await prisma.auditEvent.create({
+    data: {
+      actorUserId: ctx.user.id,
+      action: `EMPLOYER_${decision}`,
+      entityType: "EMPLOYER",
+      entityId: employer.id,
+      explanation: `${employer.company}${reviewNote ? `: ${reviewNote}` : ""}`,
+    },
+  });
+  await prisma.notification.create({
+    data: {
+      userId: employer.userId,
+      type: "EMPLOYER_VERIFICATION",
+      title: decision === "APPROVED" ? "Your employer account is verified" : "Your employer account was not approved",
+      body: reviewNote || (decision === "APPROVED" ? "You can now post roles and see candidates." : "Contact the platform team for the reason."),
+    },
   });
 
   revalidatePath("/admin/dashboard");
+  revalidatePath(`/admin/employers/${employer.id}`);
   revalidatePath("/employer/dashboard");
 }
 

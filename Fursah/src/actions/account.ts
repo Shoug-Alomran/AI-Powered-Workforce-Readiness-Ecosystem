@@ -10,6 +10,7 @@ import {
 } from "@/lib/firebase-admin";
 import { randomUUID } from "node:crypto";
 import { uploadPrivateDocument } from "@/lib/r2";
+import { hashPassword } from "@/lib/localAuth";
 
 export type AccountUpdateState = {
   error?: string;
@@ -182,10 +183,13 @@ export async function updateAccountCredentials(
         );
     }
   } else if (password) {
-    return {
-      error:
-        "Password changes require the secure authentication service to be configured.",
-    };
+    // No Firebase: the credential lives on the User row, the same store the
+    // local sign-in path reads. This used to refuse outright, which left an
+    // account created locally unable to ever change its own password.
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { passwordHash: await hashPassword(password) },
+    });
   }
 
   if (email !== user.email) {

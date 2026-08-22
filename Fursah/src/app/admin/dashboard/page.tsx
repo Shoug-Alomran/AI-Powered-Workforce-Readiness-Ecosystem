@@ -128,6 +128,10 @@ export default async function AdminDashboard({
                 <div className="actions" style={{ margin: 0 }}>
                   <button className="button primary" name="decision" value="APPROVED">Approve employer</button>
                   <button className="button danger" name="decision" value="REJECTED">Reject employer</button>
+                  {/* Approving from here is a judgement made on two lines of
+                      text. The dossier is where the account's documents, roles
+                      and automated checks actually are. */}
+                  <Link className="button secondary" href={`/admin/employers/${e.id}`}>View full details and evidence</Link>
                 </div>
               </form>
             </article>

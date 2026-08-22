@@ -21,6 +21,7 @@ const icons = {
   ai: <Svg><rect x="5" y="5" width="14" height="14" rx="3"/><path d="M9 9h6v6H9zM9 1v4m6-4v4M9 19v4m6-4v4M1 9h4m-4 6h4m14-6h4m-4 6h4"/></Svg>,
   health: <Svg><path d="M3 3v18h18"/><path d="m7 16 4-5 3 3 6-8"/></Svg>,
   security: <Svg><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></Svg>,
+  support: <Svg><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2Z"/><path d="M8 9h8M8 13h5"/></Svg>,
 };
 
 const sections: { label: string; items: Item[] }[] = [
@@ -40,13 +41,23 @@ const sections: { label: string; items: Item[] }[] = [
     { label: "Enterprise Readiness", href: "/admin/enterprise", icon: icons.building },
     { label: "Security", href: "/admin/data-requests", icon: icons.security },
   ]},
+  { label: "Customer", items: [
+    { label: "Support Queue", href: "/admin/support", icon: icons.support },
+  ]},
 ];
+
+// Pages that render their own in-page contents list with PageToc must not also
+// get this one. Two menus saying the same thing stacked in the header is both
+// redundant and the reason the page's own list scrolled out of sight: the
+// sticky header grew tall enough to cover where the list parks.
+const ROUTES_WITH_OWN_TOC = new Set(["/admin/dashboard", "/admin/career-tracks"]);
 
 const primary = [
   { label: "Dashboard", href: "/admin/dashboard" },
   { label: "Trust & Governance", href: "/admin/governance" },
   { label: "Certificate Audits", href: "/admin/evidence" },
   { label: "Platform Health", href: "/admin/monitoring" },
+  { label: "Support", href: "/admin/support" },
   { label: "Security", href: "/admin/data-requests" },
 ];
 
@@ -59,8 +70,15 @@ export default function AdminSidebar({ personName }: { personName: string }) {
     if (pathname === "/admin/evidence") return target === "/admin/evidence";
     if (pathname === "/admin/monitoring") return target === "/admin/monitoring";
     if (pathname === "/admin/data-requests") return target === "/admin/data-requests";
+    if (pathname.startsWith("/admin/support")) return target === "/admin/support";
     return false;
   });
+  // Only real in-page anchors belong in a contents menu. Without this filter a
+  // page whose only entry links to itself (Security, Certificate Audits) got a
+  // one-item menu that navigated nowhere.
+  const pageAnchors = ROUTES_WITH_OWN_TOC.has(pathname)
+    ? []
+    : currentSection.filter(item => item.href.includes("#"));
   const initials = personName.split(" ").map(part => part[0]).slice(0,2).join("").toUpperCase() || "AD";
   return <header className="admin-header">
     <div className="admin-header-main">
@@ -68,6 +86,6 @@ export default function AdminSidebar({ personName }: { personName: string }) {
       <nav className="admin-primary-nav" aria-label="Administration pages">{primary.map(item => <Link key={item.href} className={pathname === item.href ? "is-active" : ""} href={item.href} aria-current={pathname === item.href ? "page" : undefined}>{item.label}</Link>)}</nav>
       <div className="admin-header-account"><Link href="/admin/profile" aria-label="Open your account profile"><AccountAvatar initials={initials}/><span><b>{personName}</b><small>Platform administrator</small></span></Link><form action={logout}><button type="submit">Log out</button></form></div>
     </div>
-    <nav className="admin-page-menu" aria-label="On this page"><strong>ON THIS PAGE</strong>{currentSection.map(item => <Link key={item.label} href={item.href}>{item.icon}<span>{item.label}</span></Link>)}</nav>
+    {pageAnchors.length > 1 && <nav className="admin-page-menu" aria-label="On this page"><strong>ON THIS PAGE</strong>{pageAnchors.map(item => <Link key={item.label} href={item.href}>{item.icon}<span>{item.label}</span></Link>)}</nav>}
   </header>;
 }

@@ -6,6 +6,7 @@ import { createCurriculumAction, submitCurriculumActionForReview } from "@/actio
 import DocumentUpload from "@/components/DocumentUpload";
 import { getUniversityIntelligence } from "@/lib/intelligence";
 import { MIN_COHORT } from "@/lib/cohort";
+import Ic from "@/components/Ic";
 
 const steps = ["Created", "Approved", "Curriculum design", "Faculty review", "Implementation", "Student delivery", "Outcome"];
 
@@ -19,9 +20,9 @@ function ActionCard({ id, title, description, owner, due, department, completed,
   const detailId=`initiative-${title.toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/(^-|-$)/g,"")}`;
   return <article className="cap-action-card" id={detailId}>
     <div className="cap-action-title-row">
-      <span className="cap-action-icon">▣</span>
+      <span className="cap-action-icon"><Ic name="grid" /></span>
       <div><div className="cap-title-line"><h3>{title}</h3><span className={`cap-tag ${status==="COMPLETED"?"cap-tag-green":status==="AWAITING_HUMAN_REVIEW"?"cap-tag-blue":"cap-tag-orange"}`}>{status==="COMPLETED"?"VERIFIED COMPLETE":status==="AWAITING_HUMAN_REVIEW"?"HUMAN REVIEW":status==="CHANGES_REQUESTED"?"CHANGES REQUESTED":status.replaceAll("_"," ")}</span><span className="cap-tag cap-tag-blue">{openRoles !== null && openRoles > 0 ? `${openRoles} OPEN ROLE(S)` : "NO LINKED DEMAND"}</span></div><p>{description}</p></div>
-      <span className="cap-card-tools">⌕　•••</span>
+      <span className="cap-card-tools"><Ic name="search" /><Ic name="more" /></span>
     </div>
     <div className="cap-progress">
       {steps.map((step, index) => <div className={`cap-step ${index < completed ? "done" : ""}`} key={step}><b>{step}</b><span /></div>)}
@@ -66,10 +67,10 @@ export default async function UniversityActionsPage() {
       <div className="cap-summary-stats"><span><small>ACTIVE INITIATIVES</small><strong>{inProgress}</strong></span><span><small>COMPLETED ACTIONS</small><strong>{completed}</strong></span><span><small>AWAITING HUMAN REVIEW</small><strong className="orange">{awaitingReview}</strong></span><span><small>UNCOVERED SKILLS</small><strong className="green">{intelligence.gaps.length}</strong></span></div></div><span className="cap-brain">♧</span>
     </section>
     <section className="cap-metrics">
-      <div><span className="blue">⌁</span><i>{intelligence.openRoleCount} roles</i><small>Demand coverage</small><strong>{intelligence.weightedDemandCoverage}%</strong><em>of weighted employer demand taught</em></div>
-      <div><span className="violet">♧</span><i>{cohort.reportable ? "reported" : "withheld"}</i><small>Students in cohort</small><strong>{cohort.reportable ? cohort.students : "Withheld"}</strong><em>{cohort.reportable ? `avg readiness ${cohort.averageScore}/100` : `withheld below ${MIN_COHORT} students`}</em></div>
-      <div><span className="orange-icon">◷</span><i className="delay">not recorded</i><small>Average completion time</small><strong>Not available</strong><em>No initiative completion durations are stored</em></div>
-      <div><span className="green-icon">◎</span><i>{intelligence.compoundedGaps.length} compounded</i><small>Curriculum gaps</small><strong>{intelligence.gaps.length}</strong><em>Requested by employers, untaught here</em></div>
+      <div><span className="blue"><Ic name="chart" /></span><i>{intelligence.openRoleCount} roles</i><small>Demand coverage</small><strong>{intelligence.weightedDemandCoverage}%</strong><em>of weighted employer demand taught</em></div>
+      <div><span className="violet"><Ic name="users" /></span><i>{cohort.reportable ? "reported" : "withheld"}</i><small>Students in cohort</small><strong>{cohort.reportable ? cohort.students : "Withheld"}</strong><em>{cohort.reportable ? `avg readiness ${cohort.averageScore}/100` : `withheld below ${MIN_COHORT} students`}</em></div>
+      <div><span className="orange-icon"><Ic name="clock" /></span><i className="delay">not recorded</i><small>Average completion time</small><strong>Not available</strong><em>No initiative completion durations are stored</em></div>
+      <div><span className="green-icon"><Ic name="target" /></span><i>{intelligence.compoundedGaps.length} compounded</i><small>Curriculum gaps</small><strong>{intelligence.gaps.length}</strong><em>Requested by employers, untaught here</em></div>
     </section>
     <section className="cap-lower">
       <div>

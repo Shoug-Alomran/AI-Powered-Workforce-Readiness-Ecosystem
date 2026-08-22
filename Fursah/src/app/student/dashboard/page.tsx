@@ -5,6 +5,7 @@ import { getCurrentStudent } from "@/lib/session";
 import { computeJobMatch } from "@/lib/ai";
 import { getCareerTrackAsync } from "@/lib/careerTracks.server";
 import { getStudentIntelligence } from "@/lib/intelligence";
+import Ic from "@/components/Ic";
 import { dismissCareerSuggestion, exploreSuggestedCareer } from "@/actions/student";
 import PageToc from "@/components/PageToc";
 import FursahAssistant from "@/components/FursahAssistant";
@@ -217,7 +218,7 @@ export default async function StudentDashboard() {
             </span>
 
             <span>
-              ◷ Next goal: {nextGoal}% readiness
+              <Ic name="clock" /> Next goal: {nextGoal}% readiness
             </span>
           </div>
 

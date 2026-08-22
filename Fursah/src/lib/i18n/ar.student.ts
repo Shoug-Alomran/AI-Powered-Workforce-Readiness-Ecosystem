@@ -114,6 +114,7 @@ export const student: Record<string, string> = {
   "↗ Career stage:": "↗ المرحلة المهنية:",
   "◎ Target:": "◎ الهدف:",
   "◷ Next goal:": "◷ الهدف التالي:",
+  "Next goal:": "الهدف التالي:",
 
   // Evidence
   "Submit for verification": "إرسال للتوثيق",

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
+import Ic from "@/components/Ic";
 
 const FORM_ID = "create-job-form";
 const DRAFT_KEY = "fursah:create-job-draft";
@@ -81,9 +82,9 @@ export function JobDraftActions() {
 
   return <>
     <div className="pjob-draft-actions">
-      <button type="button" onClick={saveDraft}>▣　Save Draft</button>
+      <button type="button" onClick={saveDraft}><Ic name="save" /> Save Draft</button>
       <i aria-hidden="true" />
-      <button type="button" onClick={showPreview}>⊙　Preview Opportunity</button>
+      <button type="button" onClick={showPreview}><Ic name="eye" /> Preview Opportunity</button>
     </div>
     {preview && <div className="pjob-preview-backdrop" role="presentation" onMouseDown={() => setPreview(null)}>
       <section className="pjob-preview" role="dialog" aria-modal="true" aria-labelledby="job-preview-title" onMouseDown={(event) => event.stopPropagation()}>

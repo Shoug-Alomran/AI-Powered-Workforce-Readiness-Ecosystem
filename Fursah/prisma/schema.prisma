@@ -24,6 +24,11 @@ model User {
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
 
+  // Set only for accounts created through local email + password sign-up, the
+  // path used when Firebase is not configured. Firebase-backed and prepared
+  // demo accounts leave it null and authenticate elsewhere.
+  passwordHash String?
+
   student        Student?
   employer       Employer?
   university     University?
@@ -451,6 +456,7 @@ model GovernanceScenario {
   createdBy      String
   createdAt      DateTime @default(now())
   reviewedAt     DateTime?
+  reviewedBy     String?
 }
 
 model MonitoringSnapshot {
@@ -473,14 +479,32 @@ model SupportTicket {
   name       String
   email      String
   category   String
+  // What the person is asking for, separate from the topic. Nullable because
+  // tickets filed before the field existed never answered it: those are
+  // labelled as inferred rather than silently claimed to be questions.
+  type       String? // QUESTION | COMPLAINT | REQUEST | BUG
   subject    String
   message    String
-  priority   String   @default("NORMAL")
+  priority   String   @default("NORMAL") // human-set: URGENT | NORMAL
   status     String   @default("OPEN") // OPEN | IN_PROGRESS | RESOLVED
   resolution String?
   assignedTo String?
+
+  // Automated triage. Advisory only: it orders the queue and explains why, but
+  // `priority` above stays the human-set field and always wins.
+  severity       String? // CRITICAL | HIGH | MEDIUM | LOW
+  urgency        String? // CRITICAL | HIGH | MEDIUM | LOW
+  triageScore    Int?
+  triageReason   String? // JSON list, written through serializeIssues
+  triageVersion  String?
+  triagedAt      DateTime?
+
+  resolvedAt DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([category, status])
 }
 
 model CurriculumAction {

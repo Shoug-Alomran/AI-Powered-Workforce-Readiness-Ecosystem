@@ -2,6 +2,7 @@ import Link from "next/link";
 import FirebaseAuthPanel from "@/components/auth/FirebaseAuthPanel";
 import { firebaseClientConfigured } from "@/lib/firebase-client";
 import { firebaseAdminConfigured } from "@/lib/firebase-admin";
+import { localAuthEnabled } from "@/lib/localAuth";
 
 export default function LoginPage() {
   return <main className="auth-page"><section className="auth-layout">
@@ -12,7 +13,7 @@ export default function LoginPage() {
     </aside>
     <div className="auth-form-panel">
       <div className="auth-form-heading"><span>WELCOME TO FURSAH</span><h2>Access your workspace</h2><p>Use your verified account or create one for your role.</p></div>
-      <FirebaseAuthPanel configured={firebaseClientConfigured} serverReady={firebaseAdminConfigured} />
+      <FirebaseAuthPanel configured={firebaseClientConfigured} serverReady={firebaseAdminConfigured} localMode={localAuthEnabled()} />
       <Link href="/login/demo" className="demo-link"><span>Explore with a prepared demo account</span><b>→</b></Link>
       <p className="auth-terms">By continuing, you agree to FURSAH&apos;s <Link href="/policies/terms">Terms of Service</Link> and <Link href="/policies/privacy">Privacy Policy</Link>.</p>
     </div>

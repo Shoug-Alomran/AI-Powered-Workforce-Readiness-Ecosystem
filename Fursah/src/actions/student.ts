@@ -607,6 +607,8 @@ export async function submitDataRequest(formData: FormData) {
   const request = await prisma.dataRequest.create({ data: { studentId: ctx.student.id, type, details: details || null } });
   await prisma.notification.create({ data: { userId: ctx.user.id, type: "DATA_REQUEST", title: `${type.toLowerCase()} request received`, body: "Your request is recorded and awaiting review." } });
   await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: `DATA_${type}_REQUESTED`, entityType: "DATA_REQUEST", entityId: request.id } });
-  revalidatePath("/student/privacy");
-  revalidatePath("/admin/governance");
+  // The request is read on the student's own history page and in the
+  // administrator's privacy queue, not on the two routes revalidated before.
+  revalidatePath("/student/data-rights");
+  revalidatePath("/admin/data-requests");
 }

@@ -3,6 +3,7 @@ import { getFirebaseAdminAuth, getFirebaseAdminDb } from "@/lib/firebase-admin";
 import type { FirebaseRole, FirebaseUserProfile } from "@/lib/firebase-types";
 import { prisma } from "@/lib/db";
 import { studentLandingPath } from "@/lib/studentOnboarding";
+import { signSessionValue } from "@/lib/session";
 
 const SESSION_COOKIE = "fursa_session";
 const MAX_AGE_SECONDS = 60 * 60 * 24 * 5;
@@ -76,7 +77,10 @@ export async function POST(request: Request) {
     response.cookies.set(SESSION_COOKIE, sessionCookie, {
       maxAge: MAX_AGE_SECONDS, httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/",
     });
-    response.cookies.set("fursa_uid", local?.id ?? decoded.uid, { maxAge: MAX_AGE_SECONDS, httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" });
+    // The fallback cookie has to carry the HMAC the session reader verifies.
+    // It was previously written as the bare user id, which `readSession`
+    // rejects, so this half of the session silently did nothing.
+    response.cookies.set("fursa_uid", signSessionValue(local?.id ?? decoded.uid), { maxAge: MAX_AGE_SECONDS, httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/" });
     return response;
   } catch (error) {
     console.error("Firebase session creation failed", error);

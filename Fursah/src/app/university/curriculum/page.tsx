@@ -3,6 +3,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { getCurrentUniversity } from "@/lib/session";
 import CurriculumControls from "@/components/CurriculumControls";
+import Ic from "@/components/Ic";
 import { computeCurriculumIntelligence, type OfferingInsight } from "@/lib/curriculum";
 
 function OfferingCard({ insight }: { insight: OfferingInsight }) {
@@ -18,9 +19,15 @@ function OfferingCard({ insight }: { insight: OfferingInsight }) {
           <h3>
             {offering.title} <span>{offering.type === "certification" ? "CERTIFICATION" : "COURSE"}</span>
           </h3>
-          <p>
-            ♙ {offering.certification ? `Grants ${offering.certification.name}` : "No certification mapped"}　 ◷ Added:{" "}
-            {offering.createdAt.toLocaleDateString()}
+          <p className="cc-course-meta">
+            <span>
+              <Ic name="award" />
+              {offering.certification ? `Grants ${offering.certification.name}` : "No certification mapped"}
+            </span>
+            <span>
+              <Ic name="clock" />
+              Added: {offering.createdAt.toLocaleDateString()}
+            </span>
           </p>
         </div>
         <div>
@@ -68,7 +75,7 @@ function OfferingCard({ insight }: { insight: OfferingInsight }) {
       </div>
 
       <div className="cc-analysis">
-        <span>✦</span>
+        <span><Ic name="spark" /></span>
         <div>
           <b>AI Curriculum Analysis</b>
           <p>{insight.analysis}</p>
@@ -207,7 +214,7 @@ export default async function UniversityCurriculum({ searchParams }: { searchPar
         <aside>
           <section className="cc-recommend">
             <h2>
-              <span>✦</span> AI Strategic Recommendations
+              <span><Ic name="spark" /></span> AI Strategic Recommendations
             </h2>
             {intel.gaps.length ? (
               intel.gaps.slice(0, 3).map((gap, index) => (
@@ -240,7 +247,7 @@ export default async function UniversityCurriculum({ searchParams }: { searchPar
           </section>
 
           <section className="cc-required">
-            <h3>Top Skills Required　ⓘ</h3>
+            <h3>Top Skills Required <Ic name="info" /></h3>
             {topDemand.length ? (
               topDemand.map((skill) => (
                 <label key={skill.name}>
@@ -253,7 +260,7 @@ export default async function UniversityCurriculum({ searchParams }: { searchPar
             ) : (
               <p className="muted">No open roles have listed required skills yet.</p>
             )}
-            <Link href="/university/job-demand">View Full Analytics　→</Link>
+            <Link href="/university/job-demand">View Full Analytics →</Link>
           </section>
         </aside>
       </div>
@@ -261,7 +268,7 @@ export default async function UniversityCurriculum({ searchParams }: { searchPar
       <section className="cc-cert-section" id="certification-mapping">
         <header>
           <h2>Certification Mapping</h2>
-          <Link href="/university/offerings">Add a certification　›</Link>
+          <Link href="/university/offerings">Add a certification ›</Link>
         </header>
         <div>
           {intel.certifications.length ? (
@@ -298,7 +305,7 @@ export default async function UniversityCurriculum({ searchParams }: { searchPar
                   )}
                 </p>
                 <footer>
-                  <span>●　{cert.offered ? "Mapped" : "Update recommended"}</span>
+                  <span className="cc-cert-state"><i />{cert.offered ? "Mapped" : "Update recommended"}</span>
                   {cert.offered && cert.offeringId ? (
                     <Link href={`/university/offerings/${cert.offeringId}`}>Manage offering</Link>
                   ) : (
@@ -321,8 +328,9 @@ export default async function UniversityCurriculum({ searchParams }: { searchPar
             intel.byCategory.map((group) => (
               <article key={group.category}>
                 <h3>
-                  ▣　{group.category === "technical" ? "Technical" : group.category === "soft" ? "Professional" : group.category} skills
-                  　<b>
+                  <Ic name="grid" />{" "}
+                  {group.category === "technical" ? "Technical" : group.category === "soft" ? "Professional" : group.category} skills{" "}
+                  <b>
                     {group.covered}/{group.total} covered
                   </b>
                 </h3>
@@ -332,7 +340,7 @@ export default async function UniversityCurriculum({ searchParams }: { searchPar
                     .slice(0, 8)
                     .map((skill) => (
                       <span key={skill.name} className={skill.covered ? "covered" : "gap"}>
-                        {skill.name}　{skill.covered ? "✓" : `${skill.jobCount} role(s)`}
+                        {skill.name} {skill.covered ? <Ic name="check" /> : `${skill.jobCount} role(s)`}
                       </span>
                     ))}
                 </div>

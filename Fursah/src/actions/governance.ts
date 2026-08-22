@@ -45,7 +45,7 @@ export async function decideGovernanceScenario(formData: FormData) {
   const decision = String(formData.get("decision") ?? "");
   const note = String(formData.get("note") ?? "").trim();
   if (!id || !["APPROVED", "OVERRIDDEN"].includes(decision) || !note) throw new Error("A decision and justification are required");
-  await prisma.governanceScenario.update({ where: { id }, data: { humanDecision: decision, decisionNote: note, reviewedAt: new Date() } });
+  await prisma.governanceScenario.update({ where: { id }, data: { humanDecision: decision, decisionNote: note, reviewedAt: new Date(), reviewedBy: ctx.user.id } });
   await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: `SCENARIO_${decision}`, entityType: "GOVERNANCE_SCENARIO", entityId: id, explanation: note } });
   revalidatePath("/admin/governance");
 }
@@ -87,9 +87,13 @@ export async function resolveDataRequest(formData: FormData) {
   const status = String(formData.get("status") ?? "COMPLETED");
   const resolution = String(formData.get("resolution") ?? "").trim();
   if (!id || !resolution) throw new Error("A resolution is required");
-  const request = await prisma.dataRequest.update({ where: { id }, data: { status, resolution, reviewedBy: ctx.user.id, reviewedAt: new Date() }, include: { student: true } });
+  if (!["PROCESSING", "COMPLETED", "REJECTED"].includes(status)) throw new Error("Invalid request status");
+  const request = await prisma.dataRequest.update({ where: { id }, data: { status, resolution, reviewedBy: ctx.user.id, reviewedAt: new Date() }, include: { student: { include: { user: true } } } });
   await prisma.notification.create({ data: { userId: request.student.userId, type: "DATA_REQUEST", title: `Data request ${status.toLowerCase()}`, body: resolution } });
-  revalidatePath("/admin/governance"); revalidatePath("/student/privacy");
+  // A data-rights decision is a regulated action: it belongs in the audit
+  // trail alongside every other human decision, not only in the row itself.
+  await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: `DATA_REQUEST_${status}`, entityType: "DATA_REQUEST", entityId: request.id, explanation: `${request.type} request from ${request.student.user.name}: ${resolution}` } });
+  revalidatePath("/admin/data-requests"); revalidatePath("/student/data-rights"); revalidatePath("/admin/governance");
 }
 
 export type MonitoringCaptureResult = {
@@ -126,6 +130,34 @@ export async function updateSupportTicket(formData: FormData) {
   const id = String(formData.get("ticketId") ?? "");
   const status = String(formData.get("status") ?? "IN_PROGRESS");
   const resolution = String(formData.get("resolution") ?? "").trim();
-  await prisma.supportTicket.update({ where: { id }, data: { status, resolution: resolution || null, assignedTo: ctx.user.name } });
+  const priority = String(formData.get("priority") ?? "").trim();
+  if (!id) throw new Error("A ticket is required");
+  if (!["OPEN", "IN_PROGRESS", "RESOLVED"].includes(status)) throw new Error("Invalid ticket status");
+  // Closing a ticket without saying what was done leaves no record worth
+  // keeping, which is the whole point of the queue.
+  if (status === "RESOLVED" && !resolution) throw new Error("A resolution is required before a ticket can be closed");
+
+  const existing = await prisma.supportTicket.findUnique({ where: { id } });
+  if (!existing) throw new Error("That ticket no longer exists");
+
+  const ticket = await prisma.supportTicket.update({
+    where: { id },
+    data: {
+      status,
+      resolution: resolution || null,
+      assignedTo: ctx.user.name,
+      // Set once, on the transition into RESOLVED, and cleared if a ticket is
+      // reopened so the closed-on date never describes an open ticket.
+      resolvedAt: status === "RESOLVED" ? existing.resolvedAt ?? new Date() : null,
+      ...(priority && ["URGENT", "NORMAL"].includes(priority) ? { priority } : {}),
+    },
+  });
+
+  await prisma.auditEvent.create({ data: { actorUserId: ctx.user.id, action: `SUPPORT_TICKET_${status}`, entityType: "SUPPORT_TICKET", entityId: ticket.id, explanation: resolution || `Status set to ${status.toLowerCase().replace("_", " ")}` } });
+  // The person who raised it should not have to come back and check.
+  if (ticket.userId && status !== existing.status) {
+    await prisma.notification.create({ data: { userId: ticket.userId, type: "SUPPORT", title: status === "RESOLVED" ? `Your ticket was resolved: ${ticket.subject}` : `Your ticket is now ${status.toLowerCase().replace("_", " ")}: ${ticket.subject}`, body: resolution || "An administrator has picked this up." } });
+  }
   revalidatePath("/admin/support");
+  revalidatePath(`/admin/support/${ticket.id}`);
 }
