@@ -1,0 +1,77 @@
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db";
+import { getCurrentAdmin } from "@/lib/session";
+import { createGovernanceScenario, decideGovernanceScenario, resolveAppeal } from "@/actions/governance";
+import { READINESS_MODEL_VERSION, READINESS_WEIGHTS } from "@/lib/intelligence/readiness";
+import { STUDENT_INTELLIGENCE_MODEL_VERSION } from "@/lib/intelligence/student";
+import { EMPLOYER_INTELLIGENCE_MODEL_VERSION } from "@/lib/intelligence/employer";
+import { UNIVERSITY_INTELLIGENCE_MODEL_VERSION } from "@/lib/intelligence/university";
+import { ECOSYSTEM_INTELLIGENCE_MODEL_VERSION } from "@/lib/intelligence/ecosystem";
+import { Y3172_EXTENSIONS, Y3172_NODES } from "@/lib/standards";
+import { parseIssues } from "@/lib/governanceIssues";
+import AdminAuditTrail from "@/components/AdminAuditTrail";
+
+// The seven clause 8.1 nodes come from the shared registry so this page and
+// the public figure on the Responsible AI policy page cannot describe the
+// pipeline differently. The two entries after them are extensions from
+// Y.3181 and Y.3176 rather than clause 8.1 nodes, and are labelled as such.
+const PIPELINE: Array<[string, string, string]> = [
+  ...Y3172_NODES.map((node): [string, string, string] => [`${node.id} · ${node.label}`, node.fursah, "ACTIVE"]),
+  ...Y3172_EXTENSIONS.map((extension): [string, string, string] => [extension.label, `${extension.reference}: ${extension.fursah}`, extension.status === "Prototype" ? "PROTOTYPE" : "ACTIVE"]),
+];
+
+export default async function GovernancePage() {
+  const ctx = await getCurrentAdmin(); if (!ctx) redirect("/login");
+  const [scenarios, appeals, audits, documentCounts, certificationCounts, roadmapCounts] = await Promise.all([
+    prisma.governanceScenario.findMany({ orderBy: { createdAt: "desc" } }),
+    prisma.appeal.findMany({ include: { student: { include: { user: true } } }, orderBy: { createdAt: "desc" } }),
+    prisma.auditEvent.findMany({ orderBy: { createdAt: "desc" }, take: 20 }),
+    prisma.evidenceDocument.groupBy({ by: ["aiStatus", "reviewStatus"], _count: { _all: true } }).catch(() => []),
+    prisma.studentCertification.groupBy({ by: ["verificationStatus"], _count: { _all: true } }),
+    prisma.roadmapItem.groupBy({ by: ["source"], _count: { _all: true } }),
+  ]);
+
+  // Evidence that an automated extraction has run is never the same thing as
+  // verified evidence. This surface reports both counts side by side so the
+  // distinction stays visible to whoever is accountable for it.
+  const aiAnalysed = documentCounts.filter((row) => row.aiStatus === "COMPLETED").reduce((sum, row) => sum + row._count._all, 0);
+  const humanApproved = documentCounts.filter((row) => row.reviewStatus === "APPROVED").reduce((sum, row) => sum + row._count._all, 0);
+  const awaitingReview = documentCounts.filter((row) => row.reviewStatus === "PENDING").reduce((sum, row) => sum + row._count._all, 0);
+
+  const models: Array<[string, string, string]> = [
+    ["Career readiness", READINESS_MODEL_VERSION, `Single calculation shared by every surface. Weights: ${Object.entries(READINESS_WEIGHTS).map(([name, weight]) => `${name} ${Math.round(weight * 100)}%`).join(", ")}. Components a track does not define are excluded and the remaining weights renormalized.`],
+    ["Student intelligence", STUDENT_INTELLIGENCE_MODEL_VERSION, "Readiness, interest signals, career matching, adaptive roadmap, and career-direction suggestions. Never changes a student's target career; suggestions require several independent signals and can be dismissed."],
+    ["Employer intelligence", EMPLOYER_INTELLIGENCE_MODEL_VERSION, "Candidate fit, requirement quality, talent availability, recurring applicant gaps. Job-related evidence only; no protected characteristic participates. Decision support, never an automated hiring decision."],
+    ["University intelligence", UNIVERSITY_INTELLIGENCE_MODEL_VERSION, "Demand coverage, curriculum gaps, and offering recommendations. Cohort figures are aggregate-only and suppressed below the minimum cohort size."],
+    ["Ecosystem intelligence", ECOSYSTEM_INTELLIGENCE_MODEL_VERSION, "Shared demand, supply, and coverage signals. Publishes no trend, growth, or forecast figure because no historical series is stored."],
+  ];
+  const auditItems = audits.map((audit, index) => ({
+    id: audit.id,
+    action: audit.action,
+    entityType: audit.entityType,
+    explanation: audit.explanation ?? "No additional note",
+    modelVersion: audit.modelVersion,
+    createdAt: audit.createdAt.toISOString(),
+    recent: index < 5,
+  }));
+  return <main className="page-shell"><span className="eyebrow">Responsible AI operations</span><h1 className="page-title">Governance and human oversight</h1><p className="muted">Test high-impact situations, review automated recommendations and trace the ITU-T Y.3172-style pipeline.</p>
+    <div className="grid-2" id="moderation-queue" style={{ marginTop: 26, alignItems: "start", scrollMarginTop: 90 }}><section className="card"><h2>Scenario simulator</h2><form action={createGovernanceScenario} className="form-grid"><label>Scenario title<input className="input" name="title" required/></label><label>Risk category<select className="input" name="scenarioType"><option value="AUTOMATED_HIRING">Automated hiring decision</option><option value="DATA_SHARING">Data sharing</option><option value="MODEL_DRIFT">Bias or model drift</option><option value="OTHER">Other</option></select></label><label>Description<textarea className="input" name="description" placeholder="Example: Automatically reject every candidate below a 70% match." required/></label><button className="button primary">Run sandbox checks</button></form></section><section className="card"><h2>Human review queue</h2>{appeals.length ? appeals.map(a => <form action={resolveAppeal} className="data-row" key={a.id}><input type="hidden" name="appealId" value={a.id}/><div style={{ flex: 1 }}><strong>{a.student.user.name} · {a.subjectType}</strong><div className="muted">{a.reason}</div><textarea className="input" name="resolution" placeholder="Resolution and corrective action" required/></div><select className="input" name="status"><option value="RESOLVED">Resolve</option><option value="REJECTED">Reject</option><option value="UNDER_REVIEW">Keep reviewing</option></select><button className="button secondary">Record</button></form>) : <div className="notice">No review requests.</div>}</section></div>
+    <section className="card admin-scenarios" id="ai-governance" style={{ marginTop: 18, scrollMarginTop: 90 }}><h2>Scenario results</h2>{scenarios.map(s => { const issues = parseIssues(s.detectedIssues); return <form action={decideGovernanceScenario} className="admin-scenario-row" key={s.id}><input type="hidden" name="scenarioId" value={s.id}/><div className="admin-scenario-summary"><div><span className={`pill status-${s.riskLevel === "HIGH" ? "rejected" : "pending"}`}>{s.riskLevel} RISK</span> <span className="pill">{s.humanDecision}</span></div><strong>{s.title}</strong><p>{issues.join(" · ")}</p><div className="notice">{s.proposedAction}</div></div><label className="admin-scenario-note"><span>Human justification</span><textarea className="input" name="note" placeholder="Explain the decision and any corrective action" required/></label><div className="admin-scenario-actions"><button className="button secondary" name="decision" value="APPROVED">Approve control</button><button className="button danger" name="decision" value="OVERRIDDEN">Override</button></div></form>; })}</section>
+    <section className="card admin-models" id="intelligence-transparency" style={{ marginTop: 18, scrollMarginTop: 90 }}><span className="eyebrow">Intelligence transparency</span><h2>Calculations currently in use</h2><p className="muted">The five active calculation services are listed below. Expand one only when you need its scope and safeguards.</p>
+      <div className="admin-model-list">{models.map(([name, version, explanation]) => <details className="ai-box" key={name}><summary><span><strong>{name}</strong><small>AI calculation</small></span><span className="pill">{version}</span></summary><p>{explanation}</p></details>)}</div>
+      <h3 style={{ marginTop: 20 }}>Evidence: automated analysis versus human verification</h3>
+      <div className="grid-3">
+        <div className="ai-box"><div className="data-row"><strong>AI-analysed documents</strong><b>{aiAnalysed}</b></div><p className="muted" style={{ fontSize: 12 }}>Automated extraction completed. Advisory only; confers no verified status.</p></div>
+        <div><div className="data-row"><strong>Human-approved documents</strong><b>{humanApproved}</b></div><p className="muted" style={{ fontSize: 12 }}>Approved by a named reviewer. Only these count as verified evidence.</p></div>
+        <div><div className="data-row"><strong>Awaiting human review</strong><b>{awaitingReview}</b></div><p className="muted" style={{ fontSize: 12 }}>In the review queue. Not scored until a person decides.</p></div>
+      </div>
+      <div className="grid-2" style={{ marginTop: 16 }}>
+        <div><strong>Certifications by verification status</strong>{certificationCounts.map(row => <div className="data-row" key={row.verificationStatus}><span>{row.verificationStatus}</span><b>{row._count._all}</b></div>)}{certificationCounts.length === 0 && <p className="muted">No certification submitted yet.</p>}</div>
+        <div className={roadmapCounts.some((row) => row.source.toUpperCase() === "AI") ? "ai-box" : undefined}><strong>Roadmap recommendations by source</strong>{roadmapCounts.map(row => <div className={`data-row${row.source.toUpperCase() === "AI" ? " ai-row" : ""}`} key={row.source}><span>{row.source}</span><b>{row._count._all}</b></div>)}{roadmapCounts.length === 0 && <p className="muted">No roadmap item generated yet.</p>}</div>
+      </div>
+    </section>
+
+    <section className="card" style={{ marginTop: 18 }}><span className="eyebrow">ITU-T Y.3172 traceability</span><h2>Operational pipeline map</h2><div className="grid-2">{PIPELINE.map(([name, implementation, status]) => <div className="data-row" key={name}><div><strong>{name}</strong><div className="muted">{implementation}</div></div><span className="pill">{status}</span></div>)}</div></section>
+    <AdminAuditTrail items={auditItems}/>
+  </main>;
+}

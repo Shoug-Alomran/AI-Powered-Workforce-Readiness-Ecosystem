@@ -1,0 +1,67 @@
+{
+  "name": "fursah",
+  "version": "0.1.0",
+  "private": true,
+  "engines": {
+    "node": ">=20.19.0 <21"
+  },
+  "scripts": {
+    "dev": "next dev --webpack",
+    "build": "next build --webpack",
+    "build:production": "npm run db:migrate:production && npm run build",
+    "postinstall": "prisma generate",
+    "start": "next start",
+    "lint": "eslint && npm run check:design && npm run check:content",
+    "check:design": "node scripts/check-design-system.mjs",
+    "check:content": "node scripts/check-content-style.mjs",
+    "create-admin": "tsx scripts/create-admin.ts",
+    "db:migrate:production": "node scripts/apply-trust-support-migration.mjs",
+    "db:migrate:firestore": "tsx --require ./scripts/allow-server-only.cjs scripts/migrate-firestore.ts",
+    "db:verify:firestore": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-firestore-backend.ts",
+    "seed:governance": "tsx --require ./scripts/allow-server-only.cjs scripts/seed-governance.ts",
+    "seed:demo": "tsx --require ./scripts/allow-server-only.cjs scripts/seed-governance.ts",
+    "verify:privacy": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-privacy.ts",
+    "verify:assistant": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-assistant.ts",
+    "verify:evidence": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-evidence.ts",
+    "verify:submission": "tsx --require ./scripts/allow-server-only.cjs scripts/verify-submission.ts",
+    "verify": "npm run verify:privacy && npm run verify:assistant && npm run verify:evidence && npm run verify:submission",
+    "smoke": "tsx --require ./scripts/allow-server-only.cjs scripts/smoke-test.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1102.0",
+    "@libsql/client": "^0.17.4",
+    "@opentelemetry/api": "^1.9.1",
+    "@prisma/adapter-libsql": "^7.9.1",
+    "@prisma/client": "7.9.1",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
+    "firebase": "^12.17.0",
+    "firebase-admin": "^13.10.0",
+    "next": "16.3.0",
+    "node-domexception": "file:vendor/node-domexception",
+    "prisma": "7.9.1",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@emnapi/core": "^1.11.3",
+    "@emnapi/runtime": "^1.11.3",
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
+    "eslint": "^9",
+    "eslint-config-next": "16.3.0",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.5",
+    "typescript": "^5"
+  },
+  "overrides": {
+    "effect": "3.22.1",
+    "node-domexception": "$node-domexception",
+    "remeda": "2.42.0",
+    "uuid": "^11.1.0"
+  }
+}

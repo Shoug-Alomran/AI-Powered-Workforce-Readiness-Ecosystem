@@ -1,0 +1,232 @@
+{"kind":"deck","id":"pr/43l7gh","name":"Deck"}
+{"kind":"layout","layoutId":"f2090773-2c29-4e3d-b25a-a15301dd8260","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"ff0756b0-1a68-4921-a963-ae7cda384689","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/rrg8lf","slide":1,"title":"FURSAH","textShapes":8}
+{"kind":"textbox","id":"sh/doval8bq","slide":1,"text":"FURSAH","textPreview":"FURSAH","textChars":6,"textLines":1,"bbox":[70,62,300,32]}
+{"kind":"textbox","id":"sh/ql4batsf","slide":1,"text":"From evidence to\nworkforce readiness","textPreview":"From evidence to | workforce readiness","textChars":36,"textLines":2,"bbox":[70,150,720,178]}
+{"kind":"textbox","id":"sh/rmdsjytk","slide":1,"text":"A judge-ready, auditable implementation of the ITU-T Y.3172 machine-learning pipeline.","textPreview":"A judge-ready, auditable implementation of the ITU-T Y.3172 machine-learning pipeline.","textChars":86,"textLines":1,"bbox":[72,354,660,78]}
+{"kind":"shape","id":"sh/4jmt8ja9","slide":1,"bbox":[856,116,300,380]}
+{"kind":"textbox","id":"sh/5kvahobu","slide":1,"text":"7/7","textPreview":"7/7","textChars":3,"textLines":1,"bbox":[894,158,224,100]}
+{"kind":"textbox","id":"sh/ihkb69s3","slide":1,"text":"Y.3172 pipeline nodes\nrepresented end to end","textPreview":"Y.3172 pipeline nodes | represented end to end","textChars":44,"textLines":2,"bbox":[894,268,224,70]}
+{"kind":"textbox","id":"sh/3idsfeto","slide":1,"text":"13/13","textPreview":"13/13","textChars":5,"textLines":1,"bbox":[894,365,224,68]}
+{"kind":"textbox","id":"sh/of6tknad","slide":1,"text":"readiness dimensions","textPreview":"readiness dimensions","textChars":20,"textLines":1,"bbox":[894,434,224,40]}
+{"kind":"textbox","id":"sh/pgfutsby","slide":1,"text":"LIVE PROTOTYPE · fursah.org","textPreview":"LIVE PROTOTYPE · fursah.org","textChars":27,"textLines":1,"bbox":[70,634,650,24]}
+{"kind":"notes","id":"nt/rrg8lf","slide":1,"text":"Fursah turns workforce evidence into an explainable readiness decision. In three minutes I will show the complete pipeline, the readiness model, our reusable knowledge base, and the policy actions produced from evidence.\n\n[Sources]\n- https://www.itu.int/rec/T-REC-Y.3172\n- https://aiforgood.itu.int/"}
+{"kind":"slide","id":"sl/p02wfz","slide":2,"title":"01 · THE USE CASE","textShapes":14}
+{"kind":"textbox","id":"sh/nmlsfepo","slide":2,"text":"01 · THE USE CASE","textPreview":"01 · THE USE CASE","textChars":17,"textLines":1,"bbox":[64,40,460,28]}
+{"kind":"textbox","id":"sh/8nut8jq9","slide":2,"text":"One decision, three fragmented evidence streams","textPreview":"One decision, three fragmented evidence streams","textChars":47,"textLines":1,"bbox":[64,78,1120,64]}
+{"kind":"textbox","id":"sh/9o3aho7u","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1174,42,42,26]}
+{"kind":"shape","id":"sh/apcbat8f","slide":2,"bbox":[64,674,1152,0]}
+{"kind":"textbox","id":"sh/vqlsjep0","slide":2,"text":"FURSAH · AI-POWERED WORKFORCE READINESS","textPreview":"FURSAH · AI-POWERED WORKFORCE READINESS","textChars":39,"textLines":1,"bbox":[64,682,600,18]}
+{"kind":"shape","id":"sh/wrutcjql","slide":2,"bbox":[64,178,350,258]}
+{"kind":"textbox","id":"sh/xs3alo7q","slide":2,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[88,198,48,30]}
+{"kind":"textbox","id":"sh/itwbet8b","slide":2,"text":"Academic evidence","textPreview":"Academic evidence","textChars":17,"textLines":1,"bbox":[88,246,300,46]}
+{"kind":"textbox","id":"sh/ju5snypw","slide":2,"text":"Courses and mastery signals rarely translate cleanly into employability evidence.","textPreview":"Courses and mastery signals rarely translate cleanly into employability evidence.","textChars":81,"textLines":1,"bbox":[88,306,300,94]}
+{"kind":"shape","id":"sh/byx03yhk","slide":2,"bbox":[446,178,350,258]}
+{"kind":"textbox","id":"sh/ax4jutgz","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[470,198,48,30]}
+{"kind":"textbox","id":"sh/x0fi58za","slide":2,"text":"Career requirements","textPreview":"Career requirements","textChars":19,"textLines":1,"bbox":[470,246,300,46]}
+{"kind":"textbox","id":"sh/wz61w3y5","slide":2,"text":"Role expectations change faster than conventional advising artifacts.","textPreview":"Role expectations change faster than conventional advising artifacts.","textChars":69,"textLines":1,"bbox":[470,306,300,94]}
+{"kind":"shape","id":"sh/nud0zeh8","slide":2,"bbox":[828,178,350,258]}
+{"kind":"textbox","id":"sh/mt4jq9gn","slide":2,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[852,198,48,30]}
+{"kind":"textbox","id":"sh/9wvi1oze","slide":2,"text":"Proof of readiness","textPreview":"Proof of readiness","textChars":18,"textLines":1,"bbox":[852,246,300,46]}
+{"kind":"textbox","id":"sh/ovm1sjyt","slide":2,"text":"Learners need a defensible next action—not another opaque score.","textPreview":"Learners need a defensible next action—not another opaque score.","textChars":64,"textLines":1,"bbox":[852,306,300,94]}
+{"kind":"shape","id":"sh/7qhkbixs","slide":2,"bbox":[64,466,1114,144]}
+{"kind":"textbox","id":"sh/6p8j2dg7","slide":2,"text":"Fursah joins those streams into one traceable chain: evidence → inference → readiness → action.","textPreview":"Fursah joins those streams into one traceable chain: evidence → inference → readiness → action.","textChars":95,"textLines":1,"bbox":[96,496,1050,68]}
+{"kind":"notes","id":"nt/p02wfz","slide":2,"text":"The problem is not lack of data. It is fragmentation. Fursah unifies academic evidence, role requirements, and proof of readiness so every recommendation has a visible reason and a next action."}
+{"kind":"slide","id":"sl/tu2zeh","slide":3,"title":"02 · SYSTEM DESIGN","textShapes":15}
+{"kind":"textbox","id":"sh/ob6hcbip","slide":3,"text":"02 · SYSTEM DESIGN","textPreview":"02 · SYSTEM DESIGN","textChars":18,"textLines":1,"bbox":[64,40,460,28]}
+{"kind":"textbox","id":"sh/3axgj614","slide":3,"text":"AI explains the evidence; it does not invent it","textPreview":"AI explains the evidence; it does not invent it","textChars":47,"textLines":1,"bbox":[64,78,1120,64]}
+{"kind":"textbox","id":"sh/29oza10j","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1174,42,42,26]}
+{"kind":"shape","id":"sh/dgzyp0j6","slide":3,"bbox":[64,674,1152,0]}
+{"kind":"textbox","id":"sh/cfqhgvil","slide":3,"text":"FURSAH · AI-POWERED WORKFORCE READINESS","textPreview":"FURSAH · AI-POWERED WORKFORCE READINESS","textChars":39,"textLines":1,"bbox":[64,682,600,18]}
+{"kind":"shape","id":"sh/bexgnq10","slide":3,"bbox":[64,190,350,240]}
+{"kind":"textbox","id":"sh/qdozel0v","slide":3,"text":"Verified inputs","textPreview":"Verified inputs","textChars":15,"textLines":1,"bbox":[89,222,300,42]}
+{"kind":"textbox","id":"sh/tkvydwj2","slide":3,"text":"Profiles, assessments, projects, curriculum and role evidence.","textPreview":"Profiles, assessments, projects, curriculum and role evidence.","textChars":62,"textLines":1,"bbox":[89,278,300,86]}
+{"kind":"textbox","id":"sh/sjmx4r2h","slide":3,"text":"EVIDENCE LAYER","textPreview":"EVIDENCE LAYER","textChars":14,"textLines":1,"bbox":[89,378,250,22]}
+{"kind":"shape","id":"sh/u1w3y5on","slide":3,"bbox":[446,190,350,240]}
+{"kind":"textbox","id":"sh/f2547a58","slide":3,"text":"Deterministic core","textPreview":"Deterministic core","textChars":18,"textLines":1,"bbox":[471,222,300,42]}
+{"kind":"textbox","id":"sh/g3el0f6t","slide":3,"text":"Versioned scoring, prerequisite gates and confidence labels.","textPreview":"Versioned scoring, prerequisite gates and confidence labels.","textChars":60,"textLines":1,"bbox":[471,278,300,86]}
+{"kind":"textbox","id":"sh/h4nm9kne","slide":3,"text":"SYSTEM OF RECORD","textPreview":"SYSTEM OF RECORD","textChars":16,"textLines":1,"bbox":[471,378,250,22]}
+{"kind":"shape","id":"sh/2pw325oj","slide":3,"bbox":[828,190,350,240]}
+{"kind":"textbox","id":"sh/3q54ba54","slide":3,"text":"Grounded assistant","textPreview":"Grounded assistant","textChars":18,"textLines":1,"bbox":[853,222,300,42]}
+{"kind":"textbox","id":"sh/4ryl4f6p","slide":3,"text":"Natural-language explanation constrained by stored evidence.","textPreview":"Natural-language explanation constrained by stored evidence.","textChars":60,"textLines":1,"bbox":[853,278,300,86]}
+{"kind":"textbox","id":"sh/ps7mdkna","slide":3,"text":"EVIDENCE LAYER","textPreview":"EVIDENCE LAYER","textChars":14,"textLines":1,"bbox":[853,378,250,22]}
+{"kind":"textbox","id":"sh/qtg36pov","slide":3,"text":"No source evidence → no claim","textPreview":"No source evidence → no claim","textChars":29,"textLines":1,"bbox":[64,478,540,48]}
+{"kind":"textbox","id":"sh/rup4fu5g","slide":3,"text":"The interface exposes source freshness, limitations and confidence instead of hiding uncertainty.","textPreview":"The interface exposes source freshness, limitations and confidence instead of hiding uncertainty.","textChars":97,"textLines":1,"bbox":[64,536,1000,54]}
+{"kind":"notes","id":"nt/tu2zeh","slide":3,"text":"This boundary is central to trust. The deterministic readiness engine remains the system of record. The assistant can explain verified evidence, but cannot create competencies, scores, or achievements that are not stored."}
+{"kind":"slide","id":"sl/0riy2w","slide":4,"title":"03 · Y.3172 MAPPING","textShapes":33}
+{"kind":"textbox","id":"sh/3m54vetg","slide":4,"text":"03 · Y.3172 MAPPING","textPreview":"03 · Y.3172 MAPPING","textChars":19,"textLines":1,"bbox":[64,40,460,28]}
+{"kind":"textbox","id":"sh/oneloju1","slide":4,"text":"Every ML pipeline node is visible and testable","textPreview":"Every ML pipeline node is visible and testable","textChars":46,"textLines":1,"bbox":[64,78,1120,64]}
+{"kind":"textbox","id":"sh/ponmxobm","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1174,42,42,26]}
+{"kind":"shape","id":"sh/apw3qtcr","slide":4,"bbox":[64,674,1152,0]}
+{"kind":"textbox","id":"sh/bqp4zytc","slide":4,"text":"FURSAH · AI-POWERED WORKFORCE READINESS","textPreview":"FURSAH · AI-POWERED WORKFORCE READINESS","textChars":39,"textLines":1,"bbox":[64,682,600,18]}
+{"kind":"shape","id":"sh/cryls3ux","slide":4,"bbox":[64,204,132,92]}
+{"kind":"textbox","id":"sh/xs7m18bi","slide":4,"text":"1","textPreview":"1","textChars":1,"textLines":1,"bbox":[74,214,25,20]}
+{"kind":"textbox","id":"sh/ytgnudc3","slide":4,"text":"Sources","textPreview":"Sources","textChars":7,"textLines":1,"bbox":[74,242,112,34]}
+{"kind":"textbox","id":"sh/zup43yto","slide":4,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[196,230,28,40]}
+{"kind":"shape","id":"sh/vyloj61g","slide":4,"bbox":[224,204,132,92]}
+{"kind":"textbox","id":"sh/axc7a1kv","slide":4,"text":"2","textPreview":"2","textChars":1,"textLines":1,"bbox":[234,214,25,20]}
+{"kind":"textbox","id":"sh/x03qlgjm","slide":4,"text":"Collect","textPreview":"Collect","textChars":7,"textLines":1,"bbox":[234,242,112,34]}
+{"kind":"textbox","id":"sh/wzupcb21","slide":4,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[356,230,28,40]}
+{"kind":"shape","id":"sh/na1of614","slide":4,"bbox":[384,204,132,92]}
+{"kind":"textbox","id":"sh/m9s761kj","slide":4,"text":"3","textPreview":"3","textChars":1,"textLines":1,"bbox":[394,214,25,20]}
+{"kind":"textbox","id":"sh/9wj6hwja","slide":4,"text":"Preprocess","textPreview":"Preprocess","textChars":10,"textLines":1,"bbox":[394,242,112,34]}
+{"kind":"textbox","id":"sh/8vap8r2p","slide":4,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[516,230,28,40]}
+{"kind":"shape","id":"sh/7658rq1o","slide":4,"bbox":[544,204,132,92]}
+{"kind":"textbox","id":"sh/65w7il03","slide":4,"text":"4","textPreview":"4","textChars":1,"textLines":1,"bbox":[554,214,25,20]}
+{"kind":"textbox","id":"sh/2lgrqpkb","slide":4,"text":"Model","textPreview":"Model","textChars":5,"textLines":1,"bbox":[554,242,112,34]}
+{"kind":"textbox","id":"sh/3mpsjulw","slide":4,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[676,230,28,40]}
+{"kind":"shape","id":"sh/4nitsz2h","slide":4,"bbox":[704,204,132,92]}
+{"kind":"textbox","id":"sh/poral43m","slide":4,"text":"5","textPreview":"5","textChars":1,"textLines":1,"bbox":[714,214,25,20]}
+{"kind":"textbox","id":"sh/qp0bu9k7","slide":4,"text":"Policy","textPreview":"Policy","textChars":6,"textLines":1,"bbox":[714,242,112,34]}
+{"kind":"textbox","id":"sh/rq9snels","slide":4,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[836,230,28,40]}
+{"kind":"shape","id":"sh/critwz2d","slide":4,"bbox":[864,204,132,92]}
+{"kind":"textbox","id":"sh/dsrap43y","slide":4,"text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[874,214,25,20]}
+{"kind":"textbox","id":"sh/6twri543","slide":4,"text":"Distribute","textPreview":"Distribute","textChars":10,"textLines":1,"bbox":[874,242,112,34]}
+{"kind":"textbox","id":"sh/7u5sbalo","slide":4,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[996,230,28,40]}
+{"kind":"shape","id":"sh/9ovuh8n6","slide":4,"bbox":[1024,204,132,92]}
+{"kind":"textbox","id":"sh/onmdo3ml","slide":4,"text":"7","textPreview":"7","textChars":1,"textLines":1,"bbox":[1034,214,25,20]}
+{"kind":"textbox","id":"sh/nmdcfy50","slide":4,"text":"Act","textPreview":"Act","textChars":3,"textLines":1,"bbox":[1034,242,112,34]}
+{"kind":"textbox","id":"sh/mlkvmd4f","slide":4,"text":"Evidence Registry","textPreview":"Evidence Registry","textChars":17,"textLines":1,"bbox":[64,316,132,54]}
+{"kind":"textbox","id":"sh/xcvelsn2","slide":4,"text":"Aggregation + QC","textPreview":"Aggregation + QC","textChars":16,"textLines":1,"bbox":[224,316,132,54]}
+{"kind":"textbox","id":"sh/wbmdsnmh","slide":4,"text":"Feature normalization","textPreview":"Feature normalization","textChars":21,"textLines":1,"bbox":[384,316,132,54]}
+{"kind":"textbox","id":"sh/bqdwji5c","slide":4,"text":"Readiness scoring","textPreview":"Readiness scoring","textChars":17,"textLines":1,"bbox":[544,316,132,54]}
+{"kind":"textbox","id":"sh/ap4vqd4r","slide":4,"text":"Safety + privacy","textPreview":"Safety + privacy","textChars":16,"textLines":1,"bbox":[704,316,132,54]}
+{"kind":"textbox","id":"sh/dgbu9ony","slide":4,"text":"Dashboards + exports","textPreview":"Dashboards + exports","textChars":20,"textLines":1,"bbox":[864,316,132,54]}
+{"kind":"textbox","id":"sh/cf2dgj6d","slide":4,"text":"Plans + interventions","textPreview":"Plans + interventions","textChars":21,"textLines":1,"bbox":[1024,316,132,54]}
+{"kind":"shape","id":"sh/gnap4vad","slide":4,"bbox":[64,422,1092,142]}
+{"kind":"textbox","id":"sh/1oj6d0by","slide":4,"text":"Judge shortcut","textPreview":"Judge shortcut","textChars":14,"textLines":1,"bbox":[90,446,180,30]}
+{"kind":"textbox","id":"sh/els72ls7","slide":4,"text":"Open /standards → inspect node evidence → follow the linked implementation.","textPreview":"Open /standards → inspect node evidence → follow the linked implementation.","textChars":75,"textLines":1,"bbox":[90,484,1000,44]}
+{"kind":"notes","id":"nt/0riy2w","slide":4,"text":"The standards page maps all seven Y.3172 pipeline nodes to specific prototype evidence. A judge can inspect each node and follow its implementation instead of accepting a slide-level claim.\n\n[Sources]\n- https://www.itu.int/rec/T-REC-Y.3172"}
+{"kind":"slide","id":"sl/cmxfd5","slide":5,"title":"04 · OFFICIAL CRITERIA","textShapes":24}
+{"kind":"textbox","id":"sh/l0jihw3u","slide":5,"text":"04 · OFFICIAL CRITERIA","textPreview":"04 · OFFICIAL CRITERIA","textChars":22,"textLines":1,"bbox":[64,40,460,28]}
+{"kind":"textbox","id":"sh/yxszm1k3","slide":5,"text":"Four criteria, one continuous proof chain","textPreview":"Four criteria, one continuous proof chain","textChars":41,"textLines":1,"bbox":[64,78,1120,64]}
+{"kind":"textbox","id":"sh/zy10fmlo","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1174,42,42,26]}
+{"kind":"shape","id":"sh/cbahkr2x","slide":5,"bbox":[64,674,1152,0]}
+{"kind":"textbox","id":"sh/dwjidw3i","slide":5,"text":"FURSAH · AI-POWERED WORKFORCE READINESS","textPreview":"FURSAH · AI-POWERED WORKFORCE READINESS","textChars":39,"textLines":1,"bbox":[64,682,600,18]}
+{"kind":"shape","id":"sh/q9szihk7","slide":5,"bbox":[64,184,248,166]}
+{"kind":"textbox","id":"sh/ba10bmlc","slide":5,"text":"7 / 7","textPreview":"7 / 7","textChars":5,"textLines":1,"bbox":[84,204,208,66]}
+{"kind":"textbox","id":"sh/w7u1wb2h","slide":5,"text":"Pipeline nodes","textPreview":"Pipeline nodes","textChars":14,"textLines":1,"bbox":[84,278,208,36]}
+{"kind":"shape","id":"sh/xsnipg3m","slide":5,"bbox":[342,184,248,166]}
+{"kind":"textbox","id":"sh/58j290zm","slide":5,"text":"13 / 13","textPreview":"13 / 13","textChars":7,"textLines":1,"bbox":[362,204,208,66]}
+{"kind":"textbox","id":"sh/4nalgvi1","slide":5,"text":"Readiness dimensions","textPreview":"Readiness dimensions","textChars":20,"textLines":1,"bbox":[362,278,208,36]}
+{"kind":"shape","id":"sh/jm1k7qhg","slide":5,"bbox":[620,184,248,166]}
+{"kind":"textbox","id":"sh/ils3el0v","slide":5,"text":"17","textPreview":"17","textChars":2,"textLines":1,"bbox":[640,204,208,66]}
+{"kind":"textbox","id":"sh/hkz25gza","slide":5,"text":"Knowledge sources","textPreview":"Knowledge sources","textChars":17,"textLines":1,"bbox":[640,278,208,36]}
+{"kind":"shape","id":"sh/wjqlcbip","slide":5,"bbox":[898,184,248,166]}
+{"kind":"textbox","id":"sh/vihk36hk","slide":5,"text":"6","textPreview":"6","textChars":1,"textLines":1,"bbox":[918,204,208,66]}
+{"kind":"textbox","id":"sh/uh83al0z","slide":5,"text":"Policy gaps","textPreview":"Policy gaps","textChars":11,"textLines":1,"bbox":[918,278,208,36]}
+{"kind":"textbox","id":"sh/1g3mhkzu","slide":5,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[70,382,28,32]}
+{"kind":"textbox","id":"sh/gfulofi9","slide":5,"text":"Clear Y.3172 use case","textPreview":"Clear Y.3172 use case","textChars":21,"textLines":1,"bbox":[110,382,520,32]}
+{"kind":"textbox","id":"sh/0vmd0nuh","slide":5,"text":"/standards","textPreview":"/standards","textChars":10,"textLines":1,"bbox":[770,382,370,32]}
+{"kind":"textbox","id":"sh/lwve9sb2","slide":5,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[70,440,28,32]}
+{"kind":"textbox","id":"sh/ytkvydcr","slide":5,"text":"AI Readiness factor mapping","textPreview":"AI Readiness factor mapping","textChars":27,"textLines":1,"bbox":[110,440,520,32]}
+{"kind":"textbox","id":"sh/zudw7itw","slide":5,"text":"/standards","textPreview":"/standards","textChars":10,"textLines":1,"bbox":[770,440,370,32]}
+{"kind":"textbox","id":"sh/cr2dw3ul","slide":5,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[70,498,28,32]}
+{"kind":"textbox","id":"sh/dsbe58b6","slide":5,"text":"Reusable knowledge contribution","textPreview":"Reusable knowledge contribution","textChars":31,"textLines":1,"bbox":[110,498,520,32]}
+{"kind":"textbox","id":"sh/q5kvutcf","slide":5,"text":"/knowledge-base","textPreview":"/knowledge-base","textChars":15,"textLines":1,"bbox":[770,498,370,32]}
+{"kind":"textbox","id":"sh/bqtw3yt0","slide":5,"text":"✓","textPreview":"✓","textChars":1,"textLines":1,"bbox":[70,556,28,32]}
+{"kind":"textbox","id":"sh/o32ds3u9","slide":5,"text":"Strategy and policy input","textPreview":"Strategy and policy input","textChars":25,"textLines":1,"bbox":[110,556,520,32]}
+{"kind":"textbox","id":"sh/p4be18bu","slide":5,"text":"/standards#policy-gaps","textPreview":"/standards#policy-gaps","textChars":22,"textLines":1,"bbox":[770,556,370,32]}
+{"kind":"notes","id":"nt/cmxfd5","slide":5,"text":"The submission is organized around the official judging logic: the use case, the readiness mapping, the knowledge contribution, and policy input. The numbers on this slide are verified by the automated submission check.\n\n[Sources]\n- https://aiforgood.itu.int/"}
+{"kind":"slide","id":"sl/t798tt","slide":6,"title":"05 · READINESS MODEL","textShapes":19}
+{"kind":"textbox","id":"sh/e5or2x4n","slide":6,"text":"05 · READINESS MODEL","textPreview":"05 · READINESS MODEL","textChars":20,"textLines":1,"bbox":[64,40,460,28]}
+{"kind":"textbox","id":"sh/1sfaxcne","slide":6,"text":"Thirteen dimensions; evidence before confidence","textPreview":"Thirteen dimensions; evidence before confidence","textChars":47,"textLines":1,"bbox":[64,78,1120,64]}
+{"kind":"textbox","id":"sh/076947mt","slide":6,"text":"06","textPreview":"06","textChars":2,"textLines":1,"bbox":[1174,42,42,26]}
+{"kind":"shape","id":"sh/nuhsz254","slide":6,"bbox":[64,674,1152,0]}
+{"kind":"textbox","id":"sh/mt8b6x4z","slide":6,"text":"FURSAH · AI-POWERED WORKFORCE READINESS","textPreview":"FURSAH · AI-POWERED WORKFORCE READINESS","textChars":39,"textLines":1,"bbox":[64,682,600,18]}
+{"kind":"shape","id":"sh/9wza1cna","slide":6,"bbox":[64,176,248,56]}
+{"kind":"textbox","id":"sh/ovqt87mp","slide":6,"text":"Connectivity","textPreview":"Connectivity","textChars":12,"textLines":1,"bbox":[80,186,216,34]}
+{"kind":"shape","id":"sh/byhs3mlg","slide":6,"bbox":[342,176,248,56]}
+{"kind":"textbox","id":"sh/ax8bah4v","slide":6,"text":"Compute","textPreview":"Compute","textChars":7,"textLines":1,"bbox":[358,186,216,34]}
+{"kind":"shape","id":"sh/wb2lorex","slide":6,"bbox":[620,176,248,56]}
+{"kind":"textbox","id":"sh/xcb2xwfi","slide":6,"text":"Data","textPreview":"Data","textChars":4,"textLines":1,"bbox":[636,186,216,34]}
+{"kind":"shape","id":"sh/a9k3mhwr","slide":6,"bbox":[898,176,248,56]}
+{"kind":"textbox","id":"sh/batkvmxc","slide":6,"text":"Governance","textPreview":"Governance","textChars":10,"textLines":1,"bbox":[914,186,216,34]}
+{"kind":"shape","id":"sh/kzmlsbet","slide":6,"bbox":[64,252,248,56]}
+{"kind":"textbox","id":"sh/50vm1gfe","slide":6,"text":"Security","textPreview":"Security","textChars":8,"textLines":1,"bbox":[80,262,216,34]}
+{"kind":"shape","id":"sh/ixk3q1wn","slide":6,"bbox":[342,252,248,56]}
+{"kind":"textbox","id":"sh/jytkz6x8","slide":6,"text":"Talent","textPreview":"Talent","textChars":6,"textLines":1,"bbox":[358,262,216,34]}
+{"kind":"shape","id":"sh/s3mlwbe5","slide":6,"bbox":[620,252,248,56]}
+{"kind":"textbox","id":"sh/t4vm5gfa","slide":6,"text":"Skills","textPreview":"Skills","textChars":6,"textLines":1,"bbox":[636,262,216,34]}
+{"kind":"shape","id":"sh/h8rutc3i","slide":6,"bbox":[898,252,248,56]}
+{"kind":"textbox","id":"sh/g7yt0r2x","slide":6,"text":"Research","textPreview":"Research","textChars":8,"textLines":1,"bbox":[914,262,216,34]}
+{"kind":"shape","id":"sh/f6pcrmlc","slide":6,"bbox":[64,328,248,56]}
+{"kind":"textbox","id":"sh/ulgbyhkr","slide":6,"text":"Innovation","textPreview":"Innovation","textChars":10,"textLines":1,"bbox":[80,338,216,34]}
+{"kind":"shape","id":"sh/pcruxw3e","slide":6,"bbox":[342,328,248,56]}
+{"kind":"textbox","id":"sh/4bit4r2t","slide":6,"text":"Adoption","textPreview":"Adoption","textChars":8,"textLines":1,"bbox":[358,338,216,34]}
+{"kind":"shape","id":"sh/3a9cvmlo","slide":6,"bbox":[620,328,248,56]}
+{"kind":"textbox","id":"sh/290b2hk3","slide":6,"text":"Investment","textPreview":"Investment","textChars":10,"textLines":1,"bbox":[636,338,216,34]}
+{"kind":"shape","id":"sh/lgnuls3a","slide":6,"bbox":[898,328,248,56]}
+{"kind":"textbox","id":"sh/kfetsn2p","slide":6,"text":"Inclusion","textPreview":"Inclusion","textChars":9,"textLines":1,"bbox":[914,338,216,34]}
+{"kind":"shape","id":"sh/alcrmt0n","slide":6,"bbox":[64,404,248,56]}
+{"kind":"textbox","id":"sh/bml8vy18","slide":6,"text":"Sustainability","textPreview":"Sustainability","textChars":14,"textLines":1,"bbox":[80,414,216,34]}
+{"kind":"shape","id":"sh/wnu9o3it","slide":6,"bbox":[64,500,1092,112]}
+{"kind":"textbox","id":"sh/xo3qx8jy","slide":6,"text":"Reusable by design","textPreview":"Reusable by design","textChars":18,"textLines":1,"bbox":[88,520,260,32]}
+{"kind":"textbox","id":"sh/ypwrqd0j","slide":6,"text":"Versioned JSON + CSV knowledge-base exports make the framework portable beyond this interface.","textPreview":"Versioned JSON + CSV knowledge-base exports make the framework portable beyond this interface.","textChars":94,"textLines":1,"bbox":[88,554,1010,34]}
+{"kind":"notes","id":"nt/t798tt","slide":6,"text":"Fursah covers thirteen readiness dimensions and exposes the underlying knowledge base as versioned JSON and CSV. That makes the contribution reusable, reviewable, and suitable for comparison or integration—not locked inside the UI."}
+{"kind":"slide","id":"sl/z7e84x","slide":7,"title":"06 · POLICY OUTPUT","textShapes":32}
+{"kind":"textbox","id":"sh/87qlgrit","slide":7,"text":"06 · POLICY OUTPUT","textPreview":"06 · POLICY OUTPUT","textChars":18,"textLines":1,"bbox":[64,40,460,28]}
+{"kind":"textbox","id":"sh/7mhk7mh8","slide":7,"text":"A gap becomes an owned, measurable intervention","textPreview":"A gap becomes an owned, measurable intervention","textChars":47,"textLines":1,"bbox":[64,78,1120,64]}
+{"kind":"textbox","id":"sh/ml83eh0n","slide":7,"text":"07","textPreview":"07","textChars":2,"textLines":1,"bbox":[1174,42,42,26]}
+{"kind":"shape","id":"sh/lkz25cz2","slide":7,"bbox":[64,674,1152,0]}
+{"kind":"textbox","id":"sh/kjq1c7ix","slide":7,"text":"FURSAH · AI-POWERED WORKFORCE READINESS","textPreview":"FURSAH · AI-POWERED WORKFORCE READINESS","textChars":39,"textLines":1,"bbox":[64,682,600,18]}
+{"kind":"textbox","id":"sh/zixk32hc","slide":7,"text":"TRIGGER","textPreview":"TRIGGER","textChars":7,"textLines":1,"bbox":[72,166,310,25]}
+{"kind":"textbox","id":"sh/yhojax0r","slide":7,"text":"OWNER","textPreview":"OWNER","textChars":5,"textLines":1,"bbox":[408,166,220,25]}
+{"kind":"textbox","id":"sh/xgf21cz6","slide":7,"text":"REVIEW","textPreview":"REVIEW","textChars":6,"textLines":1,"bbox":[650,166,160,25]}
+{"kind":"textbox","id":"sh/cf6187il","slide":7,"text":"METRIC","textPreview":"METRIC","textChars":6,"textLines":1,"bbox":[828,166,300,25]}
+{"kind":"shape","id":"sh/69wvqdsb","slide":7,"bbox":[64,194,1092,54]}
+{"kind":"textbox","id":"sh/7a5czi9w","slide":7,"text":"Low verified evidence","textPreview":"Low verified evidence","textChars":21,"textLines":1,"bbox":[76,202,310,36]}
+{"kind":"textbox","id":"sh/8bedsnah","slide":7,"text":"Student Success","textPreview":"Student Success","textChars":15,"textLines":1,"bbox":[408,202,220,36]}
+{"kind":"textbox","id":"sh/tcnu1sr2","slide":7,"text":"Monthly","textPreview":"Monthly","textChars":7,"textLines":1,"bbox":[650,202,160,36]}
+{"kind":"textbox","id":"sh/y5cbmdsf","slide":7,"text":"Evidence completion","textPreview":"Evidence completion","textChars":19,"textLines":1,"bbox":[828,202,300,36]}
+{"kind":"textbox","id":"sh/j6lcvi90","slide":7,"text":"Repeated prerequisite failure","textPreview":"Repeated prerequisite failure","textChars":29,"textLines":1,"bbox":[76,270,310,36]}
+{"kind":"textbox","id":"sh/k7utona5","slide":7,"text":"Academic Affairs","textPreview":"Academic Affairs","textChars":16,"textLines":1,"bbox":[408,270,220,36]}
+{"kind":"textbox","id":"sh/l8nux8rq","slide":7,"text":"Per term","textPreview":"Per term","textChars":8,"textLines":1,"bbox":[650,270,160,36]}
+{"kind":"textbox","id":"sh/ahcbits3","slide":7,"text":"Gate recovery","textPreview":"Gate recovery","textChars":13,"textLines":1,"bbox":[828,270,300,36]}
+{"kind":"shape","id":"sh/bilcryto","slide":7,"bbox":[64,330,1092,54]}
+{"kind":"textbox","id":"sh/fmhsju9g","slide":7,"text":"Stale role evidence","textPreview":"Stale role evidence","textChars":19,"textLines":1,"bbox":[76,338,310,36]}
+{"kind":"textbox","id":"sh/el8rqp8v","slide":7,"text":"Career Services","textPreview":"Career Services","textChars":15,"textLines":1,"bbox":[408,338,220,36]}
+{"kind":"textbox","id":"sh/1ozal47m","slide":7,"text":"Quarterly","textPreview":"Quarterly","textChars":9,"textLines":1,"bbox":[650,338,160,36]}
+{"kind":"textbox","id":"sh/0nq9szq1","slide":7,"text":"Source freshness","textPreview":"Source freshness","textChars":16,"textLines":1,"bbox":[828,338,300,36]}
+{"kind":"textbox","id":"sh/na1sneps","slide":7,"text":"Low-confidence recommendation","textPreview":"Low-confidence recommendation","textChars":29,"textLines":1,"bbox":[76,406,310,36]}
+{"kind":"textbox","id":"sh/29sru987","slide":7,"text":"AI Governance","textPreview":"AI Governance","textChars":13,"textLines":1,"bbox":[408,406,220,36]}
+{"kind":"textbox","id":"sh/pcjapo7i","slide":7,"text":"Monthly","textPreview":"Monthly","textChars":7,"textLines":1,"bbox":[650,406,160,36]}
+{"kind":"textbox","id":"sh/oba9wjqx","slide":7,"text":"Confidence mix","textPreview":"Confidence mix","textChars":14,"textLines":1,"bbox":[828,406,300,36]}
+{"kind":"shape","id":"sh/3ex8ba98","slide":7,"bbox":[64,466,1092,54]}
+{"kind":"textbox","id":"sh/idori58n","slide":7,"text":"Accessibility gap","textPreview":"Accessibility gap","textChars":17,"textLines":1,"bbox":[76,474,310,36]}
+{"kind":"textbox","id":"sh/8n2xwr29","slide":7,"text":"Product Owner","textPreview":"Product Owner","textChars":13,"textLines":1,"bbox":[408,474,220,36]}
+{"kind":"textbox","id":"sh/98by5w3u","slide":7,"text":"Per release","textPreview":"Per release","textChars":11,"textLines":1,"bbox":[650,474,160,36]}
+{"kind":"textbox","id":"sh/mlkfuhkj","slide":7,"text":"WCAG checks","textPreview":"WCAG checks","textChars":11,"textLines":1,"bbox":[828,474,300,36]}
+{"kind":"textbox","id":"sh/7mtg3mlo","slide":7,"text":"Outcome disparity","textPreview":"Outcome disparity","textChars":17,"textLines":1,"bbox":[76,542,310,36]}
+{"kind":"textbox","id":"sh/kjixs72d","slide":7,"text":"Institutional Research","textPreview":"Institutional Research","textChars":22,"textLines":1,"bbox":[408,542,220,36]}
+{"kind":"textbox","id":"sh/lkre1c3y","slide":7,"text":"Quarterly","textPreview":"Quarterly","textChars":9,"textLines":1,"bbox":[650,542,160,36]}
+{"kind":"textbox","id":"sh/yh0fqxk7","slide":7,"text":"Group parity","textPreview":"Group parity","textChars":12,"textLines":1,"bbox":[828,542,300,36]}
+{"kind":"notes","id":"nt/z7e84x","slide":7,"text":"Policy output is operational, not aspirational. Each gap includes an accountable owner, a trigger, a metric, and a review cadence. This supports real governance conversations while staying honest that institutional validation is the next step."}
+{"kind":"slide","id":"sl/48vff8","slide":8,"title":"07 · LIVE PROOF","textShapes":19}
+{"kind":"textbox","id":"sh/8repkvu9","slide":8,"text":"07 · LIVE PROOF","textPreview":"07 · LIVE PROOF","textChars":15,"textLines":1,"bbox":[64,40,460,28]}
+{"kind":"textbox","id":"sh/nq5obqdo","slide":8,"text":"The three-minute judge route","textPreview":"The three-minute judge route","textChars":28,"textLines":1,"bbox":[64,78,1120,64]}
+{"kind":"textbox","id":"sh/mpwnilc3","slide":8,"text":"08","textPreview":"08","textChars":2,"textLines":1,"bbox":[1174,42,42,26]}
+{"kind":"shape","id":"sh/xgn6h0bq","slide":8,"bbox":[64,674,1152,0]}
+{"kind":"textbox","id":"sh/wfepovu5","slide":8,"text":"FURSAH · AI-POWERED WORKFORCE READINESS","textPreview":"FURSAH · AI-POWERED WORKFORCE READINESS","textChars":39,"textLines":1,"bbox":[64,682,600,18]}
+{"kind":"shape","id":"sh/ve5ofqd0","slide":8,"bbox":[64,190,248,174]}
+{"kind":"textbox","id":"sh/atw7m5cf","slide":8,"text":"01","textPreview":"01","textChars":2,"textLines":1,"bbox":[82,208,50,26]}
+{"kind":"textbox","id":"sh/dk365gvm","slide":8,"text":"Open","textPreview":"Open","textChars":4,"textLines":1,"bbox":[82,246,210,38]}
+{"kind":"textbox","id":"sh/cju5cbu1","slide":8,"text":"/judge-demo","textPreview":"/judge-demo","textChars":11,"textLines":1,"bbox":[82,296,210,34]}
+{"kind":"shape","id":"sh/ml07ilkr","slide":8,"bbox":[342,190,248,174]}
+{"kind":"textbox","id":"sh/nm98rq1c","slide":8,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[360,208,50,26]}
+{"kind":"textbox","id":"sh/8nipkv2x","slide":8,"text":"Inspect","textPreview":"Inspect","textChars":7,"textLines":1,"bbox":[360,246,210,38]}
+{"kind":"textbox","id":"sh/9orqt0ji","slide":8,"text":"/standards","textPreview":"/standards","textChars":10,"textLines":1,"bbox":[360,296,210,34]}
+{"kind":"shape","id":"sh/ap07m5k3","slide":8,"bbox":[620,190,248,174]}
+{"kind":"textbox","id":"sh/vq98va1o","slide":8,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[638,208,50,26]}
+{"kind":"textbox","id":"sh/wbi9of29","slide":8,"text":"Export","textPreview":"Export","textChars":6,"textLines":1,"bbox":[638,246,210,38]}
+{"kind":"textbox","id":"sh/xcbqx0je","slide":8,"text":"/knowledge-base","textPreview":"/knowledge-base","textChars":15,"textLines":1,"bbox":[638,296,210,34]}
+{"kind":"shape","id":"sh/idkrq5kz","slide":8,"bbox":[898,190,248,174]}
+{"kind":"textbox","id":"sh/jet8za1k","slide":8,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[916,208,50,26]}
+{"kind":"textbox","id":"sh/fito7ahs","slide":8,"text":"Ask","textPreview":"Ask","textChars":3,"textLines":1,"bbox":[916,246,210,38]}
+{"kind":"textbox","id":"sh/uhk7e5g7","slide":8,"text":"grounded assistant","textPreview":"grounded assistant","textChars":18,"textLines":1,"bbox":[916,296,210,34]}
+{"kind":"textbox","id":"sh/hkvq9kzy","slide":8,"text":"What remains before a real-world claim","textPreview":"What remains before a real-world claim","textChars":38,"textLines":1,"bbox":[64,420,600,38]}
+{"kind":"textbox","id":"sh/gjmpgfyd","slide":8,"text":"A controlled pilot with institutional users, measured outcomes and external governance review. The prototype labels this limitation explicitly.","textPreview":"A controlled pilot with institutional users, measured outcomes and external governance review. The prototype labels this limitation expli...","textChars":143,"textLines":1,"bbox":[64,468,1040,70]}
+{"kind":"shape","id":"sh/7eto3ahw","slide":8,"bbox":[64,568,1092,62]}
+{"kind":"textbox","id":"sh/6dk7a50b","slide":8,"text":"Fursah makes readiness evidence actionable—and every important claim inspectable.","textPreview":"Fursah makes readiness evidence actionable—and every important claim inspectable.","textChars":81,"textLines":1,"bbox":[84,580,1052,36]}
+{"kind":"notes","id":"nt/48vff8","slide":8,"text":"The strongest way to evaluate Fursah is live: start at the judge route, inspect the standards evidence, export the knowledge base, then ask the assistant to explain a recommendation. Our remaining limitation is also explicit: production impact requires a controlled institutional pilot."}

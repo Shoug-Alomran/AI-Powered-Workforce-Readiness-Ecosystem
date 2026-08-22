@@ -189,65 +189,143 @@ This allows academic programs to become increasingly responsive to real workforc
 
 ---
 
-## Responsible AI
+## How the AI actually works
 
-Responsible AI is integrated into the design of the ecosystem.
+Fursah has two components, and the boundary between them is the central design
+decision in the platform.
 
-### Human Oversight
-AI supports recruitment and career decisions but does not replace human decision-making.
+### Deterministic intelligence — everything that produces a number
 
-### Explainable AI
-Career recommendations, readiness assessments, and candidate-job matches should provide understandable reasoning rather than unexplained scores.
+The Career Readiness Score, skill-gap analysis, and candidate–role matching are
+computed by a **rule-based engine with published weights** ([`src/lib/ai.ts`](Fursah/src/lib/ai.ts)).
+No machine-learning model trained on historical hiring data is involved in any
+score that affects a person.
 
-### Fairness
-Models should be continuously evaluated for potential bias and inequitable outcomes.
+| Career Readiness Score | Weight | | Candidate–role match | Weight |
+|---|---|---|---|---|
+| Technical skills vs. track | 35% | | Required skills | 55% |
+| Certifications (verified only) | 20% | | Required certifications | 25% |
+| Relevant experience | 20% | | Experience vs. minimum | 20% |
+| Soft skills vs. track | 15% | | *within skills: essential* | *80%* |
+| Projects | 10% | | *within skills: preferred* | *20%* |
 
-### Privacy & Security
-Student, employer, and institutional information must be protected through appropriate security and data-governance mechanisms.
+This is deliberate. A model trained on past hiring outcomes learns past hiring
+preference, including its inequities. A weighted rule engine cannot silently
+acquire a bias from history because it has no history to learn from, and every
+output can be reconstructed and challenged. The trade-off — it cannot discover
+patterns nobody encoded — is one we accept for a system that affects access to
+employment.
+
+Scores are banded as Career Ready (≥80), Developing (55–79), and Early Stage
+(<55). A band describes evidence on file, not a person's ability.
+
+### Generative AI — reading documents and explaining results
+
+A general-purpose language model (Llama 3.1 8B via Cloudflare Workers AI,
+reached through our own Worker — see [`src/lib/assistant/llm.ts`](Fursah/src/lib/assistant/llm.ts))
+does exactly two things:
+
+1. **Evidence extraction** ([`src/lib/evidence-ai.ts`](Fursah/src/lib/evidence-ai.ts)) — reads an
+   uploaded certificate, project, or experience document and proposes the
+   skills it evidences, each with a confidence value and the supporting text.
+   **Extraction never verifies evidence.** A human reviewer approves or rejects
+   before an extracted skill becomes trusted.
+2. **The role-scoped assistant** — answers questions about results already
+   produced by the deterministic layer. It is grounded on those facts and
+   cannot compute or alter a score, a ranking, or a verification decision.
+
+The model sits on the explanatory side of the boundary. Language models are
+well suited to reading a document and explaining a result, and poorly suited to
+being the reason a person did or did not get an opportunity.
 
 ---
 
-## AI & Machine Learning Pipeline
+## Governance, in code rather than in prose
 
-The proposed intelligence pipeline consists of four major stages:
+Each of these is an implemented mechanism, not an aspiration:
 
-### 1. Data Collection
-Relevant information may include:
+| Commitment | Where it lives |
+|---|---|
+| No protected attributes collected — no gender, nationality, age, or GPA field exists | [`prisma/schema.prisma`](Fursah/prisma/schema.prisma) |
+| Cohort aggregates suppressed below 5 students in **every** reporting group — band, career track, skill gap, certification gap — not just the cohort total | `MIN_COHORT` in [`src/lib/cohort.ts`](Fursah/src/lib/cohort.ts) |
+| Secondary suppression: withholding one group of a partition would leak it by subtraction, so a second is withheld | `suppressPartition` in [`src/lib/cohort.ts`](Fursah/src/lib/cohort.ts) |
+| Suppression is *shown*, not silent — a withheld figure renders as ⊘ with its reason | [`src/components/SuppressedFigure.tsx`](Fursah/src/components/SuppressedFigure.tsx) |
+| Every consequential action logged with its ruleset version and reasoning | `AuditEvent` model |
+| Purpose-specific consent, versioned, independently withdrawable | `ConsentRecord` model |
+| Four PDPL request types: access, portability, correction, deletion | `DataRequest` model |
+| Appeals against readiness, match, evidence, and data decisions | `Appeal` model |
+| Drift monitoring with a `PAUSED` state, so rollback is an available action | `MonitoringSnapshot` model |
+| Governance decisions recorded including where a human **overrode** the proposal | `GovernanceScenario.humanDecision` |
+| Assistant role-scoping verified automatically for all three roles — a university context can never contain an individual student record, an employer context never a non-applicant, a student context never a peer | [`scripts/verify-assistant.ts`](Fursah/scripts/verify-assistant.ts) |
+| Cohort suppression verified against live data on every run | [`scripts/verify-privacy.ts`](Fursah/scripts/verify-privacy.ts) |
+| Evidence stays advisory until a named human approves it — asserted, not assumed | [`scripts/verify-evidence.ts`](Fursah/scripts/verify-evidence.ts) |
+| Session cookies are HMAC-signed, so a user id alone cannot open a session | `signSession` in [`src/lib/session.ts`](Fursah/src/lib/session.ts) |
+| The password-free demo shortcut opens prepared demo accounts only, never a real sign-up | [`src/lib/demoAccounts.ts`](Fursah/src/lib/demoAccounts.ts) |
+| Assistant rate limits are per authenticated user, so one visitor cannot switch it off for everyone | [`src/app/api/assistant/route.ts`](Fursah/src/app/api/assistant/route.ts) |
+| Employer blind review, withholding identifying detail at screening | `Job.blindReview` |
 
-- Student profiles
-- Academic records
-- Skills Passport data
-- Career goals
-- Job requirements
-- Employer feedback
-- Workforce outcomes
+Published policies: [Privacy](https://fursah.org/policies/privacy) ·
+[Responsible AI](https://fursah.org/policies/responsible-ai) ·
+[Terms](https://fursah.org/policies/terms) ·
+[Accessibility](https://fursah.org/policies/accessibility)
 
-### 2. Feature Engineering
-Data is transformed into meaningful indicators such as:
+### Known limitations
 
-- Skill-gap measurements
-- Career-role alignment
-- Experience relevance
-- Competency coverage
-- Readiness indicators
+Stated here rather than discovered later:
 
-### 3. Model Intelligence
-AI/ML components support:
+- **Prototype hosting is not in-Kingdom.** Application hosting (Vercel),
+  storage (Cloudflare R2), and model inference (Cloudflare Workers AI) are not
+  currently pinned to a Saudi region. Production deployment requires binding
+  these to a compliant region and documenting any residual transfer.
+- **No independent WCAG 2.1 AA audit** has been carried out; the conformance
+  claim is a target based on internal review.
+- **Arabic coverage is complete on the public pages and partial inside the
+  portals.** Untranslated strings fall back to English rather than failing, so
+  a portal page in Arabic can still show English fragments.
+- **The assistant's behavioural safety probes only run where the assistant is
+  configured.** `scripts/verify-assistant.ts` asserts the grounding contract
+  and the data boundaries everywhere, but the adversarial prompts — refusing
+  another student's data, refusing a hiring decision, resisting prompt
+  injection — report SKIP without `ASSISTANT_AI_URL`. Model behaviour is
+  unverified until they run.
+- **Fairness monitoring cannot use protected attributes**, because none are
+  collected. Disparity review therefore depends on institutions conducting
+  evaluation under their own lawful basis with separately governed data.
+- Some demonstration data is seeded rather than measured. See
+  `npm run seed:governance`.
 
-- Career pathway recommendations
-- Skills-gap analysis
-- Career readiness assessment
-- Candidate-job matching
-- Workforce trend analysis
+---
 
-### 4. Deployment & Monitoring
-Models are continuously evaluated for:
+## Standards conformance and the knowledge base
 
-- Recommendation quality
-- Matching performance
-- Bias and fairness
-- Model drift
-- Reliability
+Two published pages carry the assessment material directly, so it can be read
+without running the prototype:
+
+- **[Standards conformance](https://fursah.org/standards)** — the platform
+  mapped onto **ITU-T Y.3172 clause 8.1** node by node (SRC, C, PP, M, P, D,
+  SINK), each with the source file implementing it; the two components Fursah
+  runs that clause 8.1 does not define, attributed to Y.3181 and Y.3176; a
+  self-assessment against the **13 dimensions of the ITU AI Ready Report 2.0**;
+  and the **policy gaps** this project identified, structured on the report's
+  own chapter 4 gap taxonomy.
+- **[Knowledge base](https://fursah.org/knowledge-base)** — every authentic
+  public document the platform depends on, linked to the original publication
+  and to the file in this repository that depends on it: the ITU
+  Recommendations and reports, the PDPL, SDAIA AI Ethics Principles, NDMO and
+  NCA controls, DGA accessibility standards, Vision 2030, GASTAT, the Council
+  of Universities Affairs, UNESCO, and ISO/IEC 42001 and 23894.
+
+The seven clause 8.1 node names live in one place
+([`src/lib/standards.ts`](Fursah/src/lib/standards.ts)) and are rendered by both
+the public pipeline figure and the admin governance page, so the two surfaces
+cannot describe the pipeline differently.
+
+Six policy gaps are stated. The one marked blocking is cross-border inference
+(DPIA risk R5). The most interesting is the fairness paradox: because Fursah
+deliberately collects no protected attribute, it cannot disaggregate outcomes
+to test for disparate impact — data minimisation and demonstrable
+non-discrimination pull against each other, and no instrument we found resolves
+which takes precedence for an employment-adjacent system.
 
 ---
 
@@ -325,7 +403,7 @@ Ultimately, the goal is not simply to help students **find jobs**, but to help t
 
 ## Running the Prototype
 
-**Fursah** is the working prototype of this ecosystem, located in [`fursa/`](fursa/). It is a Next.js 16 app (React 19, TypeScript, Tailwind CSS 4) with Prisma over libSQL.
+**Fursah** is the working prototype of this ecosystem, located in [`Fursah/`](Fursah/). It is a Next.js 16 app (React 19, TypeScript, Tailwind CSS 4) with Prisma over libSQL.
 
 ### Quick start
 
@@ -345,14 +423,15 @@ The bundled SQLite file (`prisma/dev.db`) is used by default, so the demo runs o
 | Command | Purpose |
 |---|---|
 | `npm run dev` | Start the local development server |
-| `npm run build` | Apply production migrations, then build |
+| `npm run build` | Build the production application |
+| `npm run build:production` | Apply production migrations, then build |
 | `npm start` | Serve the production build |
 | `npm run lint` | Run ESLint |
 | `npm run create-admin` | Create an `ADMIN` account from `ADMIN_*` env vars |
 
 ### Environment
 
-Create `fursa/.env.local` with the variables your setup needs. Readiness scoring, skill-gap analysis, and opportunity matching run on deterministic local logic, so no model API key is required to run the prototype.
+Create `Fursah/.env.local` with the variables your setup needs. Readiness scoring, skill-gap analysis, and opportunity matching run on deterministic local logic, so no model API key is required to run the prototype.
 
 | Variable | Purpose |
 |---|---|
