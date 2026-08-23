@@ -1,0 +1,11 @@
+-- The student half of "recent graduates accepted".
+--
+-- An employer could state that a role welcomed recent graduates, but no student
+-- could say whether that described them, so the statement reached nobody it was
+-- meant for. The student now supplies the fact themselves.
+--
+-- Deliberately a year the student types, not a status the platform infers, and
+-- deliberately optional: it is used to tell a student that a role welcomes them
+-- and to let them filter for such roles. It never enters candidate ranking, so
+-- nobody is scored higher or lower for their career stage.
+ALTER TABLE "Student" ADD COLUMN "graduationYear" INTEGER;

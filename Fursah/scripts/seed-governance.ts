@@ -781,6 +781,61 @@ async function seedRightsAndAppeals() {
  * student can still record, and one rejection that must never contribute.
  * Idempotent: a row already carrying a decision is left alone.
  */
+/**
+ * Graduation years for the scenario students.
+ *
+ * The employer-side "recent graduates accepted" flag is only meaningful if some
+ * students are recent graduates and some are not, so the demo needs both. Years
+ * are relative to the current year rather than hard-coded, so this does not
+ * quietly stop demonstrating anything as time passes. Idempotent: a student who
+ * already stated a year keeps it, because it is their answer and not ours.
+ */
+async function repairGraduationYears() {
+  const year = new Date().getFullYear();
+
+  // Deliberately a mix either side of the two-year window.
+  const intent: Record<string, number> = {
+    "sara.aldosari@example.com": year,          // graduating now
+    "khalid.alharbi@example.com": year,         // graduating now
+    "dana.alharbi@example.com": year + 1,       // still studying
+    "abdullah.alghamdi@example.com": year - 1,  // recent
+    "reem.alanazi@example.com": year - 1,       // recent
+    "faris.alqahtani@example.com": year,        // graduating now
+    "lina.alzahrani@example.com": year - 4,     // not recent
+    "omar.alrashid@example.com": year - 5,      // not recent
+    "maha.alotaibi@example.com": year - 3,      // not recent
+    "yousef.alshehri@example.com": year + 1,    // still studying
+    "hana.almutairi@example.com": year - 1,     // recent
+  };
+
+  let changed = 0;
+  for (const [email, graduationYear] of Object.entries(intent)) {
+    const result = await prisma.student.updateMany({
+      where: { user: { email }, graduationYear: null },
+      data: { graduationYear },
+    });
+    changed += result.count;
+  }
+
+  // Generated cohort members get a spread across the same window so the
+  // opportunities filter has a realistic population behind it.
+  const cohort = await prisma.student.findMany({
+    where: { bio: { contains: COHORT_BIO_TAG }, graduationYear: null },
+    select: { id: true },
+  });
+
+  for (const [index, student] of cohort.entries()) {
+    await prisma.student.update({
+      where: { id: student.id },
+      data: { graduationYear: year - (index % 5) },
+    });
+    changed += 1;
+  }
+
+  if (changed) console.log(`Graduation years set: ${changed} student(s)`);
+  return changed;
+}
+
 async function repairEvidenceVerificationStates() {
   const reviewer = await prisma.user.findFirst({ where: { role: "ADMIN" } });
   if (!reviewer) return 0;
@@ -984,6 +1039,7 @@ async function main() {
   await seedCohortStudents();
   await repairUnattributedDecisions();
   await repairEvidenceVerificationStates();
+  await repairGraduationYears();
   await seedRejectedCertification();
   await repairFeedbackDates();
   await seedEmptyStudentAccount();

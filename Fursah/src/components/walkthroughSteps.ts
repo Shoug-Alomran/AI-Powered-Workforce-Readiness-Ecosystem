@@ -16,8 +16,8 @@ export type Tour = { key: string; label: string; steps: Step[] };
 /** Shown once per role, on the first portal page the user lands on. */
 export const chromeSteps: Record<PortalRole, Step[]> = {
   STUDENT: [
-    { title: "Your student workspace", body: "This navigation moves you between readiness, careers, jobs, applications, your roadmap, and your verified Skills Passport.", selector: ".student-nav", interact: { event: "click", hint: "Pick any destination to jump there. The tour follows you." } },
-    { title: "Your account", body: "Open your account to update your photo, email, password, and personal details.", selector: ".student-profile-link" },
+    { title: "Your student workspace", body: "This navigation moves you between readiness, careers, jobs, applications, your roadmap, and your verified Skills Passport.", selector: ".student-template-topnav nav, .student-nav", interact: { event: "click", hint: "Pick any destination to jump there. The tour follows you." } },
+    { title: "Your account", body: "Open your account to update your photo, email, password, and personal details.", selector: ".student-template-topuser, .student-profile-link" },
   ],
   EMPLOYER: [
     { title: "Your hiring workspace", body: "Dashboard keeps hiring activity together. Post a Job opens the complete opportunity form.", selector: ".erd-nav", interact: { event: "click", hint: "Choose a destination. The tour re-anchors to whatever page you open." } },
@@ -216,7 +216,7 @@ const routeTours: Array<{ prefix: string; match?: RegExp; tour: Tour }> = [
         { title: "Create a real opportunity", body: "This form publishes a live opportunity that students can apply to; nothing here is a demo control.", selector: ".pjob-top" },
         { title: "Role basics", body: "Title, description, and location set what students see first in job discovery.", selector: ".pjob-section" },
         { title: "Work arrangement", body: "Arrangement and employment type feed the filters students search with.", selector: ".pjob-arrangement, .pjob-switch-grid" },
-        { title: "Required skills", body: "Skills you add here become the weighted criteria behind every match score on this role.", selector: ".pjob-token-input", interact: { event: "input", hint: "Type a skill and add it to see the weighting build up." } },
+        { title: "Required skills", body: "Skills you add here become the weighted criteria behind every match score on this role.", selector: ".pjob-main input[name=\"skills\"], .pjob-token-input", interact: { event: "input", hint: "Type a skill and add it to see the weighting build up." } },
         { title: "Human oversight", body: "Matching assists your shortlist; it never rejects or hires on your behalf.", selector: ".pjob-oversight" },
         { title: "Live preview", body: "The side panel shows the posting as an applicant will read it.", selector: ".pjob-aside, .pjob-recent" },
         { title: "Publish or discard", body: "Publish when the required information is ready; discarding leaves nothing behind.", selector: ".pjob-footer" },
@@ -310,7 +310,6 @@ const routeTours: Array<{ prefix: string; match?: RegExp; tour: Tour }> = [
       label: "Workforce demand",
       steps: [
         { title: "Demand at a glance", body: "Volume, growth, and concentration of employer demand relevant to your programs.", selector: ".wdi-metrics, .wdi-summary" },
-        { title: "Filter the signal", body: "Narrow by sector, track, or period before drawing a conclusion.", selector: ".wdi-filters", interact: { event: "change", hint: "Change a filter to re-cut the data." } },
         { title: "Skill intelligence", body: "Each update, review, or add link opens the relevant workflow rather than acting as a decorative control.", selector: ".wdi-skills, .skill-stats" },
         { title: "Gaps", body: "Skills employers request that your curriculum does not currently deliver.", selector: ".wdi-gaps" },
         { title: "Employers and trends", body: "Who is hiring, and how their requirements have moved over time.", selector: ".wdi-employers, .wdi-trends" },
@@ -524,7 +523,7 @@ const routeTours: Array<{ prefix: string; match?: RegExp; tour: Tour }> = [
       label: "Workforce intelligence",
       steps: [
         { title: "Aggregated and anonymized", body: "Only aggregate trends appear here. Individual student data stays inside authorized role views.", selector: ".page-title" },
-        { title: "Jump to a section", body: "The contents bar moves you between demand, outcomes, and the responsible-AI notes.", selector: ".page-toc, .page-shell nav", interact: { event: "click", hint: "Open a section from the contents bar." } },
+        { title: "Jump to a section", body: "The contents bar moves you between demand, outcomes, and the responsible-AI notes.", selector: ".toc, .page-toc, .page-shell nav", interact: { event: "click", hint: "Open a section from the contents bar." } },
         { title: "Headline signals", body: "Average readiness, distinct requested skills, and outcome records across the platform.", selector: ".page-shell .grid-3" },
         { title: "Industry demand", body: "The most requested skills, ranked by weighted demand points.", selector: "#industry-demand" },
         { title: "Education-employment loop", body: "Applications, shortlists, and open opportunities as a single feedback loop.", selector: "#education-employment-loop" },

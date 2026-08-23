@@ -9,6 +9,7 @@ import { applyToJob, toggleBookmark } from "@/actions/student";
 import { getAllCareerTracksAsync } from "@/lib/careerTracks.server";
 import type { Prisma } from "@/generated/prisma/client";
 import DocumentUpload from "@/components/DocumentUpload";
+import { isRecentGraduate, RECENT_GRADUATE_YEARS } from "@/lib/studentOnboarding";
 
 // The shell is prerenderable; everything that reads the session or the query
 // string lives inside the boundary below, so the page can be served from the
@@ -16,7 +17,7 @@ import DocumentUpload from "@/components/DocumentUpload";
 export default function Jobs({
   searchParams,
 }: {
-  searchParams: Promise<{ track?: string; q?: string; job?: string; sort?: string; application?: string; apply?: string }>;
+  searchParams: Promise<{ track?: string; q?: string; job?: string; sort?: string; application?: string; apply?: string; graduate?: string }>;
 }) {
   return (
     <Suspense fallback={<RouteSkeleton />}>
@@ -28,18 +29,22 @@ export default function Jobs({
 async function JobsContent({
   searchParams,
 }: {
-  searchParams: Promise<{ track?: string; q?: string; job?: string; sort?: string; application?: string; apply?: string }>;
+  searchParams: Promise<{ track?: string; q?: string; job?: string; sort?: string; application?: string; apply?: string; graduate?: string }>;
 }) {
   const ctx = await getCurrentStudent();
   if (!ctx) redirect("/login");
 
-  const { track: trackFilter = "", q = "", job: selectedJobId = "", sort = "recommended", application = "available", apply = "" } = await searchParams;
+  const { track: trackFilter = "", q = "", job: selectedJobId = "", sort = "recommended", application = "available", apply = "", graduate = "" } = await searchParams;
+  const graduateOnly = graduate === "1";
   const applicationView = application === "submitted" ? "submitted" : "available";
 
   const where: Prisma.JobWhereInput = {
     employer: { verificationStatus: "APPROVED" },
     ...(selectedJobId ? { id: selectedJobId } : {}),
     ...(trackFilter ? { careerTrack: trackFilter } : {}),
+    // The student's own choice, applied to the listing only. It narrows what
+    // they are shown; it does not change any score.
+    ...(graduateOnly ? { recentGraduatesAccepted: true } : {}),
     ...(q
       ? {
           OR: [
@@ -92,6 +97,11 @@ async function JobsContent({
       }
     }
   }
+
+  // Read from the year the student supplied on their own passport, never
+  // inferred from anything else, and used only to word the flag below and to
+  // offer the filter. It is not part of any score.
+  const studentIsRecentGraduate = isRecentGraduate(student.graduationYear);
 
   const verifiedCertificationCount = student.certifications.filter(
     (entry) => entry.verificationStatus === "APPROVED",
@@ -182,8 +192,16 @@ async function JobsContent({
             <option value="most-experience">Highest experience requirement</option>
           </select>
         </label>
+        <label className="student-job-graduate-filter">
+          Career stage
+          <span>
+            <input type="checkbox" name="graduate" value="1" defaultChecked={graduateOnly} />
+            Only roles that welcome recent graduates
+          </span>
+          <small className="muted">Counts as recent if you graduated in the last {RECENT_GRADUATE_YEARS} years or have not graduated yet.</small>
+        </label>
         <div className="student-job-filter-action"><span aria-hidden="true">Action</span><button className="button secondary" type="submit">Apply filters</button></div>
-        <div className="student-job-filter-summary"><span>{displayedJobs.length} {applicationView === "submitted" ? "submitted application" : "available opportunit"}{displayedJobs.length === 1 ? (applicationView === "submitted" ? "" : "y") : (applicationView === "submitted" ? "s" : "ies")}</span>{(trackFilter || q || sort !== "recommended") && <Link className="link" href={`/student/jobs?application=${applicationView}#opportunity-results`}>Clear filters</Link>}</div>
+        <div className="student-job-filter-summary">{!student.graduationYear && <Link className="link" href="/student/profile#career-profile">Add your graduation year to see which roles welcome recent graduates</Link>}<span>{displayedJobs.length} {applicationView === "submitted" ? "submitted application" : "available opportunit"}{displayedJobs.length === 1 ? (applicationView === "submitted" ? "" : "y") : (applicationView === "submitted" ? "s" : "ies")}</span>{(trackFilter || q || graduateOnly || sort !== "recommended") && <Link className="link" href={`/student/jobs?application=${applicationView}#opportunity-results`}>Clear filters</Link>}</div>
       </form>}
 
       <div className="stack student-job-results" id="opportunity-results" style={{ marginTop: 18 }}>
@@ -197,7 +215,7 @@ async function JobsContent({
           const remainingRequirements = [...m.missingSkills, ...m.missingCerts, m.experienceGapMonths ? `${m.experienceGapMonths} additional month${m.experienceGapMonths === 1 ? "" : "s"} of relevant experience` : ""].filter(Boolean);
           return (
             <article className="card student-job-card" key={job.id}>
-              <header className="student-job-card-header"><div><span className={`student-job-match ${matchLevel}`}>{m.score}% match</span><h2>{job.title}</h2><p><strong>{job.employer.company}</strong><span>{experienceLabel(job.minExperience)}</span>{job.portfolioRequired && <span className="student-job-flag">CV or portfolio required</span>}{job.recentGraduatesAccepted && <span className="student-job-flag is-welcome">Recent graduates welcome</span>}</p></div><span className={`student-job-status${applied ? " is-submitted" : ""}`}>{applicationRecord ? ({ applied: "Submitted", shortlisted: "Shortlisted", hired: "Offer received", rejected: "Not selected" }[applicationRecord.status] ?? "Submitted") : saved ? "Saved" : "Open"}</span></header>
+              <header className="student-job-card-header"><div><span className={`student-job-match ${matchLevel}`}>{m.score}% match</span><h2>{job.title}</h2><p><strong>{job.employer.company}</strong><span>{experienceLabel(job.minExperience)}</span>{job.portfolioRequired && <span className="student-job-flag">CV or portfolio required</span>}{job.recentGraduatesAccepted && <span className="student-job-flag is-welcome">{studentIsRecentGraduate ? "Welcomes recent graduates like you" : "Recent graduates welcome"}</span>}</p></div><span className={`student-job-status${applied ? " is-submitted" : ""}`}>{applicationRecord ? ({ applied: "Submitted", shortlisted: "Shortlisted", hired: "Offer received", rejected: "Not selected" }[applicationRecord.status] ?? "Submitted") : saved ? "Saved" : "Open"}</span></header>
               <section className="student-job-about"><h3>About this opportunity</h3><p className="student-job-description">{job.description}</p></section>
               <div className="grid-2 student-job-match-grid">
                 <div>

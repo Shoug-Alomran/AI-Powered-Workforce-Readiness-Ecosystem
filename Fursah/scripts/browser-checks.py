@@ -38,6 +38,16 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch()
         ctx = browser.new_context(viewport={"width": 1440, "height": 900})
+
+        # The guided walkthrough opens automatically for a first-time visitor and
+        # docks a panel over the page. A real person sees it once and dismisses
+        # it; a headless context is a first-time visitor on every run, so it
+        # would otherwise intercept every click in this suite. Turning it off up
+        # front is what a returning user's browser already looks like.
+        ctx.add_init_script(
+            "try{localStorage.setItem('fursah_tour_auto','off');"
+            "localStorage.setItem('fursah_tour_v2','{}');}catch(e){}"
+        )
         page = ctx.new_page()
         errors = []
         page.on("pageerror", lambda e: errors.append(str(e)))

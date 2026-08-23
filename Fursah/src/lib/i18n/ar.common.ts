@@ -317,8 +317,6 @@ export const common: Record<string, string> = {
   "↗ +9.2 pts Readiness": "↗ +9.2 نقطة جاهزية",
   "↘ -15 days from AY23": "↘ -15 يوماً عن العام الجامعي 23",
   "△ +2 days": "△ +2 يوم",
-  "◯◯ +4 Collaborators ▣ 12 Comments": "◯◯ +4 متعاونين ▣ 12 تعليقاً",
-  "⌾ Riyadh Region, KSA · ◷ Data Freshness: 12h ago · ♙ 1,248 Employers Analyzed · ▣ 45,200 Active Postings": "⌾ منطقة الرياض، السعودية · ◷ حداثة البيانات: قبل 12 ساعة · ♙ تحليل 1,248 صاحب عمل · ▣ 45,200 إعلان نشط",
   "Your Software Engineering program aligns well with current market demand (88th percentile), but": "يتوائم برنامج هندسة البرمجيات لديك جيداً مع طلب السوق الحالي (المئين 88)، لكن",
   "remain underrepresented across the curriculum. Recent hiring trends show a": "ما زالت ممثّلة بشكل ناقص عبر المنهج. وتُظهر اتجاهات التوظيف الأخيرة",
   "in demand for specialized Machine Learning Operations (MLOps), which currently matches only 12% of graduate output.": "في الطلب على عمليات تعلّم الآلة المتخصصة (MLOps)، وهو ما يطابق حالياً 12% فقط من مخرجات الخريجين.",

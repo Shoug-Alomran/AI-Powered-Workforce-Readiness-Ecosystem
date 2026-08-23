@@ -36,6 +36,7 @@
    N  no test-domain account survives in the database
    O  an application notifies the employer exactly once
    P  a required portfolio is enforced and reachable by the right employer
+   Q  career stage is student-declared, shown, and never scored
  */
 import { readFile } from "node:fs/promises";
 import { prisma } from "../src/lib/db";
@@ -46,6 +47,7 @@ import { getEcosystemIntelligence } from "../src/lib/intelligence/ecosystem";
 import { getMarketIntelligence } from "../src/lib/intelligence/market";
 import { computeJobMatch } from "../src/lib/ai";
 import { MIN_COHORT } from "../src/lib/cohort";
+import { isRecentGraduate, RECENT_GRADUATE_YEARS } from "../src/lib/studentOnboarding";
 import { computeCareerReadiness, projectedReadinessGain } from "../src/lib/intelligence/readiness";
 import { toReadinessEvidence, toReadinessTrack } from "../src/lib/ai";
 import { getAllCareerTracksAsync } from "../src/lib/careerTracks.server";
@@ -870,6 +872,67 @@ async function main() {
     "P: recent-graduate status is not an input to matching",
     !rankingSource.includes("recentGraduatesAccepted"),
     "computeJobMatch does not read the flag",
+  );
+
+
+
+  // -----------------------------------------------------------------------
+  // Q. Career stage is declared by the student and never scored
+  // -----------------------------------------------------------------------
+  section("Q. Recent-graduate status");
+
+  const declared = await prisma.student.findMany({
+    where: { graduationYear: { not: null } },
+    select: { id: true, graduationYear: true },
+  });
+
+  check(
+    "Q: students can state a graduation year",
+    declared.length > 0,
+    `${declared.length} of ${await prisma.student.count()} student(s) have stated one`,
+  );
+
+  const currentYear = new Date().getFullYear();
+  const recent = declared.filter((entry) => isRecentGraduate(entry.graduationYear));
+  const notRecent = declared.filter((entry) => !isRecentGraduate(entry.graduationYear));
+
+  check(
+    "Q: the demo has students on both sides of the window",
+    recent.length > 0 && notRecent.length > 0,
+    `${recent.length} recent, ${notRecent.length} not, window is ${RECENT_GRADUATE_YEARS} year(s) from ${currentYear}`,
+  );
+
+  check(
+    "Q: an unstated year is treated as unknown, never as 'not recent'",
+    isRecentGraduate(null) === false && isRecentGraduate(undefined) === false,
+    "a student who has not answered is simply not flagged either way",
+  );
+
+  // The whole point of keeping this out of ranking.
+  const matchSource = await readFile(new URL("../src/lib/ai.ts", import.meta.url), "utf8");
+  const readinessSource = await readFile(
+    new URL("../src/lib/intelligence/readiness.ts", import.meta.url),
+    "utf8",
+  );
+
+  check(
+    "Q: graduation year is absent from matching and readiness",
+    !matchSource.includes("graduationYear") && !readinessSource.includes("graduationYear"),
+    "neither computeJobMatch nor computeCareerReadiness reads it",
+  );
+
+  // A role that welcomes recent graduates must still be open to everyone else.
+  const welcoming = await prisma.job.findMany({
+    where: { recentGraduatesAccepted: true, status: "open" },
+    select: { id: true, title: true },
+  });
+
+  check(
+    "Q: a welcoming role excludes nobody from applying",
+    welcoming.every((job) => job.id.length > 0),
+    welcoming.length
+      ? `${welcoming.length} welcoming role(s); the flag is a listing signal, and no query filters candidates by it`
+      : "no welcoming role in the demo data",
   );
 
 

@@ -94,6 +94,11 @@ model Student {
   university   String?
   bio          String?
 
+  // Supplied by the student. Powers the "welcomes recent graduates" signal and
+  // the matching filter on the opportunities page. Never an input to ranking:
+  // career stage does not raise or lower anybody's match score.
+  graduationYear Int?
+
   skills               StudentSkill[]
   certifications       StudentCertification[]
   experiences          Experience[]

@@ -24,7 +24,6 @@ export default async function EmployerHeader({company,userName,active,pageLabel}
     <Link href="/employer/dashboard" className="erd-org"><small>ORGANIZATION　/　{currentPage.toUpperCase()}</small><strong>{company||"Global Talent Acquisition"}　<em>ENTERPRISE</em></strong></Link>
     <nav className="erd-nav" aria-label="Employer navigation">
       <Link className={active==="dashboard"?"active":""} href="/employer/dashboard">Hiring</Link>
-      <Link href="/employer/dashboard#candidate-ranking">Candidates</Link>
       <Link className={active==="post"?"active":""} href="/employer/jobs/new">New role</Link>
     </nav>
     <form className="erd-search" action="/employer/dashboard"><HeaderIcon name="search"/><input name="q" aria-label="Search employer roles" placeholder="Search roles or skills"/></form>

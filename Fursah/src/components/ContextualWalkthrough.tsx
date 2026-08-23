@@ -6,13 +6,20 @@ import { chromeSteps, isPortalPath, tourForPath, type PortalRole, type Step } fr
 
 type Box = { top: number; left: number; width: number; height: number };
 type SeenMap = Record<string, string>;
+type Placement = "below" | "above" | "right" | "left" | "docked";
 
 const STORE_KEY = "fursah_tour_v2";
 const AUTO_KEY = "fursah_tour_auto";
 const EVENT_NAME = "fursah-walkthrough-change";
 const POP_WIDTH = 380;
 const PAD = 8;
-const NO_STEPS: Step[] = [];
+/** Clearance between the popover and the element it points at. */
+const GAP = 14;
+/** Distance kept from every viewport edge. */
+const EDGE = 12;
+/** How long the page is given to finish rendering before a partial tour opens. */
+const SETTLE_MS = 700;
+const NO_IDS: number[] = [];
 
 function subscribe(listener: () => void) {
   window.addEventListener("storage", listener);
@@ -32,20 +39,32 @@ function writeStorage(key: string, value: string) {
   window.dispatchEvent(new Event(EVENT_NAME));
 }
 
-/** Resolve a step to a live element: CSS selector first, heading text as the fallback anchor. */
+/**
+ * Resolve a step to a live element: CSS selector first, then section label text.
+ * The label pass reads the eyebrow above a card as well as its heading, because
+ * most sections in this app carry their name in the eyebrow.
+ */
 function resolveTarget(step: Step): HTMLElement | null {
   if (step.selector) {
-    const bySelector = document.querySelector<HTMLElement>(step.selector);
-    if (bySelector) return bySelector;
+    for (const candidate of document.querySelectorAll<HTMLElement>(step.selector)) {
+      // Never anchor to the popover's own markup: it would chase itself.
+      if (!candidate.closest(".walkthrough-panel")) return candidate;
+    }
   }
   if (step.heading) {
     const wanted = step.heading.toLowerCase();
-    const heading = Array.from(document.querySelectorAll<HTMLElement>("h1,h2,h3")).find((node) =>
-      (node.textContent || "").trim().toLowerCase().startsWith(wanted),
+    const label = Array.from(document.querySelectorAll<HTMLElement>("h1,h2,h3,.eyebrow")).find(
+      (node) =>
+        !node.closest(".walkthrough-panel") &&
+        (node.textContent || "").trim().toLowerCase().startsWith(wanted),
     );
-    if (heading) return heading.closest<HTMLElement>("section,article,form,.card") ?? heading;
+    if (label) return label.closest<HTMLElement>("section,article,form,.card") ?? label;
   }
   return null;
+}
+
+function isAnchored(step: Step) {
+  return Boolean(step.selector || step.heading);
 }
 
 function sameBox(a: Box | null, b: Box) {
@@ -56,6 +75,30 @@ function sameBox(a: Box | null, b: Box) {
     Math.abs(a.width - b.width) < 0.5 &&
     Math.abs(a.height - b.height) < 0.5
   );
+}
+
+/**
+ * Bottom edge of whatever is pinned to the top of the page. Every portal has a
+ * sticky header, and the popover has a higher stacking order than all of them,
+ * so without this the panel simply covers the navigation it is describing.
+ */
+function safeTop() {
+  let bottom = EDGE;
+  for (const node of document.querySelectorAll<HTMLElement>("header,nav,[data-portal-header]")) {
+    if (node.closest(".walkthrough-panel")) continue;
+    const position = window.getComputedStyle(node).position;
+    if (position !== "fixed" && position !== "sticky") continue;
+    const rect = node.getBoundingClientRect();
+    if (rect.height === 0 || rect.top > 4) continue;
+    bottom = Math.max(bottom, rect.bottom + 8);
+  }
+  return bottom;
+}
+
+/** A detached, hidden, or scrolled-away element measures as an unusable rect. */
+function usableBox(box: Box | null, top: number) {
+  if (!box || box.width <= 1 || box.height <= 1) return false;
+  return box.top < window.innerHeight - 4 && box.top + box.height > top;
 }
 
 export default function ContextualWalkthrough({ role }: { role: PortalRole }) {
@@ -82,66 +125,85 @@ export default function ContextualWalkthrough({ role }: { role: PortalRole }) {
   const autoOpen = autoRaw !== "off";
 
   /* Everything below is keyed by pathname so a navigation resets the tour without an effect. */
-  const [resolved, setResolved] = useState<{ path: string; steps: Step[] } | null>(null);
-  const [progress, setProgress] = useState<{ path: string; index: number } | null>(null);
+  const [liveRaw, setLiveRaw] = useState<{ path: string; ids: number[] } | null>(null);
+  const [settled, setSettled] = useState<string | null>(null);
+  const [progress, setProgress] = useState<{ path: string; id: number } | null>(null);
   const [opened, setOpened] = useState<string | null>(null);
-  const [tracked, setTracked] = useState<{ key: string; box: Box } | null>(null);
+  const [tracked, setTracked] = useState<{ id: number; box: Box } | null>(null);
   const [popHeight, setPopHeight] = useState(240);
+  const [inset, setInset] = useState(EDGE);
   const popRef = useRef<HTMLElement | null>(null);
-  const openRef = useRef(false);
+  const litRef = useRef<HTMLElement | null>(null);
 
   const tour = useMemo(() => tourForPath(pathname), [pathname]);
   const chromeKey = `chrome:${role.toLowerCase()}`;
   const showChrome = isPortalPath(role, pathname) && !seen[chromeKey];
 
   const candidateSteps = useMemo<Step[]>(() => {
-    if (!tour) return NO_STEPS;
+    if (!tour) return [];
     return showChrome ? [...chromeSteps[role], ...tour.steps] : tour.steps;
   }, [tour, showChrome, role]);
 
-  /* Drop steps whose target is not on this page, so a tour never stalls on a dead anchor. */
+  /*
+   * Which steps can be shown right now. This is re-evaluated for the life of the
+   * tour rather than cut once: server content, client widgets, and conditional
+   * sections all appear at different moments, and a step whose section arrives
+   * late should join the tour instead of being lost with it.
+   */
   useEffect(() => {
     if (!candidateSteps.length) return;
-    let cancelled = false;
-    const resolve = (final: boolean) => {
-      // Never re-cut the list mid-tour: that would shift the step the user is on.
-      if (cancelled || openRef.current) return;
-      const available = candidateSteps.filter(
-        (step) => (!step.selector && !step.heading) || resolveTarget(step),
+    let last = 0;
+    let timer = 0;
+    const measure = () => {
+      last = Date.now();
+      const ids = candidateSteps.reduce<number[]>((keep, step, id) => {
+        if (!isAnchored(step) || resolveTarget(step)) keep.push(id);
+        return keep;
+      }, []);
+      setLiveRaw((previous) =>
+        previous?.path === pathname && previous.ids.join() === ids.join() ? previous : { path: pathname, ids },
       );
-      // Server-rendered sections can stream in after the page title. Publishing a
-      // partial list would auto-open the tour and lock out the second anchor pass.
-      // Open early only when every configured anchor is already present.
-      if (!final && available.length !== candidateSteps.length) return;
-      setResolved({
-        path: pathname,
-        steps: available,
-      });
     };
-    // Client components below the server shell need a frame or two to paint.
-    const first = window.setTimeout(() => resolve(false), 120);
-    const second = window.setTimeout(() => resolve(true), 600);
+    // Coalesce bursts of DOM churn: a tour only needs to know within a frame or two.
+    const schedule = () => {
+      if (timer) return;
+      const wait = Math.max(0, 200 - (Date.now() - last));
+      timer = window.setTimeout(() => {
+        timer = 0;
+        measure();
+      }, wait);
+    };
+    measure();
+    const observer = new MutationObserver(schedule);
+    observer.observe(document.body, { childList: true, subtree: true });
+    const settle = window.setTimeout(() => setSettled(pathname), SETTLE_MS);
+    window.addEventListener("resize", schedule);
     return () => {
-      cancelled = true;
-      window.clearTimeout(first);
-      window.clearTimeout(second);
+      observer.disconnect();
+      window.removeEventListener("resize", schedule);
+      window.clearTimeout(settle);
+      if (timer) window.clearTimeout(timer);
     };
   }, [candidateSteps, pathname]);
 
-  const steps = resolved?.path === pathname ? resolved.steps : NO_STEPS;
+  const order = liveRaw?.path === pathname ? liveRaw.ids : NO_IDS;
   const tourKey = tour?.key ?? "";
   const unseen = Boolean(tourKey) && !seen[tourKey];
-  const open = steps.length > 0 && (opened === pathname || (autoOpen && unseen));
+  // Auto-opening waits for a complete tour, or for the page to stop changing,
+  // so a reader is never handed a two-step version of an eight-step page.
+  const ready = order.length === candidateSteps.length || settled === pathname;
+  const open = order.length > 0 && (opened === pathname || (autoOpen && unseen && ready));
 
-  useEffect(() => {
-    openRef.current = open;
-  });
-
-  const stepIndex = progress?.path === pathname ? progress.index : 0;
-  const index = Math.min(stepIndex, Math.max(steps.length - 1, 0));
-  const current = steps[index];
-  const boxKey = `${pathname}|${index}`;
-  const box = tracked?.key === boxKey ? tracked.box : null;
+  /* The position is held as a step id, so steps appearing or disappearing never shift the reader. */
+  const wanted = progress?.path === pathname ? progress.id : (order[0] ?? -1);
+  const exact = order.indexOf(wanted);
+  // If the step the reader was on lost its section, fall forward to the next
+  // one that still exists rather than jumping back to the start.
+  const after = order.findIndex((step) => step >= wanted);
+  const index = exact >= 0 ? exact : after >= 0 ? after : Math.max(0, order.length - 1);
+  const id = order[index] ?? -1;
+  const current = candidateSteps[id];
+  const box = tracked?.id === id ? tracked.box : null;
 
   const finish = useCallback(
     (mark: "completed" | "skipped") => {
@@ -161,50 +223,83 @@ export default function ContextualWalkthrough({ role }: { role: PortalRole }) {
   );
 
   const next = useCallback(() => {
-    if (index >= steps.length - 1) {
+    if (index >= order.length - 1) {
       finish("completed");
       return;
     }
-    setProgress({ path: pathname, index: index + 1 });
-  }, [index, steps.length, finish, pathname]);
+    setProgress({ path: pathname, id: order[index + 1] });
+  }, [index, order, finish, pathname]);
 
   const back = useCallback(
-    () => setProgress({ path: pathname, index: Math.max(0, index - 1) }),
-    [index, pathname],
+    () => setProgress({ path: pathname, id: order[Math.max(0, index - 1)] }),
+    [index, order, pathname],
   );
 
-  /* Track the target's position every frame so the spotlight follows scrolling and layout shifts. */
+  /*
+   * Track the target every frame. The element is resolved inside the loop, not
+   * captured once: streamed and re-rendered sections replace their nodes, and a
+   * detached node reports a zero rect forever, which used to strand the popover
+   * in the top-left corner of the screen.
+   */
   useEffect(() => {
     if (!open || !current) return;
-    const target = resolveTarget(current);
-    if (!target) return;
-    target.classList.add("walkthrough-target");
-    target.scrollIntoView({ behavior: "smooth", block: "center" });
     let frame = 0;
+    let scrolled = false;
+    let tick = 0;
+    let top = safeTop();
     const track = () => {
-      const rect = target.getBoundingClientRect();
-      const measured = { top: rect.top, left: rect.left, width: rect.width, height: rect.height };
-      setTracked((previous) =>
-        previous?.key === boxKey && sameBox(previous.box, measured) ? previous : { key: boxKey, box: measured },
-      );
+      const target = isAnchored(current) ? resolveTarget(current) : null;
+      if (target !== litRef.current) {
+        litRef.current?.classList.remove("walkthrough-target");
+        target?.classList.add("walkthrough-target");
+        litRef.current = target;
+      }
+      const rect = target?.getBoundingClientRect();
+      const measured = rect
+        ? { top: rect.top, left: rect.left, width: rect.width, height: rect.height }
+        : null;
+      // The header only moves when the layout does, so it is not worth a
+      // forced style recalculation on every single frame.
+      if (tick++ % 15 === 0) {
+        top = safeTop();
+        setInset((previous) => (Math.abs(previous - top) < 0.5 ? previous : top));
+      }
+      // Bring the section into view once. This has to happen while the target
+      // is still off-screen, which is exactly when its box is not yet usable.
+      if (target && measured && measured.width > 1 && measured.height > 1 && !scrolled) {
+        scrolled = true;
+        target.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+      setTracked((previous) => {
+        if (!measured || !usableBox(measured, top)) return previous?.id === id ? null : previous;
+        return previous?.id === id && sameBox(previous.box, measured) ? previous : { id, box: measured };
+      });
       frame = window.requestAnimationFrame(track);
     };
     frame = window.requestAnimationFrame(track);
     return () => {
       window.cancelAnimationFrame(frame);
-      target.classList.remove("walkthrough-target");
+      litRef.current?.classList.remove("walkthrough-target");
+      litRef.current = null;
     };
-  }, [open, current, boxKey]);
+  }, [open, current, id]);
 
-  /* Interactive steps: doing the real thing on the page advances the tour. */
+  /*
+   * Interactive steps: doing the real thing on the page advances the tour. The
+   * listener sits on the document and re-resolves the target when the event
+   * fires, so a section that re-renders between steps still counts.
+   */
   useEffect(() => {
     const interact = current?.interact;
     if (!open || !current || !interact) return;
-    const target = resolveTarget(current);
-    if (!target) return;
-    const handler = () => window.setTimeout(next, 260);
-    target.addEventListener(interact.event, handler, true);
-    return () => target.removeEventListener(interact.event, handler, true);
+    const handler = (event: Event) => {
+      const node = event.target as Node | null;
+      const target = resolveTarget(current);
+      if (!node || !target || !target.contains(node)) return;
+      window.setTimeout(next, 260);
+    };
+    document.addEventListener(interact.event, handler, true);
+    return () => document.removeEventListener(interact.event, handler, true);
   }, [open, current, next]);
 
   useEffect(() => {
@@ -237,7 +332,7 @@ export default function ContextualWalkthrough({ role }: { role: PortalRole }) {
     return () => observer.disconnect();
   }, [open]);
 
-  if (!tour || !steps.length) return null;
+  if (!tour || !order.length || !current) return null;
 
   if (!open) {
     return (
@@ -245,7 +340,7 @@ export default function ContextualWalkthrough({ role }: { role: PortalRole }) {
         type="button"
         className={`walkthrough-launcher${unseen ? " has-new" : ""}`}
         onClick={() => {
-          setProgress({ path: pathname, index: 0 });
+          setProgress({ path: pathname, id: order[0] });
           setOpened(pathname);
         }}
         aria-label={`Start the guided walkthrough for ${tour.label}`}
@@ -258,25 +353,47 @@ export default function ContextualWalkthrough({ role }: { role: PortalRole }) {
 
   const viewportWidth = window.innerWidth;
   const viewportHeight = window.innerHeight;
-  const width = Math.min(POP_WIDTH, viewportWidth - 24);
-  let popLeft = viewportWidth / 2 - width / 2;
-  let popTop = viewportHeight / 2 - popHeight / 2;
-  let arrow: "up" | "down" | null = null;
+  const width = Math.min(POP_WIDTH, viewportWidth - EDGE * 2);
+  const clampLeft = (value: number) =>
+    Math.min(Math.max(EDGE, value), Math.max(EDGE, viewportWidth - width - EDGE));
+  const clampTop = (value: number) =>
+    Math.min(Math.max(inset, value), Math.max(inset, viewportHeight - popHeight - EDGE));
+
+  /*
+   * Placement, in order of preference: under the target, over it, beside it,
+   * and only then parked in the corner. Anything that would land on top of the
+   * sticky header or off the viewport is rejected before it is chosen.
+   */
+  let placement: Placement = "docked";
+  let popLeft = viewportWidth - width - EDGE;
+  let popTop = viewportHeight - popHeight - EDGE;
 
   if (box) {
-    popLeft = Math.min(Math.max(12, box.left + box.width / 2 - width / 2), viewportWidth - width - 12);
-    if (box.top + box.height + popHeight + 20 < viewportHeight) {
-      popTop = box.top + box.height + 14;
-      arrow = "up";
-    } else if (box.top - popHeight - 20 > 0) {
-      popTop = box.top - popHeight - 14;
-      arrow = "down";
-    } else {
-      popTop = Math.max(12, viewportHeight - popHeight - 16);
+    const centred = clampLeft(box.left + box.width / 2 - width / 2);
+    if (box.top + box.height + GAP + popHeight + EDGE <= viewportHeight) {
+      placement = "below";
+      popLeft = centred;
+      popTop = box.top + box.height + GAP;
+    } else if (box.top - GAP - popHeight >= inset) {
+      placement = "above";
+      popLeft = centred;
+      popTop = box.top - GAP - popHeight;
+    } else if (box.left + box.width + GAP + width + EDGE <= viewportWidth) {
+      placement = "right";
+      popLeft = box.left + box.width + GAP;
+      popTop = clampTop(box.top + box.height / 2 - popHeight / 2);
+    } else if (box.left - GAP - width >= EDGE) {
+      placement = "left";
+      popLeft = box.left - GAP - width;
+      popTop = clampTop(box.top + box.height / 2 - popHeight / 2);
     }
   }
 
-  const last = index === steps.length - 1;
+  const arrow = placement === "below" ? "up" : placement === "above" ? "down" : null;
+  // Clamping moves the panel away from the target's centre, so the arrow is
+  // placed against the target rather than at a fixed half of the panel.
+  const arrowX = box ? Math.min(Math.max(18, box.left + box.width / 2 - popLeft), width - 18) : width / 2;
+  const last = index === order.length - 1;
 
   return (
     <>
@@ -294,17 +411,17 @@ export default function ContextualWalkthrough({ role }: { role: PortalRole }) {
       )}
       <aside
         ref={popRef}
-        className={`walkthrough-panel${arrow ? ` arrow-${arrow}` : ""}`}
+        className={`walkthrough-panel place-${placement}${arrow ? ` arrow-${arrow}` : ""}`}
         role="dialog"
         aria-modal="false"
         aria-live="polite"
         aria-label={`Guided walkthrough: ${tour.label}`}
-        style={{ top: popTop, left: popLeft, width }}
+        style={{ top: popTop, left: popLeft, width, ["--walkthrough-arrow" as string]: `${arrowX}px` }}
       >
         <div className="walkthrough-progress">
           <span>{tour.label.toUpperCase()}</span>
           <b>
-            {index + 1} / {steps.length}
+            {index + 1} / {order.length}
           </b>
         </div>
         <h2>{current.title}</h2>
@@ -316,8 +433,8 @@ export default function ContextualWalkthrough({ role }: { role: PortalRole }) {
           </p>
         )}
         <div className="walkthrough-dots" aria-hidden="true">
-          {steps.map((_, dot) => (
-            <i className={dot === index ? "active" : dot < index ? "done" : ""} key={dot} />
+          {order.map((dot, position) => (
+            <i className={position === index ? "active" : position < index ? "done" : ""} key={dot} />
           ))}
         </div>
         <footer>

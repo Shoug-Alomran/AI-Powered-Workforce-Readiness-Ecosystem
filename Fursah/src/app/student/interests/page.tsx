@@ -73,8 +73,12 @@ export default async function StudentInterests({
     const matchesStatus = trackStatus === "following" ? favoriteTrackIds.has(track.id) : trackStatus === "available" ? !favoriteTrackIds.has(track.id) : true;
     return matchesSearch && matchesCategory && matchesStatus;
   });
-  const companyLetters = [...new Set(employers.map((employer) => employer.company.charAt(0).toUpperCase()))].sort();
-  const visibleEmployers = employers.filter((employer) => {
+  /* SQLite orders ASC by code point, so lowercase-initial names ("alfanar",
+     "flynas", "stc") land after "Z". Re-sort case-insensitively here so each
+     A-Z group reads alphabetically. */
+  const sortedEmployers = [...employers].sort((a, b) => a.company.localeCompare(b.company, "en", { sensitivity: "base" }));
+  const companyLetters = [...new Set(sortedEmployers.map((employer) => employer.company.charAt(0).toUpperCase()))].sort();
+  const visibleEmployers = sortedEmployers.filter((employer) => {
     const matchesSearch = !companyQ || employer.company.toLowerCase().includes(companyQ.trim().toLowerCase());
     const matchesLetter = !companyLetter || employer.company.charAt(0).toUpperCase() === companyLetter.toUpperCase();
     return matchesSearch && matchesLetter;

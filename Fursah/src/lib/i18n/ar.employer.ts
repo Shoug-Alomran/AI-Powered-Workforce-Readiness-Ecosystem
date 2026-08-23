@@ -102,7 +102,6 @@ export const employer: Record<string, string> = {
   "⌂ On-site": "⌂ من المقر",
   "◎ Remote": "◎ عن بُعد",
   "♙ Hybrid": "♙ هجين",
-  "▣ Save Draft": "▣ حفظ المسودة",
   "Save Draft": "حفظ المسودة",
   "Preview Opportunity": "معاينة الفرصة",
   "⊙ Preview Opportunity": "⊙ معاينة الفرصة",

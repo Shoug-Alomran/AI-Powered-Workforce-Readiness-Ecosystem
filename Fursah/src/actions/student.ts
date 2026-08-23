@@ -23,6 +23,17 @@ export async function updateStudentProfile(formData: FormData) {
   const degree = String(formData.get("degree") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim();
 
+  // Blank clears it. A year outside a plausible range is ignored rather than
+  // stored, so a typo cannot quietly mark somebody as a recent graduate.
+  const graduationYearRaw = String(formData.get("graduationYear") ?? "").trim();
+  const graduationYearValue = Number(graduationYearRaw);
+  const currentYear = new Date().getFullYear();
+  const graduationYear =
+    graduationYearRaw && Number.isInteger(graduationYearValue) &&
+    graduationYearValue >= currentYear - 60 && graduationYearValue <= currentYear + 10
+      ? graduationYearValue
+      : null;
+
   await prisma.student.update({
     where: { id: student.id },
     data: {
@@ -30,6 +41,7 @@ export async function updateStudentProfile(formData: FormData) {
       university: university || null,
       degree: degree || null,
       bio: bio || null,
+      graduationYear,
     },
   });
 
