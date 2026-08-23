@@ -140,306 +140,232 @@ try {
 
 
   // =========================================================
-  // AI EVIDENCE ANALYSIS MIGRATION
+  // SCHEMA RECONCILIATION
   // =========================================================
-
-  const aiDocumentColumns =
-    await client.execute(
-      "PRAGMA table_info('EvidenceDocument')"
-    );
-
-  const hasAiAnalysis =
-    aiDocumentColumns.rows.some(
-      (row) => row.name === "aiAnalysis"
-    );
-
-  const hasAiAnalyzedAt =
-    aiDocumentColumns.rows.some(
-      (row) => row.name === "aiAnalyzedAt"
-    );
-
-  if (
-    !hasAiAnalysis ||
-    !hasAiAnalyzedAt
-  ) {
-    console.log(
-      "Applying evidence AI analysis migration..."
-    );
-
-    const aiMigration =
-      await readFile(
-        new URL(
-          "../prisma/migrations/20260819034500_evidence_ai_analysis/migration.sql",
-          import.meta.url
-        ),
-        "utf8"
-      );
-
-    await client.executeMultiple(
-      aiMigration
-    );
-
-    console.log(
-      "Evidence AI analysis migration applied."
-    );
-  }
-
-
-  // =========================================================
-  // ROADMAP INTELLIGENCE METADATA MIGRATION
-  // =========================================================
-  // Adds the columns the intelligence engine writes when it generates a
-  // roadmap recommendation (career direction, skill/offering/certification the
-  // recommendation addresses, its explanation, score, generation time, and an
-  // explicit dismissal marker). Additive only: existing roadmap rows keep
-  // their values and simply carry NULL metadata until the next sync.
-
-  const roadmapColumns =
-    await client.execute(
-      "PRAGMA table_info('RoadmapItem')"
-    );
-
-  const hasRecommendationReason =
-    roadmapColumns.rows.some(
-      (row) => row.name === "recommendationReason"
-    );
-
-  const hasDismissedAt =
-    roadmapColumns.rows.some(
-      (row) => row.name === "dismissedAt"
-    );
-
-  if (
-    !hasRecommendationReason ||
-    !hasDismissedAt
-  ) {
-    console.log(
-      "Applying roadmap intelligence metadata migration..."
-    );
-
-    const intelligenceMigration =
-      await readFile(
-        new URL(
-          "../prisma/migrations/20260819030000_intelligence_metadata/migration.sql",
-          import.meta.url
-        ),
-        "utf8"
-      );
-
-    await client.executeMultiple(
-      intelligenceMigration
-    );
-
-    console.log(
-      "Roadmap intelligence metadata migration applied."
-    );
-  }
-
-
-  // =========================================================
-  // VERIFY DATABASE STATE
-  // =========================================================
-
-  const [
-    experienceCheck,
-    projectCheck,
-    feedbackCheck,
-    documentCheck,
-  ] = await Promise.all([
-    client.execute(
-      "PRAGMA table_info('Experience')"
-    ),
-
-    client.execute(
-      "PRAGMA table_info('Project')"
-    ),
-
-    client.execute(
-      "PRAGMA table_info('Feedback')"
-    ),
-
-    client.execute(
-      "PRAGMA table_info('EvidenceDocument')"
-    ),
-  ]);
-
-
-  // Experience verification
-  if (
-    !experienceCheck.rows.some(
-      (row) =>
-        row.name === "evidenceUrl"
-    )
-  ) {
-    throw new Error(
-      "Experience migration verification failed"
-    );
-  }
-
-
-  // Project verification
-  if (
-    !projectCheck.rows.some(
-      (row) =>
-        row.name === "evidenceUrl"
-    )
-  ) {
-    throw new Error(
-      "Project migration verification failed"
-    );
-  }
-
-
-  // Feedback verification
-  if (
-    !feedbackCheck.rows.some(
-      (row) =>
-        row.name === "checkpointDays"
-    )
-  ) {
-    throw new Error(
-      "Feedback migration verification failed"
-    );
-  }
-
-
-  // EvidenceDocument verification
-  if (
-    !documentCheck.rows.some(
-      (row) =>
-        row.name === "storageKey"
-    )
-  ) {
-    throw new Error(
-      "Private document migration verification failed"
-    );
-  }
-
-
-  // AI analysis verification
-  if (
-    !documentCheck.rows.some(
-      (row) =>
-        row.name === "aiAnalysis"
-    )
-  ) {
-    throw new Error(
-      "Evidence AI migration verification failed: aiAnalysis column missing"
-    );
-  }
-
-  if (
-    !documentCheck.rows.some(
-      (row) =>
-        row.name === "aiAnalyzedAt"
-    )
-  ) {
-    throw new Error(
-      "Evidence AI migration verification failed: aiAnalyzedAt column missing"
-    );
-  }
-
-
-  // Roadmap intelligence verification
-  const roadmapCheck =
-    await client.execute(
-      "PRAGMA table_info('RoadmapItem')"
-    );
-
-  for (const column of [
-    "careerTrackId",
-    "skillId",
-    "offeringId",
-    "certificationId",
-    "recommendationReason",
-    "recommendationScore",
-    "generatedAt",
-    "dismissedAt",
-  ]) {
-    if (
-      !roadmapCheck.rows.some(
-        (row) => row.name === column
-      )
-    ) {
-      throw new Error(
-        `Roadmap intelligence migration verification failed: ${column} column missing`
-      );
-    }
-  }
-
-
-
-  // =========================================================
-  // JOB POSTING DETAIL MIGRATION
-  // =========================================================
-  // The role form has always collected department, employment type, location,
-  // work arrangement, education level and languages. None of them had a column,
-  // so every answer was discarded on submit. All additive and nullable, so
-  // existing roles keep working and simply carry no detail.
+  // Everything above creates tables. Everything else this project has ever
+  // needed in production has been an additive, nullable column, and each one
+  // used to get its own hand-written block here.
   //
-  // Each column is checked and added on its own rather than the whole set being
-  // gated behind one sentinel column. A partially-applied table is a real state
-  // to be in - an interrupted run, or a column added to the file later - and an
-  // all-or-nothing guard handles it in the worst possible way: it either skips
-  // the columns that are genuinely missing, or fails on "duplicate column name"
-  // for the ones already there. Per-column is idempotent from any starting
-  // state, which is the only property that matters for a migration that runs on
-  // every deploy.
+  // That list drifted, twice, in the only way a hand-maintained list can: a
+  // migration was added to prisma/migrations and nobody remembered to also
+  // teach this file about it. Production then ran a schema the application
+  // did not expect, and the failure surfaced as a query error in front of a
+  // user - `no such column: main.Job.department` during a build, and
+  // `no such column: passwordHash` on the demo sign-in page. Four migrations
+  // were unapplied by the time the second one was noticed.
+  //
+  // So the list is gone. The columns are derived from prisma/schema.prisma,
+  // which is the thing that actually defines what the application expects, and
+  // a new nullable column is picked up with no edit here at all.
+  //
+  // Deliberately narrow. It adds missing columns and missing indexes, and
+  // nothing else: a missing table, a dropped column, a changed type or a data
+  // backfill is refused with an explanation, because those need a considered
+  // migration rather than a guess. The early migrations in this project rebuild
+  // tables through a temporary copy, and replaying one of those against live
+  // data would silently drop columns it predates.
 
-  const jobDetailColumns = [
-    ["department", "TEXT"],
-    ["employmentType", "TEXT"],
-    ["location", "TEXT"],
-    ["arrangement", "TEXT"],
-    ["educationLevel", "TEXT"],
-    ["languages", "TEXT"],
-  ];
+  /** Prisma scalar types and how the SQLite connector renders them. */
+  const SQLITE_TYPE = {
+    String: "TEXT", Boolean: "BOOLEAN", Int: "INTEGER", BigInt: "BIGINT",
+    Float: "REAL", Decimal: "DECIMAL", DateTime: "DATETIME", Json: "JSONB",
+    Bytes: "BLOB",
+  };
 
-  const existingJobColumns = new Set(
+  const schema = await readFile(
+    new URL("../prisma/schema.prisma", import.meta.url),
+    "utf8"
+  );
+
+  /**
+   * The columns and indexes each model expects, read from the schema.
+   *
+   * Relation fields and list fields are not columns; a relation's foreign key
+   * is declared separately as its own scalar field, so it is picked up anyway.
+   */
+  function parseSchema(source) {
+    const enums = new Set(
+      [...source.matchAll(/^enum\s+(\w+)\s*\{/gm)].map((match) => match[1])
+    );
+    const models = [];
+
+    for (const block of source.matchAll(/^model\s+(\w+)\s*\{([\s\S]*?)^\}/gm)) {
+      const [, name, body] = block;
+      const columns = [];
+      const indexes = [];
+
+      for (const rawLine of body.split("\n")) {
+        const line = rawLine.trim();
+        if (!line || line.startsWith("//")) continue;
+
+        if (line.startsWith("@@index") || line.startsWith("@@unique")) {
+          const fields = line.match(/\[([^\]]+)\]/);
+          if (!fields) continue;
+          const parts = fields[1]
+            .split(",")
+            .map((part) => part.trim())
+            .filter(Boolean);
+          if (parts.length === 0) continue;
+          // Prisma's own naming, so an index it already created is recognised.
+          const suffix = line.startsWith("@@unique") ? "key" : "idx";
+          indexes.push({
+            name: `${name}_${parts.join("_")}_${suffix}`,
+            columns: parts,
+            unique: line.startsWith("@@unique"),
+          });
+          continue;
+        }
+
+        if (line.startsWith("@@")) continue;
+
+        const field = line.match(/^(\w+)\s+(\w+)(\[\])?(\?)?\s*(.*)$/);
+        if (!field) continue;
+        const [, fieldName, fieldType, isList, isOptional, attributes] = field;
+
+        if (isList) continue;                                  // relation list
+        if (attributes.includes("@relation")) continue;        // relation object
+        if (!(fieldType in SQLITE_TYPE) && !enums.has(fieldType)) continue;
+
+        // A field carrying @unique gets its own single-column index.
+        if (/@unique\b/.test(attributes)) {
+          indexes.push({ name: `${name}_${fieldName}_key`, columns: [fieldName], unique: true });
+        }
+
+        columns.push({
+          name: fieldName,
+          type: enums.has(fieldType) ? "TEXT" : SQLITE_TYPE[fieldType],
+          required: !isOptional,
+          hasDefault: attributes.includes("@default("),
+          isId: /@id\b/.test(attributes),
+        });
+      }
+
+      models.push({ name, columns, indexes });
+    }
+
+    return models;
+  }
+
+  const models = parseSchema(schema);
+
+  if (models.length === 0) {
+    throw new Error(
+      "Schema reconciliation read no models from prisma/schema.prisma"
+    );
+  }
+
+  const addedColumns = [];
+  const addedIndexes = [];
+  const unreconcilable = [];
+
+  const tableNames = new Set(
     (
       await client.execute(
-        "PRAGMA table_info('Job')"
+        "SELECT name FROM sqlite_master WHERE type = 'table'"
       )
     ).rows.map((row) => row.name)
   );
 
-  const addedJobColumns = [];
-
-  for (const [column, type] of jobDetailColumns) {
-    if (existingJobColumns.has(column)) {
+  for (const model of models) {
+    if (!tableNames.has(model.name)) {
+      unreconcilable.push(
+        `table "${model.name}" does not exist; create it with a migration rather than here`
+      );
       continue;
     }
 
-    // Identifiers come from the fixed list above, never from input.
-    await client.execute(
-      `ALTER TABLE "Job" ADD COLUMN "${column}" ${type}`
+    const present = new Set(
+      (
+        await client.execute(`PRAGMA table_info('${model.name}')`)
+      ).rows.map((row) => row.name)
     );
 
-    addedJobColumns.push(column);
+    for (const column of model.columns) {
+      if (present.has(column.name)) continue;
+
+      // A NOT NULL column added to a populated table needs a value for the
+      // rows already there. Prisma's defaults are frequently expressions
+      // (now(), cuid()) that SQLite cannot use in a DEFAULT clause, so this
+      // stops rather than inventing one.
+      if (column.required) {
+        unreconcilable.push(
+          `"${model.name}"."${column.name}" is required; adding it to existing rows needs a migration that decides their value`
+        );
+        continue;
+      }
+
+      await client.execute(
+        `ALTER TABLE "${model.name}" ADD COLUMN "${column.name}" ${column.type}`
+      );
+      addedColumns.push(`${model.name}.${column.name}`);
+    }
   }
 
-  if (addedJobColumns.length > 0) {
-    console.log(
-      `Job posting detail migration applied: added ${addedJobColumns.join(", ")}.`
+  if (unreconcilable.length > 0) {
+    throw new Error(
+      `Schema reconciliation cannot proceed:\n  - ${unreconcilable.join("\n  - ")}`
     );
   }
 
-  // Verification: every column the application writes must now exist, so a
-  // deploy fails here with a readable message rather than part way through
-  // prerendering with "no such column: main.Job.department".
-  const jobCheck = await client.execute(
-    "PRAGMA table_info('Job')"
+  // Indexes only affect how fast a query runs, so a failure to create one is
+  // reported and does not stop a deployment.
+  const indexNames = new Set(
+    (
+      await client.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'index'"
+      )
+    ).rows.map((row) => row.name)
   );
 
-  for (const [column] of jobDetailColumns) {
-    if (
-      !jobCheck.rows.some(
-        (row) => row.name === column
-      )
-    ) {
-      throw new Error(
-        `Job posting detail migration verification failed: ${column} column missing`
-      );
+  for (const model of models) {
+    if (!tableNames.has(model.name)) continue;
+    for (const index of model.indexes) {
+      if (indexNames.has(index.name)) continue;
+      const columns = index.columns.map((column) => `"${column}"`).join(", ");
+      try {
+        await client.execute(
+          `CREATE ${index.unique ? "UNIQUE " : ""}INDEX IF NOT EXISTS "${index.name}" ON "${model.name}"(${columns})`
+        );
+        addedIndexes.push(index.name);
+      } catch (error) {
+        console.warn(
+          `Could not create index ${index.name}: ${error.message}`
+        );
+      }
+    }
+  }
+
+  if (addedColumns.length > 0) {
+    console.log(
+      `Schema reconciliation added ${addedColumns.length} column(s): ${addedColumns.join(", ")}.`
+    );
+  }
+
+  if (addedIndexes.length > 0) {
+    console.log(
+      `Schema reconciliation added ${addedIndexes.length} index(es): ${addedIndexes.join(", ")}.`
+    );
+  }
+
+  if (addedColumns.length === 0 && addedIndexes.length === 0) {
+    console.log("Schema reconciliation: database already matches the schema.");
+  }
+
+  // Verification. Every column the application can query must now exist, so a
+  // deploy fails here with a readable message rather than part way through a
+  // page render in front of a user.
+  for (const model of models) {
+    const present = new Set(
+      (
+        await client.execute(`PRAGMA table_info('${model.name}')`)
+      ).rows.map((row) => row.name)
+    );
+    for (const column of model.columns) {
+      if (!present.has(column.name)) {
+        throw new Error(
+          `Schema verification failed: "${model.name}"."${column.name}" is missing after reconciliation`
+        );
+      }
     }
   }
 
