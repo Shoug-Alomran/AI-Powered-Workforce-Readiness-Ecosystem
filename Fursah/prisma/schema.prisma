@@ -273,6 +273,13 @@ model Job {
   educationLevel String?
   languages      String? // comma-separated, as the employer typed them
 
+  // Enforced: the student is told before applying and the application is
+  // refused without an attached document.
+  portfolioRequired Boolean @default(false)
+
+  // Shown to candidates as a statement of openness. Never an input to ranking.
+  recentGraduatesAccepted Boolean @default(false)
+
   status        String   @default("open") // open | closed
   blindReview   Boolean  @default(false)
   createdAt     DateTime @default(now())

@@ -231,11 +231,15 @@ try {
           indexes.push({ name: `${name}_${fieldName}_key`, columns: [fieldName], unique: true });
         }
 
+        // Balances one level of nesting so `@default(now())` reads as "now()"
+        // rather than "now(", which then shows up verbatim in an error message.
+        const defaultMatch = attributes.match(/@default\(((?:[^()]|\([^()]*\))*)\)/);
+
         columns.push({
           name: fieldName,
           type: enums.has(fieldType) ? "TEXT" : SQLITE_TYPE[fieldType],
           required: !isOptional,
-          hasDefault: attributes.includes("@default("),
+          default: defaultMatch ? defaultMatch[1].trim() : null,
           isId: /@id\b/.test(attributes),
         });
       }
@@ -244,6 +248,22 @@ try {
     }
 
     return models;
+  }
+
+  /**
+   * The SQL literal for a Prisma default, or null when it is computed.
+   *
+   * Only values SQLite can write into every existing row unaided qualify:
+   * booleans, numbers and quoted strings. `now()`, `cuid()`, `uuid()`,
+   * `autoincrement()` and `dbgenerated()` are refused by returning null.
+   */
+  function literalDefault(value) {
+    if (value === null || value === undefined) return null;
+    const text = String(value).trim();
+    if (text === "true" || text === "false") return text;
+    if (/^-?\d+(\.\d+)?$/.test(text)) return text;
+    if (/^"([^"\\]*)"$/.test(text)) return `'${text.slice(1, -1).replaceAll("'", "''")}'`;
+    return null;
   }
 
   const models = parseSchema(schema);
@@ -284,18 +304,29 @@ try {
       if (present.has(column.name)) continue;
 
       // A NOT NULL column added to a populated table needs a value for the
-      // rows already there. Prisma's defaults are frequently expressions
-      // (now(), cuid()) that SQLite cannot use in a DEFAULT clause, so this
-      // stops rather than inventing one.
+      // rows already there. A literal default supplies one; an expression
+      // default (now(), cuid(), autoincrement(), dbgenerated()) does not,
+      // because SQLite cannot evaluate it in a DEFAULT clause. The first is
+      // safe to add here, the second needs a migration that decides what the
+      // existing rows should say.
+      let clause = `"${column.name}" ${column.type}`;
+
       if (column.required) {
-        unreconcilable.push(
-          `"${model.name}"."${column.name}" is required; adding it to existing rows needs a migration that decides their value`
-        );
-        continue;
+        const literal = literalDefault(column.default);
+        if (literal === null) {
+          unreconcilable.push(
+            `"${model.name}"."${column.name}" is required with ${column.default ? `a computed default (${column.default})` : "no default"}; adding it to existing rows needs a migration that decides their value`
+          );
+          continue;
+        }
+        clause += ` NOT NULL DEFAULT ${literal}`;
+      } else if (column.default !== null) {
+        const literal = literalDefault(column.default);
+        if (literal !== null) clause += ` DEFAULT ${literal}`;
       }
 
       await client.execute(
-        `ALTER TABLE "${model.name}" ADD COLUMN "${column.name}" ${column.type}`
+        `ALTER TABLE "${model.name}" ADD COLUMN ${clause}`
       );
       addedColumns.push(`${model.name}.${column.name}`);
     }

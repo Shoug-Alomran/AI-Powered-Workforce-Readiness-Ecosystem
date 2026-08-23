@@ -88,10 +88,46 @@ async function main() {
   const documents = await prisma.evidenceDocument.findMany();
   const contextsInUse = [...new Set(documents.map(document => document.contextType))];
 
+  /*
+   * Two different lists were being treated as one. EXPECTED_CONTEXTS is the set
+   * of contexts the AI Worker has an extraction schema for; it is not the set of
+   * contexts a document may be stored against. A file attached to a job
+   * application is stored, reviewable and access-controlled like any other, and
+   * is deliberately never sent for extraction - `storeEvidenceDocuments` marks
+   * it NOT_APPLICABLE precisely because no schema describes a CV.
+   *
+   * The check now asserts the property that actually matters: a context either
+   * has an extraction schema, or is a known non-analysed context and carries no
+   * extraction at all.
+   */
+  const NON_ANALYSED_CONTEXTS = ["APPLICATION", "PROFILE_IMAGE"];
+
+  const unknownContexts = contextsInUse.filter(
+    context =>
+      !(EXPECTED_CONTEXTS as string[]).includes(context) &&
+      !NON_ANALYSED_CONTEXTS.includes(context),
+  );
+
   check(
-    "every stored contextType is one of the six",
-    contextsInUse.every(context => (EXPECTED_CONTEXTS as string[]).includes(context)),
-    contextsInUse.length ? contextsInUse.join(", ") : "no documents stored yet",
+    "every stored contextType is analysed or a known non-analysed context",
+    unknownContexts.length === 0,
+    contextsInUse.length
+      ? `${contextsInUse.join(", ")}${unknownContexts.length ? ` — unknown: ${unknownContexts.join(", ")}` : ""}`
+      : "no documents stored yet",
+  );
+
+  const wronglyAnalysed = documents.filter(
+    document =>
+      NON_ANALYSED_CONTEXTS.includes(document.contextType) &&
+      (document.aiStatus !== "NOT_APPLICABLE" || document.aiAnalysis !== null),
+  );
+
+  check(
+    "non-analysed contexts carry no extraction",
+    wronglyAnalysed.length === 0,
+    wronglyAnalysed.length
+      ? wronglyAnalysed.map(document => `${document.contextType}:${document.aiStatus}`).join(", ")
+      : `${documents.filter(d => NON_ANALYSED_CONTEXTS.includes(d.contextType)).length} document(s) correctly marked NOT_APPLICABLE`,
   );
 
   const analysed = documents.filter(document => document.aiStatus === "COMPLETED");

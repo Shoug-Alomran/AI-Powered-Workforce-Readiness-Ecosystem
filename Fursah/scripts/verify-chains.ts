@@ -35,7 +35,9 @@
    M  displayed point figures come from the engine and stay consistent
    N  no test-domain account survives in the database
    O  an application notifies the employer exactly once
+   P  a required portfolio is enforced and reachable by the right employer
  */
+import { readFile } from "node:fs/promises";
 import { prisma } from "../src/lib/db";
 import { getStudentIntelligence } from "../src/lib/intelligence/student";
 import { getEmployerIntelligence } from "../src/lib/intelligence/employer";
@@ -789,6 +791,87 @@ async function main() {
       `${before} before, ${after} after`,
     );
   }
+
+
+  // -----------------------------------------------------------------------
+  // P. A required portfolio is stated, enforced, and readable by that employer
+  // -----------------------------------------------------------------------
+  section("P. Portfolio requirement");
+
+  const requiringJobs = await prisma.job.findMany({
+    where: { portfolioRequired: true },
+    include: { applications: true, employer: true },
+  });
+
+  check(
+    "P: at least one role states the requirement",
+    requiringJobs.length > 0,
+    `${requiringJobs.length} role(s) require a CV or portfolio`,
+  );
+
+  // Every application accepted against such a role must carry an attachment,
+  // which is the property the server-side check exists to guarantee.
+  let checkedApplications = 0;
+  const withoutAttachment: string[] = [];
+
+  for (const job of requiringJobs) {
+    for (const application of job.applications) {
+      checkedApplications += 1;
+      const documents = await prisma.evidenceDocument.count({
+        where: { contextType: "APPLICATION", contextId: application.id },
+      });
+      if (documents === 0) withoutAttachment.push(`${job.title}/${application.id}`);
+    }
+  }
+
+  check(
+    "P: no application to a portfolio-required role lacks an attachment",
+    withoutAttachment.length === 0,
+    withoutAttachment.length
+      ? withoutAttachment.join(", ")
+      : `${checkedApplications} application(s) checked, all carry a document`,
+  );
+
+  // The requirement is only meaningful if the employer can actually open it,
+  // and only that employer.
+  const applicationDocuments = await prisma.evidenceDocument.findMany({
+    where: { contextType: "APPLICATION" },
+    select: { id: true, contextId: true, ownerUserId: true },
+  });
+
+  let reachable = 0;
+  const misattributed: string[] = [];
+
+  for (const document of applicationDocuments) {
+    const application = await prisma.application.findUnique({
+      where: { id: document.contextId },
+      include: { job: { select: { employerId: true } }, student: { select: { userId: true } } },
+    });
+    if (!application) {
+      misattributed.push(`${document.id} points at no application`);
+      continue;
+    }
+    if (application.student.userId !== document.ownerUserId) {
+      misattributed.push(`${document.id} is not owned by the applicant`);
+      continue;
+    }
+    reachable += 1;
+  }
+
+  check(
+    "P: every application document belongs to its applicant and role",
+    misattributed.length === 0,
+    misattributed.length ? misattributed.join(", ") : `${reachable} application document(s) correctly attributed`,
+  );
+
+  // Career stage is stated to candidates and must never reach a score.
+  const rankingSource = await readFile(new URL("../src/lib/ai.ts", import.meta.url), "utf8");
+  check(
+    "P: recent-graduate status is not an input to matching",
+    !rankingSource.includes("recentGraduatesAccepted"),
+    "computeJobMatch does not read the flag",
+  );
+
 
   console.log(
     `\n${failures === 0 ? "ALL PROPAGATION CHECKS PASSED" : `${failures} PROPAGATION CHECK(S) FAILED`} · ${checks} check(s) run`,

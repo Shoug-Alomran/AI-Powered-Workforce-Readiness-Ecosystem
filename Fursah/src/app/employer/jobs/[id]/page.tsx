@@ -126,7 +126,17 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
             </p>
             <strong style={{ display: "block", marginTop: 10 }}>Stated requirements not used in ranking</strong>
             <p className="muted">
-              {[job.educationLevel, job.languages].filter(Boolean).join(" · ") || "No education level or language requirement stated"}
+              {[
+                job.educationLevel,
+                job.languages,
+                job.recentGraduatesAccepted ? "Recent graduates welcome" : null,
+              ].filter(Boolean).join(" · ") || "No education level or language requirement stated"}
+            </p>
+            <strong style={{ display: "block", marginTop: 10 }}>Application requirement</strong>
+            <p className="muted">
+              {job.portfolioRequired
+                ? "Candidates must attach a CV, portfolio or work sample. They are told before applying and cannot submit without one."
+                : "No attachment required to apply."}
             </p>
           </div>
         </div>
@@ -190,6 +200,24 @@ export default async function EmployerJobDetail({ params }: { params: Promise<{ 
             <input className="input" name="certifications" defaultValue={job.requiredCerts.map((c) => c.certification.name).join(", ")} placeholder="Comma separated" />
           </label>
           <label className="wide">Description<textarea className="input" name="description" defaultValue={job.description ?? ""} /></label>
+          <label className="wide" style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+            <input type="checkbox" name="portfolioRequired" defaultChecked={job.portfolioRequired} />
+            <span>
+              <strong>Portfolio required</strong>
+              <small className="muted" style={{ display: "block" }}>
+                Candidates must attach a CV, portfolio or work sample to apply.
+              </small>
+            </span>
+          </label>
+          <label className="wide" style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+            <input type="checkbox" name="recentGraduatesAccepted" defaultChecked={job.recentGraduatesAccepted} />
+            <span>
+              <strong>Recent graduates accepted</strong>
+              <small className="muted" style={{ display: "block" }}>
+                Shown on the role. It does not affect how candidates are ranked.
+              </small>
+            </span>
+          </label>
           <div className="actions" style={{ margin: 0 }}>
             <button className="button primary">Save requirements</button>
           </div>

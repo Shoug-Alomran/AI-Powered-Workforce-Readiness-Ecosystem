@@ -227,6 +227,31 @@ export async function applyToJob(formData: FormData) {
     }),
   ]);
 
+  const attachments = formData
+    .getAll("documents")
+    .filter((entry): entry is File => entry instanceof File && entry.size > 0);
+
+  /*
+   * A role can require a CV or portfolio. The requirement is stated on the
+   * opportunity and the upload control is marked required, so this is the
+   * backstop rather than the first the student hears of it: a form can be
+   * submitted without the browser's own check.
+   *
+   * It is checked before the application row is written, so a refused
+   * application leaves nothing behind. Re-applying to attach a document to an
+   * existing application is allowed through unchanged, because the requirement
+   * was already satisfied when that application was accepted.
+   */
+  if (job.portfolioRequired && attachments.length === 0) {
+    const already = await prisma.application.findUnique({
+      where: { studentId_jobId: { studentId: student.id, jobId } },
+      select: { id: true },
+    });
+    if (!already) {
+      redirect(`/student/jobs?job=${jobId}&apply=portfolio-required`);
+    }
+  }
+
   const match = computeJobMatch(studentFull, job);
 
   // Read before the upsert so a re-application can be told apart from a first
@@ -241,8 +266,23 @@ export async function applyToJob(formData: FormData) {
     update: { matchScore: match.score },
     create: { studentId: student.id, jobId, matchScore: match.score },
   });
-  const files=formData.getAll("documents");
-  if(files.some(file=>file instanceof File&&file.size>0)) await storeEvidenceDocuments({files,ownerUserId:student.userId,contextType:"APPLICATION",contextId:application.id,purpose:"Job application supporting document"});
+  if (attachments.length > 0) {
+    try {
+      await storeEvidenceDocuments({
+        files: attachments,
+        ownerUserId: student.userId,
+        contextType: "APPLICATION",
+        contextId: application.id,
+        purpose: "Job application supporting document",
+      });
+    } catch (error) {
+      // The application itself is already recorded. Storage failing is not the
+      // student's mistake and must not be reported to them as a missing
+      // attachment, so it is surfaced as what it is.
+      console.error("Application document storage failed", error);
+      redirect(`/student/jobs?job=${jobId}&apply=upload-failed`);
+    }
+  }
 
   // The employer had no way to learn an application had arrived: their portal
   // shows a candidate list, but nothing told them to go and look at it.

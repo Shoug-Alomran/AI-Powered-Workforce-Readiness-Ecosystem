@@ -16,7 +16,7 @@ import DocumentUpload from "@/components/DocumentUpload";
 export default function Jobs({
   searchParams,
 }: {
-  searchParams: Promise<{ track?: string; q?: string; job?: string; sort?: string; application?: string }>;
+  searchParams: Promise<{ track?: string; q?: string; job?: string; sort?: string; application?: string; apply?: string }>;
 }) {
   return (
     <Suspense fallback={<RouteSkeleton />}>
@@ -28,12 +28,12 @@ export default function Jobs({
 async function JobsContent({
   searchParams,
 }: {
-  searchParams: Promise<{ track?: string; q?: string; job?: string; sort?: string; application?: string }>;
+  searchParams: Promise<{ track?: string; q?: string; job?: string; sort?: string; application?: string; apply?: string }>;
 }) {
   const ctx = await getCurrentStudent();
   if (!ctx) redirect("/login");
 
-  const { track: trackFilter = "", q = "", job: selectedJobId = "", sort = "recommended", application = "available" } = await searchParams;
+  const { track: trackFilter = "", q = "", job: selectedJobId = "", sort = "recommended", application = "available", apply = "" } = await searchParams;
   const applicationView = application === "submitted" ? "submitted" : "available";
 
   const where: Prisma.JobWhereInput = {
@@ -129,6 +129,16 @@ async function JobsContent({
       <span className="eyebrow">Explainable matching</span>
       <h1 className="page-title">Opportunities matched to you</h1>
       <p className="muted student-jobs-intro">Explore open roles, compare your strongest matches, and review the requirements you can still develop.</p>
+      {apply === "portfolio-required" && (
+        <div className="auth-error student-upload-error">
+          That role requires a CV, portfolio or work sample. Attach one to the application below and submit again. Nothing was sent.
+        </div>
+      )}
+      {apply === "upload-failed" && (
+        <div className="auth-error student-upload-error">
+          Your application was recorded, but the attachment could not be stored. Open the role and attach the file again.
+        </div>
+      )}
       <p className="muted" style={{ fontSize: 13 }}>
         Your match scores include {verifiedCertificationCount} human-verified certification{verifiedCertificationCount === 1 ? "" : "s"}.
         {unverifiedCertificationCount > 0
@@ -187,7 +197,7 @@ async function JobsContent({
           const remainingRequirements = [...m.missingSkills, ...m.missingCerts, m.experienceGapMonths ? `${m.experienceGapMonths} additional month${m.experienceGapMonths === 1 ? "" : "s"} of relevant experience` : ""].filter(Boolean);
           return (
             <article className="card student-job-card" key={job.id}>
-              <header className="student-job-card-header"><div><span className={`student-job-match ${matchLevel}`}>{m.score}% match</span><h2>{job.title}</h2><p><strong>{job.employer.company}</strong><span>{experienceLabel(job.minExperience)}</span></p></div><span className={`student-job-status${applied ? " is-submitted" : ""}`}>{applicationRecord ? ({ applied: "Submitted", shortlisted: "Shortlisted", hired: "Offer received", rejected: "Not selected" }[applicationRecord.status] ?? "Submitted") : saved ? "Saved" : "Open"}</span></header>
+              <header className="student-job-card-header"><div><span className={`student-job-match ${matchLevel}`}>{m.score}% match</span><h2>{job.title}</h2><p><strong>{job.employer.company}</strong><span>{experienceLabel(job.minExperience)}</span>{job.portfolioRequired && <span className="student-job-flag">CV or portfolio required</span>}{job.recentGraduatesAccepted && <span className="student-job-flag is-welcome">Recent graduates welcome</span>}</p></div><span className={`student-job-status${applied ? " is-submitted" : ""}`}>{applicationRecord ? ({ applied: "Submitted", shortlisted: "Shortlisted", hired: "Offer received", rejected: "Not selected" }[applicationRecord.status] ?? "Submitted") : saved ? "Saved" : "Open"}</span></header>
               <section className="student-job-about"><h3>About this opportunity</h3><p className="student-job-description">{job.description}</p></section>
               <div className="grid-2 student-job-match-grid">
                 <div>
@@ -266,7 +276,16 @@ async function JobsContent({
               <footer className={`student-job-card-footer${applied ? " student-application-footer" : ""}`}>
                 {applicationRecord ? <div className="student-application-summary"><span>Application status</span><strong>{({ applied: "Submitted", shortlisted: "Shortlisted", hired: "Offer received", rejected: "Not selected" }[applicationRecord.status] ?? "Submitted")}</strong><small>Submitted {applicationRecord.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</small></div> : <form action={applyToJob} className="student-job-apply-form">
                   <input type="hidden" name="jobId" value={job.id} />
-                  <DocumentUpload label="Application documents" compact/>
+                  {job.portfolioRequired && (
+                    <p className="student-job-required-note">
+                      This employer requires a CV, portfolio or work sample. Attach one below to apply.
+                    </p>
+                  )}
+                  <DocumentUpload
+                    label={job.portfolioRequired ? "CV or portfolio (required)" : "Application documents"}
+                    required={job.portfolioRequired}
+                    compact
+                  />
                   <button className="button primary student-job-apply-button">Apply now</button>
                 </form>}
                 <form action={toggleBookmark} className="student-job-save-form">

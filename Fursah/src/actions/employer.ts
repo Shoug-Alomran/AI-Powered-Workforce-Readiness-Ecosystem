@@ -36,6 +36,8 @@ export async function createJob(formData: FormData) {
   // candidate ranking, which reads structured evidence only.
   const educationLevel = String(formData.get("educationLevel") ?? "").trim();
   const languages = String(formData.get("languages") ?? "").trim();
+  const portfolioRequired = formData.get("portfolioRequired") === "on";
+  const recentGraduatesAccepted = formData.get("recentGraduatesAccepted") === "on";
 
   if (!title || !careerTrack) throw new Error("Title and career track are required");
 
@@ -48,6 +50,8 @@ export async function createJob(formData: FormData) {
       arrangement: arrangement || null,
       educationLevel: educationLevel || null,
       languages: languages || null,
+      portfolioRequired,
+      recentGraduatesAccepted,
     },
   });
 
@@ -126,6 +130,8 @@ export async function updateJob(formData: FormData) {
   const arrangement = String(formData.get("arrangement") ?? "").trim();
   const educationLevel = String(formData.get("educationLevel") ?? "").trim();
   const languages = String(formData.get("languages") ?? "").trim();
+  const portfolioRequired = formData.get("portfolioRequired") === "on";
+  const recentGraduatesAccepted = formData.get("recentGraduatesAccepted") === "on";
   if (!title || !careerTrack) throw new Error("Title and career track are required");
 
   await prisma.job.update({
@@ -138,6 +144,8 @@ export async function updateJob(formData: FormData) {
       arrangement: arrangement || null,
       educationLevel: educationLevel || null,
       languages: languages || null,
+      portfolioRequired,
+      recentGraduatesAccepted,
     },
   });
 
