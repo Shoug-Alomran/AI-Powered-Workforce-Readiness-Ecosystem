@@ -185,6 +185,16 @@ export interface JobForMatching {
   requiredCerts: { certification: { name: string } }[];
 }
 
+/**
+ * Identifies the engine behind a candidate match. The employer-facing
+ * explanation card previously footed every score with "fursah-readiness-v2",
+ * which is a different model entirely — that score is a student's own career
+ * readiness, not their fit against one employer's published requirements.
+ * Naming the wrong model on the surface whose purpose is provenance is worse
+ * than naming none.
+ */
+export const JOB_MATCH_MODEL_VERSION = "job-match-v1";
+
 export interface JobMatchResult {
   score: number; // 0-100
   matchedSkills: string[];
@@ -193,6 +203,16 @@ export interface JobMatchResult {
   missingCerts: string[];
   experienceGapMonths: number;
   explanation: string;
+  /**
+   * Recorded proficiency for each matched skill, in the order they were
+   * matched. Two candidates can both cover every required skill and still
+   * score very differently, because the score weights how strong each skill
+   * is. Without this the explanation for a 40% and a 29% candidate came out
+   * word for word identical, which is not an explanation.
+   */
+  matchedSkillLevels: Array<{ name: string; level: number }>;
+  /** The weighted parts behind `score`, so the number can be taken apart. */
+  components: Array<{ label: string; score: number; weight: number; applicable: boolean }>;
 }
 
 export function computeJobMatch(
@@ -212,6 +232,7 @@ export function computeJobMatch(
     .reduce((s, e) => s + e.months, 0);
 
   const matchedSkills: string[] = [];
+  const matchedSkillLevels: Array<{ name: string; level: number }> = [];
   const missingSkills: string[] = [];
   let essentialEarned = 0;
   let preferredEarned = 0;
@@ -223,6 +244,7 @@ export function computeJobMatch(
     const level = haveSkillMap.get(r.skill.name.toLowerCase());
     if (level) {
       matchedSkills.push(r.skill.name);
+      matchedSkillLevels.push({ name: r.skill.name, level });
       if (r.requirementType === "PREFERRED") preferredEarned += r.weight * Math.min(level / 5, 1);
       else essentialEarned += r.weight * Math.min(level / 5, 1);
     } else {
@@ -270,9 +292,11 @@ export function computeJobMatch(
   );
 
   const parts: string[] = [];
+  // Naming the recorded level next to each skill is what separates two
+  // candidates who cover the same requirements at different strengths.
   parts.push(
     matchedSkills.length
-      ? `Matches ${matchedSkills.length}/${job.requiredSkills.length} required skills (${matchedSkills.join(", ")}).`
+      ? `Matches ${matchedSkills.length}/${job.requiredSkills.length} required skills (${matchedSkillLevels.map((entry) => `${entry.name} ${entry.level}/5`).join(", ")}).`
       : `Matches none of the ${job.requiredSkills.length} required skills yet.`
   );
   if (missingSkills.length) parts.push(`Missing: ${missingSkills.join(", ")}.`);
@@ -286,6 +310,15 @@ export function computeJobMatch(
   if (experienceGapMonths > 0) {
     parts.push(`Needs ${experienceGapMonths} more month(s) of relevant experience.`);
   }
+  // Say which part held the score back, so the number and the words agree.
+  const weakest = [
+    { label: "skill proficiency", value: skillScore, applicable: true },
+    { label: "required certifications", value: certScore, applicable: certRequired },
+    { label: "recorded experience", value: expScore, applicable: job.minExperience > 0 },
+  ].filter((part) => part.applicable).sort((a, b) => a.value - b.value)[0];
+  if (weakest && weakest.value < 100) {
+    parts.push(`Lowest scoring component is ${weakest.label} at ${Math.round(weakest.value)}%.`);
+  }
 
   return {
     score: Math.max(0, Math.min(100, overall)),
@@ -295,6 +328,12 @@ export function computeJobMatch(
     missingCerts,
     experienceGapMonths,
     explanation: parts.join(" "),
+    matchedSkillLevels,
+    components: [
+      { label: "Skills", score: Math.round(skillScore), weight: 0.55, applicable: true },
+      { label: "Certifications", score: Math.round(certScore), weight: 0.25, applicable: certRequired },
+      { label: "Experience", score: Math.round(expScore), weight: 0.2, applicable: true },
+    ],
   };
 }
 

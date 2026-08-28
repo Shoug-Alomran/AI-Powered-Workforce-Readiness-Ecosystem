@@ -2,13 +2,13 @@ import "server-only";
 
 import { prisma } from "@/lib/db";
 import { computeJobMatch } from "@/lib/ai";
-import { clamp, hiringDifficultyFromPool, percentage, round, weightedAverage } from "./scoring";
+import { clamp, hiringDifficultyFromPool, percentage, round } from "./scoring";
 import { getMarketIntelligence } from "./market";
+import { evaluateJobQuality } from "./jobQuality";
 import type {
     CandidateFit,
     EmployerIntelligenceResult,
     EmployerJobIntelligence,
-    JobQualityResult,
     RecurringSkillGap,
     SkillDemand,
 } from "./types";
@@ -21,94 +21,6 @@ const POOL_THRESHOLD = 60;
 /** A candidate at or above this match is treated as a strong fit. */
 const STRONG_THRESHOLD = 80;
 
-function evaluateJobQuality(job: {
-    id: string;
-    title: string;
-    careerTrack: string;
-    description: string | null;
-    minExperience: number;
-    requiredSkills: Array<{ weight: number; requirementType: string }>;
-    requiredCerts: Array<{ certificationId: string }>;
-}): JobQualityResult {
-    const issues: string[] = [];
-    const strengths: string[] = [];
-
-    let completeness = 0;
-
-    if (job.title.trim()) completeness += 20;
-    if (job.careerTrack.trim()) completeness += 20;
-
-    if (job.description && job.description.trim().length >= 80) {
-        completeness += 30;
-        strengths.push("The job includes a substantive description.");
-    } else {
-        issues.push("Add a more detailed job description.");
-    }
-
-    if (job.requiredSkills.length > 0) {
-        completeness += 30;
-        strengths.push("The job has structured skill requirements.");
-    } else {
-        issues.push("No structured skill requirements are attached.");
-    }
-
-    const hasEssential = job.requiredSkills.some((skill) => skill.requirementType === "ESSENTIAL");
-    const hasPreferred = job.requiredSkills.some((skill) => skill.requirementType === "PREFERRED");
-
-    let requirementQuality = 50;
-
-    if (hasEssential) {
-        requirementQuality += 25;
-    } else if (job.requiredSkills.length > 0) {
-        issues.push("Consider distinguishing essential requirements.");
-    }
-
-    if (hasPreferred) requirementQuality += 15;
-
-    if (job.requiredSkills.length <= 12) {
-        requirementQuality += 10;
-    } else {
-        issues.push(
-            "The job contains a large number of skill requirements; review whether every requirement is necessary."
-        );
-    }
-
-    requirementQuality = clamp(requirementQuality);
-
-    let marketRealism = 100;
-
-    if (job.minExperience > 60) {
-        marketRealism -= 20;
-        issues.push(
-            "The minimum experience requirement is relatively high and may reduce the available candidate pool."
-        );
-    }
-
-    if (job.requiredSkills.filter((skill) => skill.requirementType === "ESSENTIAL").length > 8) {
-        marketRealism -= 20;
-        issues.push("A high number of essential skills may make this role difficult to fill.");
-    }
-
-    marketRealism = clamp(marketRealism);
-
-    const score = Math.round(
-        weightedAverage([
-            { value: completeness, weight: 0.4 },
-            { value: requirementQuality, weight: 0.35 },
-            { value: marketRealism, weight: 0.25 },
-        ])
-    );
-
-    return {
-        jobId: job.id,
-        score,
-        completenessScore: completeness,
-        requirementQualityScore: requirementQuality,
-        marketRealismScore: marketRealism,
-        issues,
-        strengths,
-    };
-}
 
 /**
  * Deliberately spelled out rather than intersected with `StudentForScoring`:

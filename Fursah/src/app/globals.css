@@ -1761,6 +1761,21 @@ body:has(.student-template-sidebar) .student-portal{margin-left:256px;min-height
 @media(max-width:680px){.admin-page-content .toc{top:70px}:root:has(.admin-page-menu) .admin-page-content .toc{top:128px}}
 .scenario-title-link{display:block;color:var(--color-primary);font-size:var(--type-md);font-weight:700;text-decoration:none;overflow-wrap:anywhere}
 .scenario-title-link:hover,.scenario-title-link:focus-visible{color:var(--color-accent);text-decoration:underline}
+/* Per-candidate ranking breakdown. The single reasoning card below the list
+   only ever explained the top candidate; everyone else was ranked with no
+   stated reason. Each row now carries its own component breakdown. */
+.erd-why{margin-top:10px}
+.erd-why>summary{width:fit-content;padding:4px 10px;border:1px solid #d9e2ed;border-radius:999px;color:#075bd8;font-size:.72rem;font-weight:800;font-style:normal;cursor:pointer;list-style:none}
+.erd-why>summary::-webkit-details-marker{display:none}
+.erd-why>summary::before{content:"+ ";font-weight:900}
+.erd-why[open]>summary::before{content:"− "}
+.erd-why>summary:hover{background:#eff6ff}
+.erd-why>ul{margin:10px 0 0;padding:0;list-style:none;display:grid;gap:6px}
+.erd-why>ul>li{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:baseline;gap:4px 10px;font-style:normal}
+.erd-why>ul>li>span{color:#142033;font-size:.8rem;font-weight:700}
+.erd-why>ul>li>b{color:#075bd8;font-size:.8rem}
+.erd-why>ul>li>small{grid-column:1/-1;color:#7c8ba0;font-size:.68rem}
+.erd-why>p{margin:10px 0 0;color:#7c8ba0;font-size:.7rem;font-style:normal;line-height:1.5}
 /* Support queue. Severity and urgency are shown side by side and never merged
    into one number, because they answer different questions and a queue sorted
    on either alone puts the wrong ticket first. */

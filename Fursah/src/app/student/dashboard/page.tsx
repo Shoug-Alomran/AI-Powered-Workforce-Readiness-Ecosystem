@@ -233,7 +233,7 @@ export default async function StudentDashboard() {
             <b>✦</b>
 
             <p>
-              <strong>AI Insight:</strong> {aiInsight}
+              <strong>Fursah Insight:</strong> {aiInsight}
             </p>
           </div>
         </div>

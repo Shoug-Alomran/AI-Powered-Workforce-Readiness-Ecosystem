@@ -79,7 +79,7 @@ export default async function RoadmapPage() {
           <span className="eyebrow">✦ ADAPTIVE LEARNING PLAN</span>
           <h1>Your Living Roadmap</h1>
           <p>
-            <strong>AI Insight:</strong>{" "}
+            <strong>Fursah Insight:</strong>{" "}
             {openItems[0]?.recommendationReason ??
               pendingRecommendations[0]?.reason ??
               `Your recorded evidence currently meets the ${trackLabel} requirements Fursah can measure. Keep adding verified evidence as your experience grows.`}

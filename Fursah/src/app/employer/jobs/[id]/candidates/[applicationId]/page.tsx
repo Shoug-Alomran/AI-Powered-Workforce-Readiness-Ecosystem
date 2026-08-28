@@ -83,7 +83,7 @@ export default async function CandidateProfile({
         <div className="card"><span className="muted">Bio</span><p className="muted" style={{ margin: 0 }}>{s.bio || "No bio provided."}</p></div>
       </div>
 
-      <section className="card" style={{ marginTop: 18 }}>
+      <section className="card" id="explainable-match" style={{ marginTop: 18, scrollMarginTop: 90 }}>
         <span className="eyebrow">Explainable match</span>
         <h2>Why this score</h2>
         <div className="grid-2">
@@ -130,7 +130,7 @@ export default async function CandidateProfile({
         </p>
       </section>
 
-      <section className="card" style={{ marginTop: 18 }}>
+      <section className="card" id="supporting-evidence" style={{ marginTop: 18, scrollMarginTop: 90 }}>
         <span className="eyebrow">Private application documents</span>
         <h2>Supporting evidence</h2>
         <p className="muted">Files are private to this applicant, your organization, and authorized reviewers.</p>
@@ -148,7 +148,7 @@ export default async function CandidateProfile({
         )) : <div className="notice">The applicant did not attach supporting documents.</div>}
       </section>
 
-      <section className="card" style={{ marginTop: 18 }}>
+      <section className="card" id="full-profile" style={{ marginTop: 18, scrollMarginTop: 90 }}>
         <span className="eyebrow">AI Skills Passport</span>
         <h2>Full profile</h2>
         <div className="grid-2">
@@ -175,7 +175,7 @@ export default async function CandidateProfile({
         </div>
       </section>
 
-      {application.status !== "hired" && <section className="card" style={{ marginTop: 18 }}>
+      {application.status !== "hired" && <section className="card" id="update-status" style={{ marginTop: 18, scrollMarginTop: 90 }}>
         <span className="eyebrow">Decision</span>
         <h2>Update status</h2>
         <form action={updateApplicationStatus} className="form-grid">

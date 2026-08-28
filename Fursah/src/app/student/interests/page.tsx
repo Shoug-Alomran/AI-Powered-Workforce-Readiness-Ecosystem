@@ -64,6 +64,20 @@ export default async function StudentInterests({
   const favoriteEmployers = employers.filter((e) => favoriteEmployerIds.has(e.id));
   const hasPrimaryCareer = student.targetCareer !== "undecided" && trackById.has(student.targetCareer);
   const primaryTrack = hasPrimaryCareer ? trackById.get(student.targetCareer) : undefined;
+
+  /*
+   * This callout used to read "Following relevant tracks and employers improves
+   * your personalized job, course, and certification recommendations" for every
+   * student, on every visit, regardless of what they had followed. A fixed
+   * sentence labelled as an insight is not an insight; it is a caption. It now
+   * reports this student's own interest state, which the page has already
+   * computed, and says what would change next.
+   */
+  const interestsInsight = directionSuggestion.shouldSuggestChange && directionSuggestion.suggestedCareer
+    ? `Your activity currently aligns more strongly with ${directionSuggestion.suggestedCareer.careerTrackLabel} than ${primaryTrack?.label ?? student.targetCareer}. Fursah only ever offers this as an alternative; your target career changes when you change it.`
+    : favoriteTracks.length === 0 && favoriteEmployers.length === 0
+      ? `You are not following any career track or company yet. Following even one tells Fursah which roles, courses and certifications to put in front of you.`
+      : `You follow ${favoriteTracks.length} career track${favoriteTracks.length === 1 ? "" : "s"} and ${favoriteEmployers.length} compan${favoriteEmployers.length === 1 ? "y" : "ies"}. Fursah uses those, alongside your verified evidence, to choose which opportunities and offerings to surface.`;
   const primaryReadiness = primaryTrack ? computeReadinessScore(student, primaryTrack) : null;
 
   const trackCategories = [...new Set(tracks.map((track) => careerCategoryFor(track.label)))].sort();
@@ -91,7 +105,7 @@ export default async function StudentInterests({
 
   return (
     <main className="page-shell student-career-interests">
-      <section className="student-design-hero student-interests-hero"><div className="student-hero-copy"><span className="eyebrow">CAREER INTERESTS</span><h1>Career Interests</h1><p>Intelligent discovery and workforce alignment based on your verified profile.</p><div className="student-interest-stats"><span><small>TARGET CAREER</small><b>{primaryTrack?.label ?? "Choose a career"}</b></span><span><small>FOLLOWING</small><b>{favoriteTracks.length} tracks</b></span><span><small>RECOMMENDED</small><b>{Math.max(0,tracks.length-favoriteTracks.length)} careers</b></span><span><small>COMPANIES</small><b>{favoriteEmployers.length} followed</b></span></div><div className="student-ai-callout"><b>✦</b><p><strong>AI Insight:</strong> Following relevant tracks and employers improves your personalized job, course, and certification recommendations.</p></div><div className="student-hero-actions"><a href="#career-tracks">Explore Career Tracks</a><a href="#companies">Explore Companies</a></div></div><aside className="student-score-card"><span>Readiness score</span><strong>{primaryReadiness?.score ?? 0}<small>%</small></strong><div className="bar"><i style={{width:`${primaryReadiness?.score ?? 0}%`}}/></div><p>{primaryReadiness ? readinessBand(primaryReadiness.score).label : "Complete your profile to begin"}</p></aside></section>
+      <section className="student-design-hero student-interests-hero"><div className="student-hero-copy"><span className="eyebrow">CAREER INTERESTS</span><h1>Career Interests</h1><p>Intelligent discovery and workforce alignment based on your verified profile.</p><div className="student-interest-stats"><span><small>TARGET CAREER</small><b>{primaryTrack?.label ?? "Choose a career"}</b></span><span><small>FOLLOWING</small><b>{favoriteTracks.length} tracks</b></span><span><small>RECOMMENDED</small><b>{Math.max(0,tracks.length-favoriteTracks.length)} careers</b></span><span><small>COMPANIES</small><b>{favoriteEmployers.length} followed</b></span></div><div className="student-ai-callout"><b>✦</b><p><strong>Fursah Insight:</strong> {interestsInsight}</p></div><div className="student-hero-actions"><a href="#career-tracks">Explore Career Tracks</a><a href="#companies">Explore Companies</a></div></div><aside className="student-score-card"><span>Readiness score</span><strong>{primaryReadiness?.score ?? 0}<small>%</small></strong><div className="bar"><i style={{width:`${primaryReadiness?.score ?? 0}%`}}/></div><p>{primaryReadiness ? readinessBand(primaryReadiness.score).label : "Complete your profile to begin"}</p></aside></section>
 
       <PageToc
         items={[

@@ -169,7 +169,7 @@ export const student: Record<string, string> = {
   // Roadmap
   "✦ ADAPTIVE LEARNING PLAN": "✦ خطة تعلّم تكيّفية",
   "Your Living Roadmap": "خارطة طريقك الحيّة",
-  "AI Insight:": "قراءة الذكاء الاصطناعي:",
+  "Fursah Insight:": "قراءة فُرصة:",
   "Completing the next milestones can raise your readiness and unlock additional roles aligned with": "إكمال المحطات التالية يرفع جاهزيتك ويفتح وظائف إضافية متوائمة مع",
   "View Next Milestone →": "عرض المحطة التالية →",
   "Refresh Roadmap ↻": "تحديث خارطة الطريق ↻",
@@ -200,7 +200,7 @@ export const student: Record<string, string> = {
   "Beyond your primary target career, follow any track you're curious about.": "إلى جانب وظيفتك المستهدفة الأساسية، تابع أي مسار يثير اهتمامك.",
   "Follow a career track or a company below to get personalized matches and recommendations.": "تابع مساراً مهنياً أو جهة أدناه للحصول على مطابقات وتوصيات مخصصة.",
   "Follow a company to get matched against every role they post, not just the ones you happen to see.": "تابع جهة لتُطابَق مع كل وظيفة تنشرها، لا فقط ما تصادف رؤيته.",
-  "Following relevant tracks and employers improves your personalized job, course, and certification recommendations.": "متابعة المسارات والجهات ذات الصلة تحسّن توصياتك المخصصة للوظائف والدورات والشهادات.",
+  "You are not following any career track or company yet. Following even one tells Fursah which roles, courses and certifications to put in front of you.": "لا تتابع أي مسار مهني أو جهة عمل حتى الآن. متابعة واحدة فقط تُخبر فُرصة بالوظائف والدورات والشهادات التي ينبغي عرضها عليك.",
   "Computing & Information Technology": "الحوسبة وتقنية المعلومات",
   "Business & Finance": "الأعمال والمالية",
   "Health & Life Sciences": "الصحة وعلوم الحياة",
