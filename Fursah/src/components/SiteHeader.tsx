@@ -30,6 +30,8 @@ export default function SiteHeader({ onHome = false }: { onHome?: boolean }) {
       {anchors.map(([label, id]) => <a key={id} href={anchor(id)}>{label}</a>)}
       <Link href="/impact">Impact</Link>
       <Link href="/commercial-readiness">Pilot</Link>
+      {/* A static deck under public/, so a plain anchor rather than a Link. */}
+      <a href="/presentation.html">Presentation</a>
     </nav>
     <div>
       {/* min-height holds the row's height so the streamed-in links do not

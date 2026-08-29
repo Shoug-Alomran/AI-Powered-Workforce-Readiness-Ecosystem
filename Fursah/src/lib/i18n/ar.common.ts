@@ -32,6 +32,7 @@ export const common: Record<string, string> = {
   "Accessibility": "إمكانية الوصول",
   "AI Readiness Report (PDF)": "تقرير الجاهزية للذكاء الاصطناعي (PDF)",
   "Business Analysis (PDF)": "تحليل الأعمال (PDF)",
+  "Presentation": "العرض التقديمي",
   "Workforce Intelligence": "ذكاء سوق العمل",
   "Workforce feedback loop": "حلقة التغذية الراجعة لسوق العمل",
   "Riyadh, Saudi Arabia": "الرياض، المملكة العربية السعودية",
