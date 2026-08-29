@@ -7,3 +7,7 @@ node_modules/
 .next/
 *.tsbuildinfo
 .vercel
+
+# Local build, render, and inspection artifacts.
+/tmp/
+*.inspect.ndjson

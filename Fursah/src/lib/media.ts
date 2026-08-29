@@ -9,4 +9,21 @@
  * The value is read at build time and inlined, so an unset variable simply
  * removes the player from the page instead of rendering a broken one.
  */
-export const DEMO_VIDEO_URL = process.env.NEXT_PUBLIC_DEMO_VIDEO_URL?.trim() || "";
+const configuredDemoVideoUrl = process.env.NEXT_PUBLIC_DEMO_VIDEO_URL?.trim() || "";
+
+function resolveDemoVideoUrl(value: string) {
+  if (!value) return "";
+
+  try {
+    const url = new URL(value);
+    if (url.pathname === "/" || url.pathname === "") {
+      url.pathname = "/videos/fursah-demo.mp4";
+    }
+    return url.toString();
+  } catch {
+    return value;
+  }
+}
+
+export const DEMO_VIDEO_URL = resolveDemoVideoUrl(configuredDemoVideoUrl);
+export const DEMO_VIDEO_POSTER_URL = "/demo-video-poster.jpg";

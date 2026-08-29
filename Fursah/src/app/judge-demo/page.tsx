@@ -3,7 +3,7 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import { ITU_DIMENSIONS, POLICY_GAPS, Y3172_NODES } from "@/lib/standards";
 import { KNOWLEDGE_BASE } from "@/lib/knowledgeBase";
-import { DEMO_VIDEO_URL } from "@/lib/media";
+import { DEMO_VIDEO_POSTER_URL, DEMO_VIDEO_URL } from "@/lib/media";
 
 export const metadata: Metadata = {
   title: "Judge Demo | Fursah",
@@ -50,7 +50,7 @@ export default function JudgeDemoPage() {
           presses play. */}
       {DEMO_VIDEO_URL ? <section className="imp-section judge-video" id="demo-video">
         <header><span className="imp-kicker">Recorded walkthrough</span><h2>Watch the product before you open it</h2><p>The same proof chain described below, captured end to end in one take. Use it if you would rather review than click, then open the live prototype to verify any step yourself.</p></header>
-        <video controls preload="metadata" playsInline src={DEMO_VIDEO_URL}>
+        <video controls preload="metadata" playsInline poster={DEMO_VIDEO_POSTER_URL} src={DEMO_VIDEO_URL}>
           <a href={DEMO_VIDEO_URL}>Download the Fursah demo recording (MP4)</a>
         </video>
         <p className="judge-video-note">Hosted on Cloudflare R2. <a href={DEMO_VIDEO_URL} target="_blank" rel="noopener noreferrer">Open the MP4 directly</a> if your browser cannot play it inline.</p>
