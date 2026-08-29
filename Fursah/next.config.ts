@@ -28,6 +28,12 @@ const nextConfig: NextConfig = {
   // Bundling these packages can incorrectly select JOSE's ESM-only web build
   // in the Vercel Node runtime.
   serverExternalPackages: ["firebase-admin", "jwks-rsa", "jose", "@libsql/client", "@prisma/adapter-libsql"],
+  // The presentation deck is a self-contained static file in public/, so it is
+  // served at /presentation.html. This gives it the clean URL the header,
+  // footer and sitemap link to.
+  async rewrites() {
+    return [{ source: "/presentation", destination: "/presentation.html" }];
+  },
   turbopack: {
     // A stray package-lock.json in the parent home directory otherwise makes
     // Turbopack misdetect the workspace root.

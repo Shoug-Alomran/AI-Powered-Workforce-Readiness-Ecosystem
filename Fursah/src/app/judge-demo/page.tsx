@@ -3,6 +3,7 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import { ITU_DIMENSIONS, POLICY_GAPS, Y3172_NODES } from "@/lib/standards";
 import { KNOWLEDGE_BASE } from "@/lib/knowledgeBase";
+import { DEMO_VIDEO_URL } from "@/lib/media";
 
 export const metadata: Metadata = {
   title: "Judge Demo | Fursah",
@@ -35,13 +36,25 @@ export default function JudgeDemoPage() {
         <span className="imp-eyebrow">Official-criteria walkthrough</span>
         <h1 className="imp-title">Judge Fursah in three minutes.</h1>
         <p className="imp-lead">This page separates implemented proof from future claims and routes each published evaluation criterion to evidence a reviewer can inspect. Demo accounts use synthetic data; production deployment remains subject to the blocking hosting control documented in the DPIA.</p>
-        <div className="judge-actions"><Link href="/login/demo">Start live prototype</Link><Link href="/standards" className="secondary">Inspect conformance</Link><a href="/fursah-ai-readiness-hackathon-submission.pdf" target="_blank" rel="noopener noreferrer" className="secondary">Read final submission</a></div>
+        <div className="judge-actions"><Link href="/login/demo">Start live prototype</Link><Link href="/standards" className="secondary">Inspect conformance</Link><a href="/fursah-ai-readiness-hackathon-submission.pdf" target="_blank" rel="noopener noreferrer" className="secondary">Read final submission</a><a href="/presentation" className="secondary">Open the presentation</a>{DEMO_VIDEO_URL ? <a href="#demo-video" className="secondary">Watch the demo video</a> : null}</div>
         <div className="imp-strip">
           <article><b>{Y3172_NODES.length}/7</b><small>Y.3172 clause 8.1 nodes mapped</small></article>
           <article><b>{addressed}+{partial}</b><small>Dimensions addressed or partially addressed; one is explicitly out of scope</small></article>
           <article><b>{KNOWLEDGE_BASE.length}</b><small>Authentic, public, implementation-linked knowledge-base entries</small></article>
         </div>
       </section>
+
+      {/* The recording is a ~60 MB MP4 in the Cloudflare R2 bucket, so it is
+          streamed from there rather than bundled into the deployment.
+          `preload="metadata"` fetches only the header until a reviewer
+          presses play. */}
+      {DEMO_VIDEO_URL ? <section className="imp-section judge-video" id="demo-video">
+        <header><span className="imp-kicker">Recorded walkthrough</span><h2>Watch the product before you open it</h2><p>The same proof chain described below, captured end to end in one take. Use it if you would rather review than click, then open the live prototype to verify any step yourself.</p></header>
+        <video controls preload="metadata" playsInline src={DEMO_VIDEO_URL}>
+          <a href={DEMO_VIDEO_URL}>Download the Fursah demo recording (MP4)</a>
+        </video>
+        <p className="judge-video-note">Hosted on Cloudflare R2. <a href={DEMO_VIDEO_URL} target="_blank" rel="noopener noreferrer">Open the MP4 directly</a> if your browser cannot play it inline.</p>
+      </section> : null}
 
       <section className="imp-section">
         <header><span className="imp-kicker">The published rubric</span><h2>Four criteria, four evidence paths</h2><p>No generic innovation score is substituted for the event&apos;s actual evaluation criteria.</p></header>
