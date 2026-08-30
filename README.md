@@ -1,476 +1,291 @@
-# AI-Powered Workforce Readiness Ecosystem
+# Fursah — AI-Powered Workforce Readiness Ecosystem
 
-> Connecting students, employers, and universities through intelligent career pathways.
+> Connecting verified student evidence, employer demand, and university decision-making through transparent workforce-readiness intelligence.
 
-An **AI-powered workforce readiness ecosystem** designed to bridge the gap between education and employment by connecting **students, employers, and universities** within one intelligent platform.
+Fursah is a workforce-readiness platform built for the AI Readiness Hackathon. It connects **students, employers, universities, and administrators** in one governed ecosystem that turns verified evidence into readiness insights, explainable candidate-role matching, workforce intelligence, and actionable next steps.
 
-The ecosystem uses AI to build personalized career pathways, evaluate career readiness, identify skill gaps, match students with employment opportunities, and generate workforce insights that help educational institutions better align with evolving industry needs.
+The working prototype is in [`Fursah/`](Fursah/).
 
----
+## Live Prototype
+
+- **Platform:** https://fursah.org/
+- **Presentation:** https://fursah.org/presentation
+- **Standards conformance:** https://fursah.org/standards
+- **Knowledge base:** https://fursah.org/knowledge-base
+
+## Submission Documents and Presentation
+
+The final hackathon documents and presentation are stored in [`Fursah/public/`](Fursah/public/) so they are versioned with the application and are also served directly by the deployed site.
+
+| Asset | Repository location | Live location |
+|---|---|---|
+| AI Readiness Hackathon submission | [`Fursah/public/fursah-ai-readiness-hackathon-submission.pdf`](Fursah/public/fursah-ai-readiness-hackathon-submission.pdf) | https://fursah.org/fursah-ai-readiness-hackathon-submission.pdf |
+| Judge submission | [`Fursah/public/fursah-ai-readiness-judge-submission.pdf`](Fursah/public/fursah-ai-readiness-judge-submission.pdf) | https://fursah.org/fursah-ai-readiness-judge-submission.pdf |
+| Business analysis | [`Fursah/public/fursah-business-analysis.pdf`](Fursah/public/fursah-business-analysis.pdf) | https://fursah.org/fursah-business-analysis.pdf |
+| Judge handout | [`Fursah/public/fursah-judge-handout.pdf`](Fursah/public/fursah-judge-handout.pdf) | https://fursah.org/fursah-judge-handout.pdf |
+| Presentation | [`Fursah/public/presentation.html`](Fursah/public/presentation.html) | https://fursah.org/presentation |
+
+Additional governance documentation is stored in [`docs/`](docs/), including the project Data Protection Impact Assessment at [`docs/DPIA.md`](docs/DPIA.md).
 
 ## The Problem
 
-A critical disconnect exists between **education, skills development, and employment**.
+Education, skills development, hiring, and curriculum planning are often disconnected.
 
-### Students
-Students often struggle to determine which courses, certifications, internships, projects, and extracurricular activities will genuinely prepare them for their desired careers.
+- **Students** may not know which evidence, skills, certifications, projects, or experiences actually move them closer to a target role.
+- **Employers** often receive fragmented candidate information and need a clearer, skills-based way to compare applicants.
+- **Universities** need aggregated feedback about workforce demand and recurring graduate skill gaps without exposing individual students.
+- **Administrators** need auditable controls for verification, appeals, privacy, monitoring, and human oversight.
 
-### Employers
-Employers rely heavily on CVs and interviews, which may provide limited insight into a candidate's actual competencies and workforce readiness.
+Fursah addresses this gap with a shared, evidence-based workforce-readiness model.
 
-### Universities
-Universities have limited visibility into how their graduates perform in industry and which skills employers increasingly demand.
+## What Fursah Does
 
-The result is a gap between **what students learn, what employers need, and how universities prepare future graduates**.
+### Student workspace
 
----
+Students can:
 
-## Our Solution
+- Build a structured profile and skills passport.
+- Submit certifications, projects, experience, and other evidence.
+- View a deterministic Career Readiness Score.
+- Identify skill and certification gaps.
+- Follow a personalized roadmap.
+- Explore opportunities and inspect why they match.
+- Track applications and offers.
+- Use a grounded assistant to understand their own current data and next actions.
 
-The **AI-Powered Workforce Readiness Ecosystem** creates a continuous connection between:
+### Employer workspace
 
-**Students → Skills Development → Career Readiness → Employers → Workforce Insights → Universities**
+Employers can:
 
-At the center of this ecosystem is an AI intelligence layer that continuously analyzes student development, workforce requirements, and employment outcomes.
+- Maintain an organization profile.
+- Create opportunities with explicit skills, certification, and experience requirements.
+- Review applicants against those requirements.
+- Inspect explainable candidate-role match results.
+- Use blind-review controls where enabled.
+- Record human recruitment decisions and feedback.
 
-Instead of providing static career recommendations, the platform creates **adaptive, personalized pathways** that evolve as students gain new skills, qualifications, and experience.
+A match score is decision support, not a hiring decision.
 
----
+### University workspace
 
-## Core Features
+Universities can view privacy-protected, aggregated information such as:
 
-### Personalized Career Roadmaps
+- Cohort readiness.
+- Skill gaps.
+- Certification gaps.
+- Workforce demand.
+- Curriculum alignment opportunities.
 
-Students create a comprehensive profile containing their:
+Small reporting groups are suppressed to reduce re-identification risk.
 
-- Academic background
-- Technical and soft skills
-- Certifications
-- Projects and portfolio
-- Internships and professional experience
-- Research activities
-- Hackathons and competitions
-- Extracurricular activities
-- Career goals
+### Administration workspace
 
-AI analyzes this information and generates a **step-by-step personalized career roadmap** toward the student's target role.
+Administrators can oversee:
 
----
+- Evidence verification.
+- Employer verification.
+- Appeals.
+- Data requests.
+- Governance scenarios.
+- Monitoring snapshots.
+- Audit records.
+- Human overrides and escalation.
 
-### Adaptive Learning Intelligence
+## How the Intelligence Layer Works
 
-Career development is rarely a single fixed pathway.
+Fursah deliberately separates **consequential scoring** from **generative AI**.
 
-If a student struggles with a certification, assessment, or recommended learning path, the system can identify potential knowledge gaps and recommend an alternative route.
+### Deterministic intelligence
 
-Instead of repeatedly recommending the same action:
+Career readiness, skill-gap analysis, and candidate-role matching are calculated with **deterministic, version-controlled rules**.
 
-**Original Path → Difficulty Identified → Alternative Route → Career Goal**
+A language model does not decide a person's readiness score, match score, evidence approval, or hiring outcome.
 
-This allows every student to follow a pathway that adapts to their individual progress.
+This design makes important outputs:
 
----
+- Reconstructible.
+- Inspectable.
+- Versioned.
+- Easier to challenge and audit.
 
-### AI Skills Passport
+The authoritative readiness logic is implemented in the application intelligence layer under [`Fursah/src/lib/intelligence/`](Fursah/src/lib/intelligence/).
 
-Each student develops a dynamic **AI Skills Passport** representing their verified competencies and achievements.
+### Generative AI
 
-The passport can include:
+Cloudflare Workers AI is used on the explanatory side of the system for two bounded tasks:
 
-- Degrees and academic achievements
-- Technical skills
-- Soft skills
-- Professional certifications
-- Projects
-- Internships
-- Research
-- Workshops
-- Competitions and hackathons
-- Volunteer experience
+1. **Evidence extraction** — interpreting uploaded evidence and proposing structured information such as demonstrated skills and supporting text.
+2. **Grounded assistance** — explaining information already available to an authenticated user within that user's permitted scope.
 
-The Skills Passport provides employers with a richer representation of a candidate's capabilities beyond a traditional CV.
+AI extraction does **not** verify evidence. Evidence that requires verification remains advisory until an authorized human reviewer approves it.
 
----
+The grounded assistant cannot independently alter readiness, matching, verification, or hiring decisions.
 
-### Career Readiness Score
+## Evidence Trust Model
 
-The platform generates a dynamic **Career Readiness Score (0–100)** based on factors such as:
+Fursah separates submission, interpretation, verification, and scoring:
 
-- Academic achievements
-- Technical competencies
-- Professional certifications
-- Practical experience
-- Portfolio development
-- Industry engagement
+**Submitted evidence → AI-assisted extraction → Human review → Approved evidence → Deterministic scoring**
 
-As students develop new competencies, their readiness score evolves.
+Pending or rejected evidence does not become trusted simply because it was uploaded or interpreted by AI.
 
-The AI can then recommend the **highest-impact next actions** that may improve their career readiness.
+## Responsible AI and Governance
 
----
+Implemented governance controls include:
 
-### Intelligent Opportunity Matching
+- Human review and override.
+- Versioned consequential rules.
+- Audit records for important actions.
+- Evidence verification before trusted scoring.
+- Appeals against important outcomes.
+- Access, correction, portability, and deletion request workflows.
+- Monitoring with a `PAUSED` state for intervention.
+- Cohort suppression for small reporting groups.
+- Role-scoped assistant context.
+- Employer blind-review support.
+- No use of gender, nationality, age, or GPA as readiness or matching inputs.
 
-Students can discover and track:
+Published policies are available at:
 
-- Job opportunities
-- Internships
-- Graduate programs
-- Companies
-- Professional development opportunities
+- https://fursah.org/policies/privacy
+- https://fursah.org/policies/responsible-ai
+- https://fursah.org/policies/terms
+- https://fursah.org/policies/accessibility
 
-The AI compares each opportunity's requirements against the student's Skills Passport and calculates a personalized compatibility score.
+The governance design is informed by relevant Saudi data, AI, cybersecurity, and privacy frameworks and by international AI-management standards. This is a prototype and does not claim formal regulatory certification or ISO certification.
 
-Rather than simply identifying that a student is not qualified, the platform explains:
+## Privacy Model
 
-- Which requirements are already satisfied
-- Which competencies are missing
-- Which certifications may be required
-- Which experience gaps exist
-- What the student can do next to improve eligibility
+Role boundaries are intentional:
 
----
+- A **student** receives their own profile, readiness, gaps, roadmap, applications, offers, and relevant opportunity information.
+- An **employer** receives information about its own jobs and its own applicant pipeline.
+- A **university** receives aggregated and suppression-protected cohort intelligence rather than unrestricted student-level records.
+- An **administrator** receives the information required for authorized governance and review functions.
 
-### Employer Intelligence
+Small cohorts are suppressed where reporting them could create privacy risk.
 
-Employers can define the exact competencies required for each opportunity, including:
+## Technology Stack
 
-- Technical skills
-- Professional certifications
-- Experience
-- Tools and technologies
-- Soft skills
+The current application is built with:
 
-The AI evaluates candidate profiles against these requirements and produces **explainable candidate-job match scores**.
+- **Next.js 16**
+- **React 19**
+- **TypeScript**
+- **Tailwind CSS 4**
+- **Prisma 7**
+- **libSQL / Turso-compatible database access**
+- **Cloudflare R2** for private evidence object storage
+- **Cloudflare Workers AI** for evidence interpretation and the grounded assistant
+- **Vercel** for application deployment
 
-Employers can understand both:
+See [`Fursah/package.json`](Fursah/package.json) for the exact dependency versions and available scripts.
 
-**Why a candidate is a strong match**
-
-and
-
-**Where competency gaps remain**
-
-> Hiring decisions always remain under human oversight.
-
----
-
-### Workforce Feedback Loop
-
-The ecosystem does not stop once a student is hired.
-
-Employers can provide anonymized, structured workforce feedback related to areas such as:
-
-- Technical competency
-- Teamwork
-- Problem solving
-- Adaptability
-
-Aggregated workforce outcomes can help improve future career recommendations and reveal which skills, certifications, and learning pathways are associated with stronger employment outcomes.
-
-This creates a continuous feedback cycle:
-
-**Education → Skills → Employment → Workforce Feedback → Better Education**
-
----
-
-### University Workforce Intelligence
-
-Universities can access aggregated workforce insights to better understand:
-
-- Emerging industry skills
-- Workforce demand
-- Graduate employment outcomes
-- Common graduate skill gaps
-- Valuable certifications and learning pathways
-- Areas for curriculum improvement
-
-This allows academic programs to become increasingly responsive to real workforce requirements.
-
----
-
-## How the AI actually works
-
-Fursah has two components, and the boundary between them is the central design
-decision in the platform.
-
-### Deterministic intelligence — everything that produces a number
-
-The Career Readiness Score, skill-gap analysis, and candidate–role matching are
-computed by a **rule-based engine with published weights** ([`src/lib/ai.ts`](Fursah/src/lib/ai.ts)).
-No machine-learning model trained on historical hiring data is involved in any
-score that affects a person.
-
-| Career Readiness Score | Weight | | Candidate–role match | Weight |
-|---|---|---|---|---|
-| Technical skills vs. track | 35% | | Required skills | 55% |
-| Certifications (verified only) | 20% | | Required certifications | 25% |
-| Relevant experience | 20% | | Experience vs. minimum | 20% |
-| Soft skills vs. track | 15% | | *within skills: essential* | *80%* |
-| Projects | 10% | | *within skills: preferred* | *20%* |
-
-This is deliberate. A model trained on past hiring outcomes learns past hiring
-preference, including its inequities. A weighted rule engine cannot silently
-acquire a bias from history because it has no history to learn from, and every
-output can be reconstructed and challenged. The trade-off — it cannot discover
-patterns nobody encoded — is one we accept for a system that affects access to
-employment.
-
-Scores are banded as Career Ready (≥80), Developing (55–79), and Early Stage
-(<55). A band describes evidence on file, not a person's ability.
-
-### Generative AI — reading documents and explaining results
-
-A general-purpose language model (Llama 3.1 8B via Cloudflare Workers AI,
-reached through our own Worker — see [`src/lib/assistant/llm.ts`](Fursah/src/lib/assistant/llm.ts))
-does exactly two things:
-
-1. **Evidence extraction** ([`src/lib/evidence-ai.ts`](Fursah/src/lib/evidence-ai.ts)) — reads an
-   uploaded certificate, project, or experience document and proposes the
-   skills it evidences, each with a confidence value and the supporting text.
-   **Extraction never verifies evidence.** A human reviewer approves or rejects
-   before an extracted skill becomes trusted.
-2. **The role-scoped assistant** — answers questions about results already
-   produced by the deterministic layer. It is grounded on those facts and
-   cannot compute or alter a score, a ranking, or a verification decision.
-
-The model sits on the explanatory side of the boundary. Language models are
-well suited to reading a document and explaining a result, and poorly suited to
-being the reason a person did or did not get an opportunity.
-
----
-
-## Governance, in code rather than in prose
-
-Each of these is an implemented mechanism, not an aspiration:
-
-| Commitment | Where it lives |
-|---|---|
-| No protected attributes collected — no gender, nationality, age, or GPA field exists | [`prisma/schema.prisma`](Fursah/prisma/schema.prisma) |
-| Cohort aggregates suppressed below 5 students in **every** reporting group — band, career track, skill gap, certification gap — not just the cohort total | `MIN_COHORT` in [`src/lib/cohort.ts`](Fursah/src/lib/cohort.ts) |
-| Secondary suppression: withholding one group of a partition would leak it by subtraction, so a second is withheld | `suppressPartition` in [`src/lib/cohort.ts`](Fursah/src/lib/cohort.ts) |
-| Suppression is *shown*, not silent — a withheld figure renders as ⊘ with its reason | [`src/components/SuppressedFigure.tsx`](Fursah/src/components/SuppressedFigure.tsx) |
-| Every consequential action logged with its ruleset version and reasoning | `AuditEvent` model |
-| Purpose-specific consent, versioned, independently withdrawable | `ConsentRecord` model |
-| Four PDPL request types: access, portability, correction, deletion | `DataRequest` model |
-| Appeals against readiness, match, evidence, and data decisions | `Appeal` model |
-| Drift monitoring with a `PAUSED` state, so rollback is an available action | `MonitoringSnapshot` model |
-| Governance decisions recorded including where a human **overrode** the proposal | `GovernanceScenario.humanDecision` |
-| Assistant role-scoping verified automatically for all three roles — a university context can never contain an individual student record, an employer context never a non-applicant, a student context never a peer | [`scripts/verify-assistant.ts`](Fursah/scripts/verify-assistant.ts) |
-| Cohort suppression verified against live data on every run | [`scripts/verify-privacy.ts`](Fursah/scripts/verify-privacy.ts) |
-| Evidence stays advisory until a named human approves it — asserted, not assumed | [`scripts/verify-evidence.ts`](Fursah/scripts/verify-evidence.ts) |
-| Session cookies are HMAC-signed, so a user id alone cannot open a session | `signSession` in [`src/lib/session.ts`](Fursah/src/lib/session.ts) |
-| The password-free demo shortcut opens prepared demo accounts only, never a real sign-up | [`src/lib/demoAccounts.ts`](Fursah/src/lib/demoAccounts.ts) |
-| Assistant rate limits are per authenticated user, so one visitor cannot switch it off for everyone | [`src/app/api/assistant/route.ts`](Fursah/src/app/api/assistant/route.ts) |
-| Employer blind review, withholding identifying detail at screening | `Job.blindReview` |
-
-Published policies: [Privacy](https://fursah.org/policies/privacy) ·
-[Responsible AI](https://fursah.org/policies/responsible-ai) ·
-[Terms](https://fursah.org/policies/terms) ·
-[Accessibility](https://fursah.org/policies/accessibility)
-
-### Known limitations
-
-Stated here rather than discovered later:
-
-- **Prototype hosting is not in-Kingdom.** Application hosting (Vercel),
-  storage (Cloudflare R2), and model inference (Cloudflare Workers AI) are not
-  currently pinned to a Saudi region. Production deployment requires binding
-  these to a compliant region and documenting any residual transfer.
-- **No independent WCAG 2.1 AA audit** has been carried out; the conformance
-  claim is a target based on internal review.
-- **Arabic coverage is complete on the public pages and partial inside the
-  portals.** Untranslated strings fall back to English rather than failing, so
-  a portal page in Arabic can still show English fragments.
-- **The assistant's behavioural safety probes only run where the assistant is
-  configured.** `scripts/verify-assistant.ts` asserts the grounding contract
-  and the data boundaries everywhere, but the adversarial prompts — refusing
-  another student's data, refusing a hiring decision, resisting prompt
-  injection — report SKIP without `ASSISTANT_AI_URL`. Model behaviour is
-  unverified until they run.
-- **Fairness monitoring cannot use protected attributes**, because none are
-  collected. Disparity review therefore depends on institutions conducting
-  evaluation under their own lawful basis with separately governed data.
-- Some demonstration data is seeded rather than measured. See
-  `npm run seed:governance`.
-
----
-
-## Standards conformance and the knowledge base
-
-Two published pages carry the assessment material directly, so it can be read
-without running the prototype:
-
-- **[Standards conformance](https://fursah.org/standards)** — the platform
-  mapped onto **ITU-T Y.3172 clause 8.1** node by node (SRC, C, PP, M, P, D,
-  SINK), each with the source file implementing it; the two components Fursah
-  runs that clause 8.1 does not define, attributed to Y.3181 and Y.3176; a
-  self-assessment against the **13 dimensions of the ITU AI Ready Report 2.0**;
-  and the **policy gaps** this project identified, structured on the report's
-  own chapter 4 gap taxonomy.
-- **[Knowledge base](https://fursah.org/knowledge-base)** — every authentic
-  public document the platform depends on, linked to the original publication
-  and to the file in this repository that depends on it: the ITU
-  Recommendations and reports, the PDPL, SDAIA AI Ethics Principles, NDMO and
-  NCA controls, DGA accessibility standards, Vision 2030, GASTAT, the Council
-  of Universities Affairs, UNESCO, and ISO/IEC 42001 and 23894.
-
-The seven clause 8.1 node names live in one place
-([`src/lib/standards.ts`](Fursah/src/lib/standards.ts)) and are rendered by both
-the public pipeline figure and the admin governance page, so the two surfaces
-cannot describe the pipeline differently.
-
-Six policy gaps are stated. The one marked blocking is cross-border inference
-(DPIA risk R5). The most interesting is the fairness paradox: because Fursah
-deliberately collects no protected attribute, it cannot disaggregate outcomes
-to test for disparate impact — data minimisation and demonstrable
-non-discrimination pull against each other, and no instrument we found resolves
-which takes precedence for an employment-adjacent system.
-
----
-
-## Ecosystem Architecture
+## Repository Structure
 
 ```text
-           ┌──────────────────────┐
-           │       STUDENTS       │
-           └──────────┬───────────┘
-                      │
-                      ▼
-           ┌──────────────────────┐
-           │    AI INTELLIGENCE   │
-           │                      │
-           │ • Career Pathways    │
-           │ • Skills Analysis    │
-           │ • Readiness Scoring  │
-           │ • Opportunity Match  │
-           └──────────┬───────────┘
-                      │
-          ┌───────────┴───────────┐
-          ▼                       ▼
-┌──────────────────┐    ┌──────────────────┐
-│    EMPLOYERS     │    │   UNIVERSITIES   │
-│                  │    │                  │
-│ Talent Matching  │    │ Workforce        │
-│ Skill Demand     │    │ Intelligence     │
-└────────┬─────────┘    └─────────▲────────┘
-         │                        │
-         └──── Workforce Data ────┘
+AI-Powered-Workforce-Readiness-Ecosystem/
+├── Fursah/                     # Working Next.js application
+│   ├── prisma/                 # Data model and seed data
+│   ├── public/                 # Submission PDFs, presentation, public assets
+│   ├── scripts/                # Migration, verification, smoke and governance scripts
+│   └── src/                    # Application source code
+├── docs/
+│   └── DPIA.md                 # Data Protection Impact Assessment
+├── workers/                    # Cloudflare Worker source/configuration
+├── SECURITY.md                 # Security policy
+├── LICENSE
+└── README.md
 ```
 
-The result is a **continuous AI-driven feedback loop between education and employment**.
+## Local Development
 
----
-
-## Stakeholder Benefits
-
-| Students | Employers | Universities |
-|---|---|---|
-| Personalized career guidance | Better candidate-job matching | Industry demand insights |
-| Adaptive learning pathways | Verified competencies | Graduate employment analytics |
-| Career readiness tracking | Faster candidate discovery | Skill-gap identification |
-| Skills Passport | Explainable match scores | Data-driven curriculum insights |
-| Opportunity recommendations | Reduced recruitment mismatch | Better industry alignment |
-
----
-
-## Alignment with Saudi Vision 2030
-
-The ecosystem supports the broader goals of **Saudi Vision 2030** by contributing to:
-
-- Human capital development
-- Workforce readiness
-- Digital transformation
-- Skills-based employment
-- Education-industry alignment
-- Development of future-ready Saudi talent
-
-By connecting education more closely with real workforce requirements, the platform aims to help students develop the competencies needed for an increasingly technology-driven economy.
-
----
-
-## Long-Term Vision
-
-Our long-term vision is to create a **national AI-powered workforce readiness ecosystem** where students, universities, and employers operate within one connected intelligent environment.
-
-The platform transforms education and employment from two separate stages into a continuous cycle:
-
-**Learn → Develop → Measure → Match → Employ → Evaluate → Improve**
-
-Ultimately, the goal is not simply to help students **find jobs**, but to help them understand **how to become genuinely ready for them**.
-
----
-
-## Running the Prototype
-
-**Fursah** is the working prototype of this ecosystem, located in [`Fursah/`](Fursah/). It is a Next.js 16 app (React 19, TypeScript, Tailwind CSS 4) with Prisma over libSQL.
-
-### Quick start
+Fursah currently requires Node.js 24.
 
 ```bash
-cd fursa
-npm install          # runs `prisma generate` automatically
-npx tsx prisma/seed.ts
+cd Fursah
+npm install
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) and choose **Explore Prototype** to sign in as one of the seeded student, employer, university, or admin profiles.
+Then open:
 
-The bundled SQLite file (`prisma/dev.db`) is used by default, so the demo runs offline with no credentials. Hosted deployments point `DATABASE_URL` at Turso and supply `TURSO_AUTH_TOKEN`.
+```text
+http://localhost:3000
+```
 
-### Scripts
+`npm install` runs `prisma generate` automatically through the `postinstall` script.
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Start the local development server |
-| `npm run build` | Build the production application |
-| `npm run build:production` | Apply production migrations, then build |
-| `npm start` | Serve the production build |
-| `npm run lint` | Run ESLint |
-| `npm run create-admin` | Create an `ADMIN` account from `ADMIN_*` env vars |
+## Validation Commands
 
-### Environment
+The repository includes automated checks for privacy, assistant scoping, evidence trust, submission integrity, cross-role chains, and smoke behavior.
 
-Create `Fursah/.env.local` with the variables your setup needs. Readiness scoring, skill-gap analysis, and opportunity matching run on deterministic local logic, so no model API key is required to run the prototype.
+```bash
+cd Fursah
+npm run lint
+npm run verify
+npm run smoke
+```
 
-| Variable | Purpose |
-|---|---|
-| `DATABASE_URL` | Prisma/libSQL connection string (defaults to the bundled `file:./prisma/dev.db`) |
-| `TURSO_AUTH_TOKEN` | Auth token for hosted Turso databases |
-| `NEXT_PUBLIC_FIREBASE_*` | Public Firebase web configuration for client authentication |
-| `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | Firebase Admin SDK service-account credentials for session cookies |
-| `R2_ACCOUNT_ID`, `R2_BUCKET_NAME`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY` | Cloudflare R2 storage for evidence documents and avatars |
-| `EVIDENCE_AI_URL`, `EVIDENCE_AI_SECRET` | Endpoint and shared secret for the evidence-analysis service |
-| `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` | Seed credentials used by `npm run create-admin` |
+Additional targeted commands include:
 
-### Authentication and evidence review
+```bash
+npm run verify:privacy
+npm run verify:assistant
+npm run verify:evidence
+npm run verify:submission
+npm run verify:chains
+```
 
-Accounts use Firebase Authentication with server-side session cookies; enable Email/Password sign-in in the Firebase console before using real accounts.
+Production builds also run the repository's guarded production migration step before the Next.js build.
 
-Certificate claims require a JPG, PNG, or WebP evidence image (maximum 5 MB). Uploads are stored privately in Cloudflare R2, enter the queue as `PENDING`, and only affect readiness scoring and matching once an `ADMIN` approves them.
+## Standards and Knowledge Base
 
-### Architecture notes
+Two public pages expose the project's standards and evidence base directly:
 
-Data access is server-only and isolated in `src/lib` and server actions, so the persistence layer can be swapped without touching the UI.
+- **Standards conformance:** https://fursah.org/standards
+- **Knowledge base:** https://fursah.org/knowledge-base
 
----
+These pages document the project's mappings, source material, governance references, and identified policy gaps.
 
-## Project Status
+## Known Prototype Limitations
 
-This project is currently being developed as part of the **AI Readiness Hackathon – Kingdom of Saudi Arabia**.
+Fursah is a hackathon prototype, not a production-certified employment system.
 
-The current implementation focuses on demonstrating the core AI-powered workforce readiness experience and the interaction between students, employers, and educational institutions.
+Current limitations include:
 
----
+- Application hosting, object storage, and model inference are not guaranteed to be pinned to a Saudi region.
+- Production deployment would require formal data-residency, cross-border-transfer, security, legal, and processor review.
+- Direct demographic disparate-impact analysis is limited because protected attributes are intentionally not collected by the platform.
+- Some demonstration data is synthetic or seeded and must not be represented as measured real-world performance.
+- Accessibility has been designed into the product, but an independent WCAG certification is not claimed.
 
-## Team
+## Documentation
 
-Developed by our team for the **AI Readiness Hackathon – Kingdom of Saudi Arabia**.
+For detailed system documentation, use the repository Wiki. It covers:
 
----
+- System Overview
+- Student Portal
+- Employer Portal
+- University Portal
+- Administration Portal
+- AI and Matching System
+- System Architecture
+- Responsible AI and Governance
+- Privacy and Security
+- Workforce Intelligence
+- Technology Stack
+- Verification Administration
+- Abbreviations and Terminology
 
-## License
+## Security
 
-This project is developed for hackathon and educational purposes.
+Please read [`SECURITY.md`](SECURITY.md) before reporting a vulnerability. Security issues should be disclosed privately rather than through a public issue when doing so could expose users or infrastructure.
 
-All rights reserved unless otherwise specified.
+## Project Goal
+
+Fursah is designed to make the path from education to employment more transparent and evidence-based:
+
+**Evidence → Readiness → Gap identification → Action → Opportunity → Human decision → Workforce feedback → Better education**
+
+The goal is not simply to recommend jobs. It is to help students understand how to become demonstrably ready for them while giving employers and universities better, governed information for their own decisions.
