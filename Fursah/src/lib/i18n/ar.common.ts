@@ -41,6 +41,7 @@ export const common: Record<string, string> = {
   "Toggle color theme": "تبديل نمط الألوان",
   "Change language": "تغيير اللغة",
   "Switch to Arabic": "التبديل إلى العربية",
+  "Switch to English": "التبديل إلى الإنجليزية",
   "Use dark mode": "استخدام الوضع الداكن",
   "King Saud University": "جامعة الملك سعود",
 

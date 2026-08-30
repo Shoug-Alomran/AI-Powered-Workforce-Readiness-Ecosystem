@@ -11,6 +11,7 @@ import { admin } from "./ar.admin";
 import { policies } from "./ar.policies";
 import { standards } from "./ar.standards";
 import { walkthrough } from "./ar.walkthrough";
+import { recent } from "./ar.recent";
 
 export const ar: Record<string, string> = {
   ...common,
@@ -22,4 +23,5 @@ export const ar: Record<string, string> = {
   ...policies,
   ...standards,
   ...walkthrough,
+  ...recent,
 };
