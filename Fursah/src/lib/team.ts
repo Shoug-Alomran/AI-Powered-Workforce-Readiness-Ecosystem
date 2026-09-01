@@ -66,9 +66,9 @@ export const team: TeamMember[] = [
     ],
   }, {
     name: "Taleen Bin Nader",
-    role: "UK",
-    bio: "UK",
-    focus: ["UK"],
+    role: "Contribution details have not been provided by this contributor.",
+    bio: "Bio details have not been provided by this contributor.",
+    focus: ["Details have not been provided by this contributor."],
     email: "taleen.binnader@fursah.org",
     links: [
       { label: "GitHub", href: "https://github.com/Taleen-Bin-Nader" },
