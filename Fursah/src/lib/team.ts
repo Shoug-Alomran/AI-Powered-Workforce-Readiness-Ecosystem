@@ -71,7 +71,7 @@ export const team: TeamMember[] = [
     focus: ["Details have not been provided by this contributor."],
     email: "taleen.binnader@fursah.org",
     links: [
-      { label: "GitHub", href: "https://github.com/Taleen-Bin-Nader" },
+      { label: "GitHub", href: "https://github.com/taleenbinnader" },
       { label: "LinkedIn", href: "https://www.linkedin.com/in/taleen-bin-nader/" },
     ],
   },
