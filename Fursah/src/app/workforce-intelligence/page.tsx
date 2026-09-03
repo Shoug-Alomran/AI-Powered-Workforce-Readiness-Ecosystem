@@ -1,4 +1,5 @@
 import { cacheLife } from "next/cache";
+import { connection } from "next/server";
 import PageToc from "@/components/PageToc";
 import { getEcosystemIntelligence, MIN_ECOSYSTEM_SAMPLE } from "@/lib/intelligence";
 
@@ -24,6 +25,12 @@ function generatedAtLabel(value: Date) {
 }
 
 export default async function Intelligence() {
+  // This page reads deployment data, so it must not execute while Next.js is
+  // prerendering the application. Preview deployments intentionally do not
+  // receive production database secrets and would otherwise fall back to a
+  // new, schema-less SQLite file during `next build`.
+  await connection();
+
   const ecosystem = await getEcosystem();
 
   const topSkills = ecosystem.skills.slice(0, 6);
